@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cyber Bots Runner</title>
+  <meta name="theme-color" content="#0a1024">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cyber Bots Runner">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/icon-192.svg">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="app">
+    <section id="homeScreen" class="screen active">
+      <div class="animated-backdrop">
+        <div class="glow glow-a"></div>
+        <div class="glow glow-b"></div>
+        <div class="grid"></div>
+      </div>
+      <div class="top-bar">
+        <button id="installButton" class="tiny-icon hidden-install" aria-label="Instalar">+</button>
+        <button id="soundToggle" class="tiny-icon" aria-label="Audio">🔊</button>
+      </div>
+      <div class="home-content">
+        <div class="hero-stage">
+          <div id="homeHero" class="hero-avatar hero-orion">
+            <div class="hero-core"></div>
+            <div class="hero-vehicle"></div>
+          </div>
+          <div class="hero-ring"></div>
+        </div>
+        <div class="home-actions">
+          <button id="playButton" class="primary-cta icon-button" aria-label="Jugar"><span class="icon">▶</span></button>
+          <button id="openRosterButton" class="secondary-cta icon-button" aria-label="Elegir personaje"><span class="icon">⬢</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="rosterScreen" class="screen">
+      <div class="roster-shell">
+        <button id="rosterBackButton" class="tiny-icon back-button" aria-label="Volver">←</button>
+        <div id="characterCarousel" class="character-carousel"></div>
+        <div class="roster-actions">
+          <button id="rosterPrev" class="nav-bubble" aria-label="Anterior">◀</button>
+          <button id="selectCharacterButton" class="primary-cta icon-button" aria-label="Confirmar personaje"><span class="icon">★</span></button>
+          <button id="rosterNext" class="nav-bubble" aria-label="Siguiente">▶</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="hud">
+        <div class="hud-pill"><span class="hud-icon">⚡</span><span id="energyCount">0</span></div>
+        <div class="hud-pill"><span class="hud-icon">★</span><span id="starCount">0</span></div>
+        <div class="hud-pill"><span class="hud-icon">🤖</span><span id="botCount">0</span></div>
+      </div>
+      <div id="voiceBubble" class="voice-bubble"></div>
+      <div id="demoHint" class="demo-hint hidden"></div>
+      <canvas id="gameCanvas" width="1280" height="720" aria-label="Juego de plataformas"></canvas>
+      <div class="controls">
+        <button id="jumpButton" class="control-button jump" aria-label="Saltar"><span class="control-icon">⬆</span></button>
+        <button id="transformButton" class="control-button transform" aria-label="Transformarse"><span class="control-icon">⬣</span></button>
+      </div>
+    </section>
+
+    <section id="rewardScreen" class="screen">
+      <div class="reward-shell">
+        <div id="rewardHero" class="reward-hero hero-orion"></div>
+        <div class="reward-stars">
+          <span class="reward-star">★</span>
+          <span class="reward-star">★</span>
+          <span class="reward-star">★</span>
+        </div>
+        <div id="rewardLoot" class="reward-loot"></div>
+        <div class="reward-actions">
+          <button id="playAgainButton" class="primary-cta icon-button" aria-label="Jugar de nuevo"><span class="icon">↻</span></button>
+          <button id="homeButton" class="secondary-cta icon-button" aria-label="Inicio"><span class="icon">⌂</span></button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
