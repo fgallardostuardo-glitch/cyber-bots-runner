@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Cyber Bots Adventure</title>
-  <meta name="theme-color" content="#0a1024">
+  <title>Cyber Bots Adventure X</title>
+  <meta name="theme-color" content="#081120">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Cyber Bots Adventure">
+  <meta name="apple-mobile-web-app-title" content="Cyber Bots X">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icons/icon-192.svg">
@@ -16,94 +16,124 @@
 </head>
 <body>
   <div id="app">
-    <section id="homeScreen" class="screen active">
-      <div class="backdrop">
-        <div class="glow glow-a"></div>
-        <div class="glow glow-b"></div>
-        <div class="grid"></div>
+    <section id="homeScreen" class="screen active menu-screen">
+      <div class="menu-backdrop">
+        <div class="nebula nebula-a"></div>
+        <div class="nebula nebula-b"></div>
+        <div class="horizon-grid"></div>
       </div>
-      <div class="top-bar">
-        <button id="installButton" class="tiny-icon hidden-install" aria-label="Instalar">+</button>
-        <button id="soundToggle" class="tiny-icon" aria-label="Audio">🔊</button>
-      </div>
-      <div class="hero-panel">
-        <div class="title-block">
-          <p class="eyebrow">Aventura 2D</p>
-          <h1>Cyber Bots Adventure</h1>
-          <p class="subtitle">Muévete, salta y transfórmate para superar obstáculos claros y fáciles de entender.</p>
+
+      <header class="top-bar">
+        <div class="brand-pill">2D · táctil · PWA</div>
+        <div class="top-actions">
+          <button id="installButton" class="icon-button hidden-install" aria-label="Instalar">＋</button>
+          <button id="soundToggle" class="icon-button" aria-label="Audio">🔊</button>
         </div>
-        <div id="homeHeroCard" class="home-hero-card hero-orion">
-          <div class="robot-swatch">
-            <div class="robot-head"></div>
-            <div class="robot-body"></div>
+      </header>
+
+      <main class="home-shell">
+        <div class="home-copy glass-panel">
+          <p class="eyebrow">Transformers One inspirado</p>
+          <h1>Cyber Bots Adventure X</h1>
+          <p class="lead">Un plataformas 2D hecho para celular. Tú decides cómo avanzar. Obstáculos claros. Transformación real entre robot y vehículo.</p>
+          <div class="legend-strip">
+            <span class="legend-item red">Saltar</span>
+            <span class="legend-item blue">Hueco</span>
+            <span class="legend-item amber">Vehículo</span>
+            <span class="legend-item green">Meta</span>
           </div>
-          <div class="vehicle-swatch"></div>
         </div>
-        <div class="home-actions">
-          <button id="playButton" class="primary-cta">Jugar</button>
-          <button id="openRosterButton" class="secondary-cta">Elegir bot</button>
+
+        <div class="hero-stage glass-panel">
+          <div class="hero-name-row">
+            <div>
+              <p class="eyebrow small">Bot activo</p>
+              <h2 id="heroName">Orion Pax</h2>
+            </div>
+            <div id="heroStats" class="stat-chips"></div>
+          </div>
+          <div class="hero-preview">
+            <div class="preview-lane"></div>
+            <div id="heroRobot" class="hero-robot"></div>
+            <div id="heroVehicle" class="hero-vehicle"></div>
+          </div>
+          <p id="heroDescription" class="hero-description"></p>
         </div>
-      </div>
+      </main>
+
+      <footer class="menu-dock">
+        <button id="playButton" class="cta primary-cta">Jugar</button>
+        <button id="openRosterButton" class="cta secondary-cta">Elegir bot</button>
+      </footer>
     </section>
 
-    <section id="rosterScreen" class="screen">
-      <div class="panel shell">
-        <div class="panel-header">
-          <button id="rosterBackButton" class="tiny-icon back-button" aria-label="Volver">←</button>
+    <section id="rosterScreen" class="screen menu-screen">
+      <div class="menu-backdrop roster-backdrop">
+        <div class="nebula nebula-a"></div>
+        <div class="nebula nebula-b"></div>
+      </div>
+      <header class="top-bar">
+        <button id="rosterBackButton" class="icon-button back-button" aria-label="Volver">←</button>
+        <div class="brand-pill">Selecciona personaje</div>
+      </header>
+      <main class="roster-shell glass-panel">
+        <div class="roster-header">
           <div>
-            <p class="eyebrow">Selecciona personaje</p>
+            <p class="eyebrow">Plantel</p>
             <h2>Elige tu Cyber Bot</h2>
           </div>
+          <p class="roster-help">Desliza. Toca una tarjeta. Luego confirma.</p>
         </div>
         <div id="characterCarousel" class="character-carousel"></div>
-        <div class="home-actions compact-actions">
-          <button id="selectCharacterButton" class="primary-cta small-cta">Confirmar</button>
-        </div>
-      </div>
+      </main>
+      <footer class="menu-dock compact">
+        <button id="selectCharacterButton" class="cta primary-cta">Confirmar</button>
+      </footer>
     </section>
 
-    <section id="gameScreen" class="screen">
-      <div class="hud top-left">
+    <section id="gameScreen" class="screen game-screen">
+      <div class="hud hud-left">
         <div class="hud-pill"><span>⚡</span><span id="energyCount">0</span></div>
         <div class="hud-pill"><span>★</span><span id="starCount">0</span></div>
         <div class="hud-pill"><span>🤖</span><span id="botCount">0</span></div>
       </div>
-      <div class="hud top-right single">
+      <div class="hud hud-right">
         <div id="formIndicator" class="hud-pill accent">Modo Robot</div>
       </div>
       <div id="voiceBubble" class="voice-bubble"></div>
       <div id="goalLabel" class="goal-label"></div>
-      <canvas id="gameCanvas" width="1280" height="720" aria-label="Juego 2D de plataformas"></canvas>
-      <div class="controls movement-controls">
+      <canvas id="gameCanvas" aria-label="Juego de plataformas 2D"></canvas>
+
+      <div class="control-bar movement-bar">
         <button id="leftButton" class="control-button move" aria-label="Izquierda">◀</button>
         <button id="rightButton" class="control-button move" aria-label="Derecha">▶</button>
       </div>
-      <div class="controls action-controls">
+      <div class="control-bar action-bar">
         <button id="jumpButton" class="control-button jump" aria-label="Saltar">Saltar</button>
-        <button id="transformButton" class="control-button transform" aria-label="Transformarse">Transformar</button>
+        <button id="transformButton" class="control-button transform" aria-label="Transformar">Transformar</button>
       </div>
     </section>
 
-    <section id="rewardScreen" class="screen">
-      <div class="panel reward-panel">
+    <section id="rewardScreen" class="screen menu-screen">
+      <div class="menu-backdrop reward-backdrop">
+        <div class="nebula nebula-a"></div>
+        <div class="nebula nebula-b"></div>
+      </div>
+      <main class="reward-shell glass-panel">
         <p class="eyebrow">Nivel completado</p>
-        <h2>Lo lograste</h2>
-        <div id="rewardHero" class="reward-hero hero-orion">
-          <div class="robot-swatch">
-            <div class="robot-head"></div>
-            <div class="robot-body"></div>
-          </div>
-          <div class="vehicle-swatch"></div>
+        <h2>Misión lograda</h2>
+        <div class="reward-showcase">
+          <div id="rewardRobot" class="hero-robot"></div>
+          <div id="rewardVehicle" class="hero-vehicle"></div>
         </div>
         <div id="rewardLoot" class="reward-loot"></div>
-        <div class="home-actions compact-actions">
-          <button id="playAgainButton" class="primary-cta small-cta">Jugar otra vez</button>
-          <button id="homeButton" class="secondary-cta small-cta">Inicio</button>
-        </div>
-      </div>
+      </main>
+      <footer class="menu-dock">
+        <button id="playAgainButton" class="cta primary-cta">Jugar otra vez</button>
+        <button id="homeButton" class="cta secondary-cta">Inicio</button>
+      </footer>
     </section>
   </div>
-
   <script src="./app.js"></script>
 </body>
 </html>

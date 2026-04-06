@@ -1,26 +1,27 @@
-# Cyber Bots Adventure - Remaster
+# Cyber Bots Adventure X
 
-## Qué cambió
-- Movimiento manual: el jugador ya no avanza solo.
-- Controles claros: izquierda, derecha, salto y transformar.
-- Transformación visible: robot y vehículo tienen formas distintas.
-- Obstáculos más entendibles:
-  - Caja roja = saltar
-  - Hueco azul = saltar antes del borde
-  - Túnel amarillo = pasar en modo vehículo
-  - Meta verde = final del nivel
-- Personajes mejor definidos visualmente y con diferencias de atributos.
-- Tutorial con mensajes por voz y texto.
+Versión rehacida del prototipo con foco en:
+- Layout realmente usable en celular horizontal.
+- Botones de menú siempre visibles con dock fijo.
+- Movimiento manual claro: izquierda, derecha, salto y transformar.
+- Obstáculos más legibles con rótulos y colores consistentes.
+- Transformación visible entre robot y vehículo.
+- Checkpoints para no reiniciar desde el principio.
+- Preferencias guardadas de personaje y audio.
 
 ## Cómo probar
-Sirve el contenido con un servidor estático. Por ejemplo:
-- VS Code Live Server
+Sirve la carpeta con un servidor estático:
 - `python -m http.server 8000`
+- o Live Server en VS Code
 
-Luego abre `http://localhost:8000/cyber-bots-remaster/`
+Luego abre:
+- `http://localhost:8000/cyber-bots-ultra/`
 
-## Controles de teclado
+## Controles
 - A / Flecha izquierda = izquierda
 - D / Flecha derecha = derecha
 - Espacio / Flecha arriba = saltar
 - S / Flecha abajo / T = transformar
+
+## Nota honesta
+Esto ya es una base bastante más seria para celular, pero sigue siendo arte procedural en canvas, no sprites ilustrados profesionales. Si el siguiente paso es “calidad visual alta”, hay que pasar a spritesheet y animaciones dibujadas.

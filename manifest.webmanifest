@@ -1,14 +1,13 @@
 {
-  "name": "Cyber Bots Adventure",
-  "short_name": "Cyber Bots",
-  "description": "Juego 2D de plataformas para celular con movimiento manual, salto, transformación visible y modo instalable.",
+  "name": "Cyber Bots Adventure X",
+  "short_name": "Cyber Bots X",
+  "description": "Juego 2D táctil con transformación robot-vehículo, diseñado para celular.",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
+  "background_color": "#081120",
+  "theme_color": "#081120",
   "orientation": "landscape",
-  "background_color": "#0a1024",
-  "theme_color": "#0a1024",
-  "lang": "es",
+  "lang": "es-CL",
   "icons": [
     {
       "src": "./icons/icon-192.svg",

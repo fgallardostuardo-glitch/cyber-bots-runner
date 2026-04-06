@@ -2,46 +2,70 @@ const characters = [
   {
     id: 'orion',
     name: 'Orion Pax',
-    css: 'hero-orion',
-    colors: { main: '#497cff', accent: '#ff6d5f', dark: '#1c295a' },
-    description: 'Equilibrado. Ideal para aprender.',
-    tags: ['Balanceado', 'Salto medio', 'Velocidad media'],
-    robotSpeed: 280,
-    vehicleSpeed: 360,
-    jumpPower: 720
+    description: 'Equilibrado y fácil de controlar. El mejor punto de partida.',
+    tags: ['Balanceado', 'Salto medio', 'Control seguro'],
+    themeClass: 'theme-orion',
+    cssVars: {
+      '--robot-head': 'linear-gradient(180deg, #ff8a76, #4b7fff)',
+      '--robot-body': 'linear-gradient(180deg, #4b7fff, #233f78)',
+      '--vehicle-body': 'linear-gradient(180deg, #4b7fff, #1a2e57)',
+      '--vehicle-cabin': 'linear-gradient(180deg, #ff8a76, #4b7fff)'
+    },
+    palette: { main: '#4b7fff', accent: '#ff8a76', dark: '#203454' },
+    robotSpeed: 290,
+    vehicleSpeed: 370,
+    jumpPower: 760
   },
   {
     id: 'bee',
     name: 'Bumblebee',
-    css: 'hero-bumblebee',
-    colors: { main: '#ffd84d', accent: '#2d3240', dark: '#1d2230' },
-    description: 'El más rápido sobre ruedas.',
-    tags: ['Muy rápido', 'Salto medio', 'Ágil'],
-    robotSpeed: 300,
-    vehicleSpeed: 410,
-    jumpPower: 700
+    description: 'El más rápido en modo vehículo. Ideal para niños inquietos.',
+    tags: ['Muy rápido', 'Ágil', 'Vehículo veloz'],
+    themeClass: 'theme-bee',
+    cssVars: {
+      '--robot-head': 'linear-gradient(180deg, #ffe35d, #2e3547)',
+      '--robot-body': 'linear-gradient(180deg, #ffd84d, #705516)',
+      '--vehicle-body': 'linear-gradient(180deg, #ffd84d, #775710)',
+      '--vehicle-cabin': 'linear-gradient(180deg, #2e3547, #ffd84d)'
+    },
+    palette: { main: '#ffd84d', accent: '#2e3547', dark: '#5b4410' },
+    robotSpeed: 305,
+    vehicleSpeed: 420,
+    jumpPower: 730
   },
   {
     id: 'elita',
     name: 'Elita-1',
-    css: 'hero-elita',
-    colors: { main: '#ff7aba', accent: '#6d63ff', dark: '#30285d' },
-    description: 'Salta más alto y controla mejor el aire.',
-    tags: ['Salto alto', 'Precisa', 'Segura'],
-    robotSpeed: 285,
-    vehicleSpeed: 350,
-    jumpPower: 780
+    description: 'Salta más alto y se siente ligera en el aire.',
+    tags: ['Salto alto', 'Precisa', 'Aérea'],
+    themeClass: 'theme-elita',
+    cssVars: {
+      '--robot-head': 'linear-gradient(180deg, #ff8bc7, #8c79ff)',
+      '--robot-body': 'linear-gradient(180deg, #ff7fc0, #5b46b8)',
+      '--vehicle-body': 'linear-gradient(180deg, #ff7fc0, #5b46b8)',
+      '--vehicle-cabin': 'linear-gradient(180deg, #ffe3ef, #8c79ff)'
+    },
+    palette: { main: '#ff7fc0', accent: '#8c79ff', dark: '#4d3f7d' },
+    robotSpeed: 286,
+    vehicleSpeed: 360,
+    jumpPower: 820
   },
   {
     id: 'd16',
     name: 'D-16',
-    css: 'hero-d16',
-    colors: { main: '#bec6d9', accent: '#586173', dark: '#2d3444' },
-    description: 'Pesado, firme y fácil de controlar.',
-    tags: ['Robusto', 'Estable', 'Salto corto'],
-    robotSpeed: 260,
-    vehicleSpeed: 330,
-    jumpPower: 680
+    description: 'Más pesado, menos nervioso. Muy estable para controlar.',
+    tags: ['Robusto', 'Estable', 'Perdona errores'],
+    themeClass: 'theme-d16',
+    cssVars: {
+      '--robot-head': 'linear-gradient(180deg, #d8dfeb, #5f697d)',
+      '--robot-body': 'linear-gradient(180deg, #bec8d8, #4a566b)',
+      '--vehicle-body': 'linear-gradient(180deg, #bec8d8, #4a566b)',
+      '--vehicle-cabin': 'linear-gradient(180deg, #ffffff, #747f93)'
+    },
+    palette: { main: '#bec8d8', accent: '#5f697d', dark: '#30384a' },
+    robotSpeed: 268,
+    vehicleSpeed: 338,
+    jumpPower: 710
   }
 ];
 
@@ -62,10 +86,16 @@ const botCount = document.getElementById('botCount');
 const formIndicator = document.getElementById('formIndicator');
 const rewardLoot = document.getElementById('rewardLoot');
 const carousel = document.getElementById('characterCarousel');
-const homeHeroCard = document.getElementById('homeHeroCard');
-const rewardHero = document.getElementById('rewardHero');
 const soundToggle = document.getElementById('soundToggle');
 const installButton = document.getElementById('installButton');
+const heroName = document.getElementById('heroName');
+const heroDescription = document.getElementById('heroDescription');
+const heroStats = document.getElementById('heroStats');
+
+const previewNodes = [
+  [document.getElementById('heroRobot'), document.getElementById('heroVehicle')],
+  [document.getElementById('rewardRobot'), document.getElementById('rewardVehicle')]
+];
 
 const uiState = {
   selectedCharacter: characters[0],
@@ -82,25 +112,105 @@ const gameState = {
   energy: 0,
   stars: 0,
   bots: 0,
+  levelName: 'Ruta Neon',
   cameraX: 0,
-  worldWidth: 4300,
+  worldWidth: 6200,
   groundY: 0,
   lastTime: 0,
   currentHint: '',
+  currentHintAt: 0,
   player: null,
   entities: [],
   keys: { left: false, right: false },
-  tutorialIndex: 0,
-  tutorialDone: false
+  tutorialStep: 0,
+  checkpoints: [120],
+  activeCheckpoint: 120
 };
 
 const tutorialSteps = [
-  { when: () => true, text: 'Muévete con los botones azules. Avanza a la derecha.', once: true },
-  { when: () => gameState.player && gameState.player.x > 240, text: 'Caja roja: salta para pasar.', once: true },
-  { when: () => gameState.player && gameState.player.x > 900, text: 'Hueco azul: salta antes del borde.', once: true },
-  { when: () => gameState.player && gameState.player.x > 1650, text: 'Túnel amarillo: transfórmate en vehículo para entrar.', once: true },
-  { when: () => gameState.player && gameState.player.x > 2600, text: 'Meta verde: llega hasta ahí.', once: true }
+  { x: 0, text: 'Usa los botones azules para moverte. Tú decides cuándo avanzar.' },
+  { x: 520, text: 'La caja roja se supera saltando.' },
+  { x: 1220, text: 'El hueco azul exige saltar antes del borde.' },
+  { x: 2120, text: 'El túnel amarillo solo se cruza en modo vehículo.' },
+  { x: 3440, text: 'La meta verde está al final. Sigue avanzando.' }
 ];
+
+function savePrefs() {
+  localStorage.setItem('cyberBotsXPrefs', JSON.stringify({
+    characterId: uiState.selectedCharacter.id,
+    audio: audioState.enabled
+  }));
+}
+
+function loadPrefs() {
+  try {
+    const raw = localStorage.getItem('cyberBotsXPrefs');
+    if (!raw) return;
+    const prefs = JSON.parse(raw);
+    const found = characters.find((c) => c.id === prefs.characterId);
+    if (found) uiState.selectedCharacter = found;
+    if (typeof prefs.audio === 'boolean') audioState.enabled = prefs.audio;
+  } catch {
+    // ignore corrupted prefs
+  }
+}
+
+function setScreen(name) {
+  Object.entries(screens).forEach(([key, node]) => node.classList.toggle('active', key === name));
+  uiState.screen = name;
+}
+
+function updatePreviewTheme() {
+  const c = uiState.selectedCharacter;
+  heroName.textContent = c.name;
+  heroDescription.textContent = c.description;
+  heroStats.innerHTML = [
+    `<span class="stat-chip">Velocidad ${Math.round(c.vehicleSpeed)}</span>`,
+    `<span class="stat-chip">Salto ${Math.round(c.jumpPower)}</span>`
+  ].join('');
+
+  document.querySelectorAll('.hero-stage, .reward-shell, .character-card').forEach((node) => {
+    // passive theme handled inside child previews
+  });
+
+  previewNodes.forEach(([robot, vehicle]) => applyTheme(robot, vehicle, c));
+  soundToggle.textContent = audioState.enabled ? '🔊' : '🔈';
+  savePrefs();
+}
+
+function applyTheme(robotNode, vehicleNode, character) {
+  if (!robotNode || !vehicleNode) return;
+  [robotNode, vehicleNode].forEach((node) => {
+    Object.entries(character.cssVars).forEach(([key, value]) => node.style.setProperty(key, value));
+  });
+}
+
+function renderRoster() {
+  carousel.innerHTML = '';
+  characters.forEach((character) => {
+    const card = document.createElement('button');
+    card.className = `character-card ${uiState.selectedCharacter.id === character.id ? 'selected' : ''}`;
+    card.innerHTML = `
+      <div class="card-preview">
+        <div class="preview-lane"></div>
+        <div class="hero-robot"></div>
+        <div class="hero-vehicle"></div>
+      </div>
+      <div class="card-copy">
+        <h3>${character.name}</h3>
+        <p>${character.description}</p>
+        <div class="tag-row">${character.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div>
+      </div>`;
+    const [robotNode, vehicleNode] = card.querySelectorAll('.hero-robot, .hero-vehicle');
+    applyTheme(robotNode, vehicleNode, character);
+    card.addEventListener('click', () => {
+      uiState.selectedCharacter = character;
+      renderRoster();
+      updatePreviewTheme();
+    });
+    carousel.appendChild(card);
+  });
+}
 
 function resizeCanvas() {
   const ratio = Math.min(window.devicePixelRatio || 1, 2);
@@ -111,68 +221,28 @@ function resizeCanvas() {
   canvas.style.width = `${width}px`;
   canvas.style.height = `${height}px`;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  gameState.groundY = height - 130;
-}
-
-function setScreen(name) {
-  Object.entries(screens).forEach(([key, node]) => node.classList.toggle('active', key === name));
-  uiState.screen = name;
-}
-
-function speak(text) {
-  voiceBubble.textContent = text;
-  gameState.currentHint = text;
-  if (!audioState.enabled) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'es-CL';
-  utterance.rate = 0.97;
-  utterance.pitch = 1.05;
-  window.speechSynthesis.speak(utterance);
-}
-
-function renderRoster() {
-  carousel.innerHTML = '';
-  characters.forEach((character) => {
-    const card = document.createElement('button');
-    card.className = `character-card ${uiState.selectedCharacter.id === character.id ? 'selected' : ''}`;
-    card.innerHTML = `
-      <div class="card-hero ${character.css}">
-        <div class="robot-swatch">
-          <div class="robot-head"></div>
-          <div class="robot-body"></div>
-        </div>
-        <div class="vehicle-swatch"></div>
-      </div>
-      <div class="card-copy">
-        <h3>${character.name}</h3>
-        <p>${character.description}</p>
-        <div class="tag-row">${character.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div>
-      </div>`;
-    card.addEventListener('click', () => {
-      uiState.selectedCharacter = character;
-      homeHeroCard.className = `home-hero-card ${character.css}`;
-      rewardHero.className = `reward-hero ${character.css}`;
-      renderRoster();
-    });
-    carousel.appendChild(card);
-  });
+  const bottomPad = Math.max(92, height * 0.16);
+  gameState.groundY = Math.max(230, height - bottomPad);
 }
 
 function createPlayer() {
   const c = uiState.selectedCharacter;
   return {
-    x: 120,
+    x: gameState.activeCheckpoint,
     y: gameState.groundY - 108,
-    width: 86,
+    width: 84,
     height: 108,
     vx: 0,
     vy: 0,
     onGround: true,
     form: 'robot',
+    morph: 0,
+    targetMorph: 0,
     character: c,
     transformCooldown: 0,
-    spawnedAt: 120
+    lastSafeX: gameState.activeCheckpoint,
+    facing: 1,
+    wheelSpin: 0
   };
 }
 
@@ -180,42 +250,64 @@ function setPlayerForm(form) {
   const player = gameState.player;
   if (!player || player.form === form) return;
   player.form = form;
-  if (form === 'vehicle') {
-    player.width = 128;
-    player.height = 62;
-    player.y = Math.min(player.y + 46, gameState.groundY - player.height);
-    formIndicator.textContent = 'Modo Vehículo';
-  } else {
-    player.width = 86;
-    player.height = 108;
-    player.y = Math.min(player.y, gameState.groundY - player.height);
-    formIndicator.textContent = 'Modo Robot';
-  }
+  player.targetMorph = form === 'vehicle' ? 1 : 0;
+  formIndicator.textContent = form === 'vehicle' ? 'Modo Vehículo' : 'Modo Robot';
 }
 
 function toggleTransform() {
   const player = gameState.player;
   if (!player || player.transformCooldown > 0) return;
   setPlayerForm(player.form === 'robot' ? 'vehicle' : 'robot');
-  player.transformCooldown = 0.22;
+  player.transformCooldown = 0.26;
+}
+
+function speak(text, force = false) {
+  if (!force && gameState.currentHint === text && performance.now() - gameState.currentHintAt < 1600) return;
+  voiceBubble.textContent = text;
+  gameState.currentHint = text;
+  gameState.currentHintAt = performance.now();
+  if (!audioState.enabled || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'es-CL';
+  utterance.rate = 0.96;
+  utterance.pitch = 1.04;
+  window.speechSynthesis.speak(utterance);
+}
+
+function updateHud() {
+  energyCount.textContent = String(gameState.energy);
+  starCount.textContent = String(gameState.stars);
+  botCount.textContent = String(gameState.bots);
+}
+
+function makeCheckpoint(x, label) {
+  return { type: 'checkpoint', x, y: gameState.groundY - 120, w: 32, h: 120, label, activated: false };
 }
 
 function buildLevel() {
   return [
-    { type: 'pickup', x: 540, y: gameState.groundY - 170, w: 34, h: 34, label: 'energón', taken: false },
-    { type: 'crate', x: 760, y: gameState.groundY - 90, w: 70, h: 90, label: 'Saltar' },
-    { type: 'pickup', x: 980, y: gameState.groundY - 160, w: 34, h: 34, label: 'energón', taken: false },
-    { type: 'gap', x: 1240, y: gameState.groundY, w: 170, h: 220, label: 'Salta el hueco' },
-    { type: 'platform', x: 1510, y: gameState.groundY - 76, w: 200, h: 18 },
-    { type: 'pickup', x: 1600, y: gameState.groundY - 118, w: 34, h: 34, label: 'energón', taken: false },
-    { type: 'tunnel', x: 1900, y: gameState.groundY - 74, w: 250, h: 74, label: 'Vehículo' },
-    { type: 'pickup', x: 2250, y: gameState.groundY - 160, w: 34, h: 34, label: 'energón', taken: false },
-    { type: 'crate', x: 2560, y: gameState.groundY - 70, w: 60, h: 70, label: 'Saltar' },
-    { type: 'platform', x: 2760, y: gameState.groundY - 130, w: 190, h: 18 },
-    { type: 'bot', x: 2815, y: gameState.groundY - 176, w: 48, h: 48, rescued: false, label: 'Mini bot' },
-    { type: 'gap', x: 3160, y: gameState.groundY, w: 140, h: 220, label: 'Salta el hueco' },
-    { type: 'pickup', x: 3380, y: gameState.groundY - 170, w: 34, h: 34, label: 'energón', taken: false },
-    { type: 'goal', x: 3900, y: gameState.groundY - 170, w: 70, h: 170, label: 'Meta' }
+    { type: 'pickup', x: 370, y: gameState.groundY - 180, w: 34, h: 34, label: '⚡', taken: false },
+    { type: 'crate', x: 620, y: gameState.groundY - 86, w: 84, h: 86, label: 'SALTA' },
+    makeCheckpoint(860, 'CP'),
+    { type: 'gap', x: 1210, y: gameState.groundY, w: 170, h: 260, label: 'HUECO' },
+    { type: 'pickup', x: 1470, y: gameState.groundY - 180, w: 34, h: 34, label: '⚡', taken: false },
+    { type: 'platform', x: 1640, y: gameState.groundY - 92, w: 220, h: 18 },
+    { type: 'bot', x: 1728, y: gameState.groundY - 144, w: 44, h: 44, rescued: false, label: 'BOT' },
+    makeCheckpoint(1890, 'CP'),
+    { type: 'tunnel', x: 2140, y: gameState.groundY - 74, w: 320, h: 74, label: 'VEHÍCULO' },
+    { type: 'pickup', x: 2530, y: gameState.groundY - 180, w: 34, h: 34, label: '⚡', taken: false },
+    { type: 'platform', x: 2720, y: gameState.groundY - 136, w: 210, h: 18 },
+    { type: 'crate', x: 3000, y: gameState.groundY - 72, w: 72, h: 72, label: 'SALTA' },
+    makeCheckpoint(3190, 'CP'),
+    { type: 'gap', x: 3530, y: gameState.groundY, w: 200, h: 260, label: 'HUECO' },
+    { type: 'platform', x: 3790, y: gameState.groundY - 120, w: 240, h: 18 },
+    { type: 'pickup', x: 3884, y: gameState.groundY - 172, w: 34, h: 34, label: '⚡', taken: false },
+    { type: 'bot', x: 3938, y: gameState.groundY - 172, w: 44, h: 44, rescued: false, label: 'BOT' },
+    { type: 'crate', x: 4290, y: gameState.groundY - 108, w: 92, h: 108, label: 'SALTA' },
+    makeCheckpoint(4520, 'CP'),
+    { type: 'tunnel', x: 4840, y: gameState.groundY - 72, w: 280, h: 72, label: 'VEHÍCULO' },
+    { type: 'goal', x: 5700, y: gameState.groundY - 180, w: 76, h: 180, label: 'META' }
   ];
 }
 
@@ -226,98 +318,117 @@ function resetGame() {
   gameState.stars = 0;
   gameState.bots = 0;
   gameState.cameraX = 0;
-  gameState.player = createPlayer();
+  gameState.tutorialStep = 0;
+  gameState.activeCheckpoint = 120;
   gameState.entities = buildLevel();
-  gameState.tutorialIndex = 0;
-  goalLabel.textContent = 'Objetivo: encuentra la meta verde';
-  setPlayerForm('robot');
+  gameState.player = createPlayer();
+  gameState.lastTime = 0;
   updateHud();
-  speak('Muévete con los botones azules. Avanza a la derecha.');
-}
-
-function updateHud() {
-  energyCount.textContent = String(gameState.energy);
-  starCount.textContent = String(gameState.stars);
-  botCount.textContent = String(gameState.bots);
+  goalLabel.textContent = `Objetivo: llega a la meta verde en ${gameState.levelName}`;
+  formIndicator.textContent = 'Modo Robot';
+  speak('Usa los botones azules para moverte. Tú decides cuándo avanzar.', true);
 }
 
 function jump() {
   const player = gameState.player;
   if (!player || !player.onGround) return;
-  const base = player.character.jumpPower;
   const modifier = player.form === 'vehicle' ? 0.82 : 1;
-  player.vy = -base * modifier;
+  player.vy = -player.character.jumpPower * modifier;
   player.onGround = false;
-}
-
-function getSolidSurfaces() {
-  const surfaces = [{ x: -2000, y: gameState.groundY, w: gameState.worldWidth + 4000, h: 2000, kind: 'ground' }];
-  gameState.entities.forEach((entity) => {
-    if (entity.type === 'gap') {
-      surfaces.push({ x: entity.x, y: gameState.groundY, w: entity.w, h: 2000, hole: true });
-    }
-    if (entity.type === 'platform') {
-      surfaces.push({ x: entity.x, y: entity.y, w: entity.w, h: 20, kind: 'platform' });
-    }
-  });
-  return surfaces;
-}
-
-function getFloorYAt(xCenter) {
-  let floorY = gameState.groundY;
-  for (const entity of gameState.entities) {
-    if (entity.type === 'gap' && xCenter >= entity.x && xCenter <= entity.x + entity.w) {
-      floorY = Infinity;
-    }
-    if (entity.type === 'platform' && xCenter >= entity.x && xCenter <= entity.x + entity.w) {
-      floorY = Math.min(floorY, entity.y);
-    }
-  }
-  return floorY;
 }
 
 function rectsOverlap(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
-function failAndRespawn(text) {
-  const player = gameState.player;
-  player.x = player.spawnedAt;
-  player.vx = 0;
-  player.vy = 0;
-  setPlayerForm('robot');
-  player.y = gameState.groundY - player.height;
-  player.onGround = true;
-  speak(text);
+function getFloorYAt(xCenter) {
+  let floorY = gameState.groundY;
+  for (const entity of gameState.entities) {
+    if (entity.type === 'gap' && xCenter >= entity.x && xCenter <= entity.x + entity.w) floorY = Infinity;
+    if (entity.type === 'platform' && xCenter >= entity.x && xCenter <= entity.x + entity.w) floorY = Math.min(floorY, entity.y);
+    if (entity.type === 'crate' && xCenter >= entity.x && xCenter <= entity.x + entity.w) floorY = Math.min(floorY, entity.y);
+  }
+  return floorY;
 }
 
-function updateTutorialHints() {
-  const step = tutorialSteps[gameState.tutorialIndex];
+function getObstacleRects() {
+  return gameState.entities.filter((e) => e.type === 'crate').map((e) => ({ x: e.x, y: e.y, w: e.w, h: e.h }));
+}
+
+function failAndRespawn(message) {
+  const player = gameState.player;
+  player.x = gameState.activeCheckpoint;
+  player.y = gameState.groundY - 108;
+  player.vx = 0;
+  player.vy = 0;
+  player.onGround = true;
+  player.width = 84;
+  player.height = 108;
+  player.morph = 0;
+  player.targetMorph = 0;
+  player.form = 'robot';
+  formIndicator.textContent = 'Modo Robot';
+  speak(message, true);
+}
+
+function updateTutorialHints(playerX) {
+  const step = tutorialSteps[gameState.tutorialStep];
   if (!step) return;
-  if (step.when()) {
-    speak(step.text);
-    gameState.tutorialIndex += 1;
+  if (playerX >= step.x) {
+    speak(step.text, true);
+    gameState.tutorialStep += 1;
   }
+}
+
+function activateCheckpoint(entity) {
+  if (entity.activated) return;
+  entity.activated = true;
+  gameState.activeCheckpoint = entity.x;
+  speak('Guardado. Si fallas, reapareces aquí.');
+}
+
+function applyMorph(player, dt) {
+  const rate = 7.8;
+  player.morph += (player.targetMorph - player.morph) * Math.min(1, dt * rate);
+  const t = player.morph;
+  player.width = 84 + (126 - 84) * t;
+  player.height = 108 + (62 - 108) * t;
 }
 
 function update(dt) {
   const player = gameState.player;
   if (!player) return;
 
-  updateTutorialHints();
+  updateTutorialHints(player.x);
+  player.transformCooldown = Math.max(0, player.transformCooldown - dt);
+  applyMorph(player, dt);
 
   const speed = player.form === 'vehicle' ? player.character.vehicleSpeed : player.character.robotSpeed;
-  const target = (gameState.keys.right ? 1 : 0) - (gameState.keys.left ? 1 : 0);
-  player.vx = target * speed;
-  player.x += player.vx * dt;
-  player.transformCooldown = Math.max(0, player.transformCooldown - dt);
+  const input = (gameState.keys.right ? 1 : 0) - (gameState.keys.left ? 1 : 0);
+  player.vx = input * speed;
+  if (input !== 0) player.facing = input;
+  player.wheelSpin += (player.form === 'vehicle' ? player.vx : player.vx * 0.25) * dt * 0.06;
 
-  player.vy += 1800 * dt;
+  const prevX = player.x;
+  const prevY = player.y;
+  player.x += player.vx * dt;
+
+  for (const box of getObstacleRects()) {
+    const nextRect = { x: player.x, y: player.y, w: player.width, h: player.height };
+    if (!rectsOverlap(nextRect, box)) continue;
+    const wasLeft = prevX + player.width <= box.x + 2;
+    const wasRight = prevX >= box.x + box.w - 2;
+    if (wasLeft) player.x = box.x - player.width - 0.5;
+    if (wasRight) player.x = box.x + box.w + 0.5;
+  }
+
+  player.vy += 1880 * dt;
   player.y += player.vy * dt;
 
-  const footCenter = player.x + player.width / 2;
+  const footCenter = player.x + player.width * 0.5;
   const floorY = getFloorYAt(footCenter);
-  if (player.vy >= 0 && player.y + player.height >= floorY) {
+  const wasAboveFloor = prevY + player.height <= floorY + 2;
+  if (player.vy >= 0 && wasAboveFloor && player.y + player.height >= floorY) {
     player.y = floorY - player.height;
     player.vy = 0;
     player.onGround = floorY !== Infinity;
@@ -325,8 +436,8 @@ function update(dt) {
     player.onGround = false;
   }
 
-  if (player.y > canvas.clientHeight + 220 || player.x < 0) {
-    failAndRespawn('Intenta otra vez. Salta antes del hueco.');
+  if (player.y > canvas.clientHeight + 260 || player.x < 0) {
+    failAndRespawn('Fallaste. Salta un poco antes del borde.');
     return;
   }
 
@@ -336,7 +447,7 @@ function update(dt) {
     if (entity.type === 'pickup' && !entity.taken && rectsOverlap(playerRect, entity)) {
       entity.taken = true;
       gameState.energy += 1;
-      gameState.stars = Math.floor(gameState.energy / 2);
+      gameState.stars = Math.max(1, Math.ceil(gameState.energy / 2));
       updateHud();
     }
 
@@ -344,17 +455,15 @@ function update(dt) {
       entity.rescued = true;
       gameState.bots += 1;
       updateHud();
-      speak('Rescataste un mini bot. Sigue avanzando.');
+      speak('Rescataste un mini bot.');
     }
 
-    if (entity.type === 'crate' && rectsOverlap(playerRect, entity)) {
-      failAndRespawn('La caja roja se pasa saltando.');
-      return;
-    }
+    if (entity.type === 'checkpoint' && rectsOverlap(playerRect, entity)) activateCheckpoint(entity);
 
-    if (entity.type === 'tunnel' && player.x + player.width > entity.x && player.x < entity.x + entity.w) {
-      if (player.form !== 'vehicle' || player.height > entity.h) {
-        failAndRespawn('El túnel amarillo es para el modo vehículo.');
+    if (entity.type === 'tunnel' && playerRect.x + playerRect.w > entity.x && playerRect.x < entity.x + entity.w) {
+      const enteringRoof = playerRect.y < entity.y + 6;
+      if (player.form !== 'vehicle' || enteringRoof) {
+        failAndRespawn('El túnel amarillo se cruza en modo vehículo.');
         return;
       }
     }
@@ -365,12 +474,11 @@ function update(dt) {
     }
   }
 
-  player.spawnedAt = Math.max(120, Math.min(player.spawnedAt, player.x));
-  if (player.onGround) {
-    player.spawnedAt = Math.max(player.spawnedAt, player.x - 40);
+  if (player.onGround && getFloorYAt(player.x + player.width * 0.5) !== Infinity) {
+    player.lastSafeX = player.x;
   }
 
-  gameState.cameraX = Math.max(0, Math.min(player.x - canvas.clientWidth * 0.35, gameState.worldWidth - canvas.clientWidth));
+  gameState.cameraX = clamp(player.x - canvas.clientWidth * 0.35, 0, gameState.worldWidth - canvas.clientWidth);
 }
 
 function finishLevel() {
@@ -383,86 +491,111 @@ function finishLevel() {
     `<span class="reward-pill">★ Estrellas: ${totalStars}</span>`,
     `<span class="reward-pill">🤖 Mini bots: ${gameState.bots}</span>`
   ].join('');
-  setTimeout(() => setScreen('reward'), 350);
+  setTimeout(() => setScreen('reward'), 220);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function drawBackground(viewWidth, viewHeight) {
   const sky = ctx.createLinearGradient(0, 0, 0, viewHeight);
-  sky.addColorStop(0, '#1d2d68');
-  sky.addColorStop(0.45, '#122247');
-  sky.addColorStop(1, '#09101f');
+  sky.addColorStop(0, '#223f84');
+  sky.addColorStop(0.45, '#102343');
+  sky.addColorStop(1, '#06101d');
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, viewWidth, viewHeight);
 
-  for (let i = 0; i < 8; i += 1) {
-    const x = ((i * 320) - (gameState.cameraX * 0.18)) % (viewWidth + 320) - 120;
-    ctx.fillStyle = 'rgba(71, 228, 255, 0.08)';
-    ctx.fillRect(x, 140 + (i % 3) * 26, 180, viewHeight - 320);
+  for (let i = 0; i < 3; i += 1) {
+    const parallax = 0.08 + i * 0.08;
+    ctx.fillStyle = i === 0 ? 'rgba(100,130,190,0.18)' : i === 1 ? 'rgba(65,95,150,0.22)' : 'rgba(30,55,92,0.4)';
+    ctx.beginPath();
+    const offset = -(gameState.cameraX * parallax) % (viewWidth + 300);
+    ctx.moveTo(offset - 240, viewHeight);
+    for (let x = offset - 240; x < viewWidth + 320; x += 180) {
+      const peakY = viewHeight - 220 - i * 40 - ((x / 180) % 2 === 0 ? 20 : 80);
+      ctx.lineTo(x + 90, peakY);
+      ctx.lineTo(x + 180, viewHeight);
+    }
+    ctx.closePath();
+    ctx.fill();
   }
 
-  ctx.fillStyle = '#1f3f5d';
+  ctx.fillStyle = '#15283f';
   ctx.fillRect(0, gameState.groundY, viewWidth, viewHeight - gameState.groundY);
-  ctx.fillStyle = '#2d6f85';
+  ctx.fillStyle = '#1c5570';
   ctx.fillRect(0, gameState.groundY - 18, viewWidth, 18);
+
+  ctx.fillStyle = 'rgba(71,229,255,0.08)';
+  for (let i = 0; i < 12; i += 1) {
+    const x = ((i * 240) - (gameState.cameraX * 0.14)) % (viewWidth + 240) - 60;
+    ctx.fillRect(x, 130 + (i % 4) * 28, 120, viewHeight - 280);
+  }
 }
 
-function drawSigns(entity, screenX) {
-  if (!entity.label) return;
-  ctx.fillStyle = 'rgba(6, 13, 30, 0.86)';
-  ctx.fillRect(screenX - 10, entity.y - 66, Math.max(94, entity.label.length * 8), 36);
-  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-  ctx.strokeRect(screenX - 10, entity.y - 66, Math.max(94, entity.label.length * 8), 36);
-  ctx.fillStyle = '#f6f8ff';
-  ctx.font = 'bold 16px Inter, sans-serif';
-  ctx.fillText(entity.label, screenX, entity.y - 42);
+function drawSign(x, y, text, fill) {
+  ctx.font = '900 15px Inter, sans-serif';
+  const width = Math.max(88, ctx.measureText(text).width + 24);
+  ctx.fillStyle = 'rgba(6,14,29,0.9)';
+  ctx.fillRect(x, y, width, 34);
+  ctx.strokeStyle = fill;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, width, 34);
+  ctx.fillStyle = fill;
+  ctx.fillText(text, x + 12, y + 22);
 }
 
 function drawEntity(entity) {
   const x = entity.x - gameState.cameraX;
-  if (x > canvas.clientWidth + 200 || x < -250) return;
+  if (x > canvas.clientWidth + 260 || x < -260) return;
 
   if (entity.type === 'crate') {
-    ctx.fillStyle = '#ff6c60';
+    ctx.fillStyle = '#ff655f';
     ctx.fillRect(x, entity.y, entity.w, entity.h);
-    ctx.strokeStyle = '#ffd8d0';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(x + 4, entity.y + 4, entity.w - 8, entity.h - 8);
-    drawSigns(entity, x);
+    ctx.fillStyle = '#ff9b95';
+    ctx.fillRect(x + 6, entity.y + 6, entity.w - 12, 12);
+    ctx.fillRect(x + 6, entity.y + 24, entity.w - 12, 8);
+    drawSign(x - 8, entity.y - 46, entity.label, '#ffd7d4');
   }
 
   if (entity.type === 'gap') {
-    ctx.fillStyle = '#08306d';
-    ctx.fillRect(x, gameState.groundY, entity.w, 220);
-    ctx.fillStyle = 'rgba(71,228,255,0.26)';
-    ctx.fillRect(x, gameState.groundY + 24, entity.w, 22);
-    drawSigns(entity, x + 12);
+    ctx.fillStyle = '#062a63';
+    ctx.fillRect(x, gameState.groundY, entity.w, 280);
+    const shimmer = (Math.sin(performance.now() / 260) + 1) * 0.5;
+    ctx.fillStyle = `rgba(71,229,255,${0.18 + shimmer * 0.16})`;
+    ctx.fillRect(x, gameState.groundY + 18, entity.w, 22);
+    ctx.fillRect(x + 18, gameState.groundY + 60, entity.w - 36, 12);
+    drawSign(x + 12, gameState.groundY - 46, entity.label, '#8dedff');
   }
 
   if (entity.type === 'platform') {
-    ctx.fillStyle = '#5d6ff2';
+    ctx.fillStyle = '#5b6eff';
     ctx.fillRect(x, entity.y, entity.w, entity.h);
-    ctx.fillStyle = '#8f9cff';
-    ctx.fillRect(x, entity.y, entity.w, 6);
+    ctx.fillStyle = '#c1caff';
+    ctx.fillRect(x, entity.y, entity.w, 5);
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillRect(x + 8, entity.y + 8, entity.w - 16, 8);
   }
 
   if (entity.type === 'tunnel') {
     ctx.fillStyle = '#ffd84d';
     ctx.fillRect(x, entity.y, entity.w, entity.h);
-    ctx.fillStyle = '#09101f';
-    ctx.fillRect(x + 24, entity.y + 10, entity.w - 48, entity.h - 10);
+    ctx.fillStyle = '#0a1323';
+    ctx.fillRect(x + 20, entity.y + 8, entity.w - 40, entity.h - 8);
     ctx.fillStyle = '#ffd84d';
-    ctx.fillRect(x + entity.w - 56, entity.y + 18, 28, 18);
-    drawSigns(entity, x + 18);
+    ctx.fillRect(x + entity.w - 64, entity.y + 16, 36, 18);
+    drawSign(x + 10, entity.y - 46, entity.label, '#fff3a2');
   }
 
   if (entity.type === 'pickup' && !entity.taken) {
+    const t = performance.now() / 340;
     ctx.save();
-    ctx.translate(x + entity.w / 2, entity.y + entity.h / 2 + Math.sin(performance.now() / 180) * 6);
-    ctx.rotate(performance.now() / 700);
-    ctx.fillStyle = '#47e4ff';
+    ctx.translate(x + entity.w / 2, entity.y + entity.h / 2 + Math.sin(t) * 5);
+    ctx.rotate(t * 0.8);
+    ctx.fillStyle = '#47e5ff';
     ctx.beginPath();
     for (let i = 0; i < 4; i += 1) {
-      ctx.lineTo(Math.cos(i * Math.PI / 2) * 18, Math.sin(i * Math.PI / 2) * 18);
+      ctx.lineTo(Math.cos(i * Math.PI / 2) * 17, Math.sin(i * Math.PI / 2) * 17);
       ctx.lineTo(Math.cos((i + 0.5) * Math.PI / 2) * 8, Math.sin((i + 0.5) * Math.PI / 2) * 8);
     }
     ctx.closePath();
@@ -471,59 +604,106 @@ function drawEntity(entity) {
   }
 
   if (entity.type === 'bot' && !entity.rescued) {
-    ctx.fillStyle = '#9fe8ff';
+    ctx.fillStyle = '#aaf0ff';
     ctx.fillRect(x, entity.y, entity.w, entity.h);
-    ctx.fillStyle = '#09101f';
-    ctx.fillRect(x + 10, entity.y + 10, entity.w - 20, 10);
-    ctx.fillRect(x + 12, entity.y + 24, 8, 16);
-    ctx.fillRect(x + entity.w - 20, entity.y + 24, 8, 16);
-    drawSigns(entity, x);
+    ctx.fillStyle = '#05101f';
+    ctx.fillRect(x + 8, entity.y + 8, entity.w - 16, 10);
+    ctx.fillRect(x + 10, entity.y + 22, 7, 14);
+    ctx.fillRect(x + entity.w - 17, entity.y + 22, 7, 14);
+    drawSign(x - 6, entity.y - 40, entity.label, '#aaf0ff');
+  }
+
+  if (entity.type === 'checkpoint') {
+    ctx.fillStyle = entity.activated ? '#39e096' : '#47e5ff';
+    ctx.fillRect(x, entity.y, entity.w, entity.h);
+    ctx.fillStyle = entity.activated ? '#dffff0' : '#dffaff';
+    ctx.fillRect(x + 6, entity.y + 8, entity.w - 12, 18);
+    drawSign(x - 12, entity.y - 40, entity.activated ? 'GUARDADO' : entity.label, entity.activated ? '#9effcc' : '#8dedff');
   }
 
   if (entity.type === 'goal') {
-    ctx.fillStyle = '#38df8f';
+    ctx.fillStyle = '#39e096';
     ctx.fillRect(x, entity.y, entity.w, entity.h);
-    ctx.fillStyle = '#daf9ea';
-    ctx.fillRect(x + 10, entity.y + 10, entity.w - 20, entity.h - 20);
-    drawSigns(entity, x);
+    ctx.fillStyle = '#e9fff4';
+    ctx.fillRect(x + 10, entity.y + 12, entity.w - 20, entity.h - 24);
+    drawSign(x - 4, entity.y - 46, entity.label, '#9effcc');
   }
 }
 
-function drawRobot(player, screenX) {
+function drawPlayer(player) {
+  const x = player.x - gameState.cameraX;
   const y = player.y;
-  ctx.fillStyle = player.character.colors.main;
-  ctx.fillRect(screenX + 16, y + 30, 54, 64);
-  ctx.fillStyle = player.character.colors.accent;
-  ctx.fillRect(screenX + 20, y + 6, 46, 38);
-  ctx.fillStyle = '#caf6ff';
-  ctx.fillRect(screenX + 30, y + 20, 8, 6);
-  ctx.fillRect(screenX + 48, y + 20, 8, 6);
-  ctx.fillStyle = player.character.colors.dark;
-  ctx.fillRect(screenX + 8, y + 36, 12, 56);
-  ctx.fillRect(screenX + 66, y + 36, 12, 56);
-  ctx.fillRect(screenX + 26, y + 94, 14, 14);
-  ctx.fillRect(screenX + 46, y + 94, 14, 14);
+  const t = player.morph;
+  const colors = player.character.palette;
+  const robotAlpha = 1 - t * 0.95;
+  const vehicleAlpha = 0.2 + t * 0.8;
+
+  if (robotAlpha > 0.02) {
+    ctx.save();
+    ctx.globalAlpha = robotAlpha;
+    ctx.translate(x + player.width / 2, y + player.height / 2);
+    ctx.scale(player.facing < 0 ? -1 : 1, 1);
+    ctx.translate(-(x + player.width / 2), -(y + player.height / 2));
+
+    const legSwing = player.onGround ? Math.sin(performance.now() / 100) * Math.min(8, Math.abs(player.vx) * 0.025) : 0;
+    ctx.fillStyle = colors.dark;
+    ctx.fillRect(x + 10, y + 38, 12, 54);
+    ctx.fillRect(x + 62, y + 38, 12, 54);
+    ctx.fillRect(x + 24, y + 90, 12, 18 + legSwing * 0.2);
+    ctx.fillRect(x + 48, y + 90, 12, 18 - legSwing * 0.2);
+    ctx.fillStyle = colors.main;
+    ctx.fillRect(x + 18, y + 30, 48, 58);
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(x + 22, y + 6, 40, 34);
+    ctx.fillStyle = '#cafaff';
+    ctx.fillRect(x + 30, y + 18, 8, 6);
+    ctx.fillRect(x + 46, y + 18, 8, 6);
+    ctx.fillStyle = colors.dark;
+    ctx.fillRect(x + 4, y + 42, 12, 42);
+    ctx.fillRect(x + 68, y + 42, 12, 42);
+    ctx.restore();
+  }
+
+  if (vehicleAlpha > 0.02) {
+    ctx.save();
+    ctx.globalAlpha = vehicleAlpha;
+    ctx.translate(x + player.width / 2, y + player.height / 2);
+    ctx.scale(player.facing < 0 ? -1 : 1, 1);
+    ctx.translate(-(x + player.width / 2), -(y + player.height / 2));
+
+    const baseY = y + 26;
+    ctx.fillStyle = colors.main;
+    ctx.fillRect(x + 10, baseY, 100, 28);
+    ctx.fillRect(x + 34, baseY - 16, 44, 20);
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(x + 82, baseY + 6, 22, 12);
+    ctx.fillStyle = '#dffaff';
+    ctx.fillRect(x + 42, baseY - 12, 20, 10);
+    drawWheel(x + 30, baseY + 34, player.wheelSpin);
+    drawWheel(x + 88, baseY + 34, player.wheelSpin);
+    ctx.restore();
+  }
 }
 
-function drawVehicle(player, screenX) {
-  const y = player.y;
-  ctx.fillStyle = player.character.colors.main;
-  ctx.fillRect(screenX + 10, y + 18, 96, 30);
-  ctx.fillRect(screenX + 26, y + 2, 44, 24);
-  ctx.fillStyle = player.character.colors.accent;
-  ctx.fillRect(screenX + 82, y + 20, 26, 16);
-  ctx.fillStyle = '#caf6ff';
-  ctx.fillRect(screenX + 38, y + 8, 22, 12);
-  ctx.fillStyle = '#232634';
+function drawWheel(x, y, spin) {
+  ctx.fillStyle = '#222a38';
   ctx.beginPath();
-  ctx.arc(screenX + 32, y + 52, 14, 0, Math.PI * 2);
-  ctx.arc(screenX + 88, y + 52, 14, 0, Math.PI * 2);
+  ctx.arc(x, y, 14, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#7e88a8';
+  ctx.strokeStyle = '#8c95ac';
+  ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.arc(screenX + 32, y + 52, 6, 0, Math.PI * 2);
-  ctx.arc(screenX + 88, y + 52, 6, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.arc(x, y, 7, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = '#8c95ac';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 4; i += 1) {
+    const a = spin + i * Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(a) * 8, y + Math.sin(a) * 8);
+    ctx.stroke();
+  }
 }
 
 function render() {
@@ -531,15 +711,7 @@ function render() {
   const viewHeight = canvas.clientHeight;
   drawBackground(viewWidth, viewHeight);
   gameState.entities.forEach(drawEntity);
-
-  const player = gameState.player;
-  if (!player) return;
-  const screenX = player.x - gameState.cameraX;
-  if (player.form === 'robot') {
-    drawRobot(player, screenX);
-  } else {
-    drawVehicle(player, screenX);
-  }
+  if (gameState.player) drawPlayer(gameState.player);
 }
 
 function loop(timestamp) {
@@ -551,6 +723,21 @@ function loop(timestamp) {
     render();
   }
   requestAnimationFrame(loop);
+}
+
+function bindHold(button, key) {
+  const start = (event) => {
+    event.preventDefault();
+    gameState.keys[key] = true;
+  };
+  const stop = (event) => {
+    event.preventDefault();
+    gameState.keys[key] = false;
+  };
+  button.addEventListener('pointerdown', start);
+  button.addEventListener('pointerup', stop);
+  button.addEventListener('pointerleave', stop);
+  button.addEventListener('pointercancel', stop);
 }
 
 function setupButtons() {
@@ -569,52 +756,36 @@ function setupButtons() {
   document.getElementById('jumpButton').addEventListener('click', jump);
   document.getElementById('transformButton').addEventListener('click', toggleTransform);
 
-  const leftButton = document.getElementById('leftButton');
-  const rightButton = document.getElementById('rightButton');
-
-  const bindHold = (button, key) => {
-    const start = (event) => {
-      event.preventDefault();
-      gameState.keys[key] = true;
-    };
-    const stop = (event) => {
-      event.preventDefault();
-      gameState.keys[key] = false;
-    };
-    button.addEventListener('pointerdown', start);
-    button.addEventListener('pointerup', stop);
-    button.addEventListener('pointerleave', stop);
-    button.addEventListener('pointercancel', stop);
-  };
-
-  bindHold(leftButton, 'left');
-  bindHold(rightButton, 'right');
+  bindHold(document.getElementById('leftButton'), 'left');
+  bindHold(document.getElementById('rightButton'), 'right');
 
   soundToggle.addEventListener('click', () => {
     audioState.enabled = !audioState.enabled;
-    soundToggle.textContent = audioState.enabled ? '🔊' : '🔈';
-    if (!audioState.enabled) window.speechSynthesis.cancel();
+    if (!audioState.enabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+    updatePreviewTheme();
   });
 }
 
 function setupKeyboard() {
   window.addEventListener('keydown', (event) => {
     if (event.repeat) return;
-    if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') gameState.keys.left = true;
-    if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') gameState.keys.right = true;
+    const key = event.key.toLowerCase();
+    if (key === 'arrowleft' || key === 'a') gameState.keys.left = true;
+    if (key === 'arrowright' || key === 'd') gameState.keys.right = true;
     if (event.key === 'ArrowUp' || event.key === ' ') {
       event.preventDefault();
       jump();
     }
-    if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's' || event.key.toLowerCase() === 't') {
+    if (event.key === 'ArrowDown' || key === 's' || key === 't') {
       event.preventDefault();
       toggleTransform();
     }
   });
 
   window.addEventListener('keyup', (event) => {
-    if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') gameState.keys.left = false;
-    if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') gameState.keys.right = false;
+    const key = event.key.toLowerCase();
+    if (key === 'arrowleft' || key === 'a') gameState.keys.left = false;
+    if (key === 'arrowright' || key === 'd') gameState.keys.right = false;
   });
 }
 
@@ -642,14 +813,25 @@ function setupInstallPrompt() {
 }
 
 function init() {
+  loadPrefs();
   resizeCanvas();
   renderRoster();
+  updatePreviewTheme();
   setupButtons();
   setupKeyboard();
-  registerServiceWorker();
   setupInstallPrompt();
-  window.addEventListener('resize', resizeCanvas);
-  requestAnimationFrame(loop);
+  registerServiceWorker();
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    if (gameState.running) {
+      const player = gameState.player;
+      if (player) {
+        player.y = Math.min(player.y, gameState.groundY - player.height);
+        goalLabel.textContent = `Objetivo: llega a la meta verde en ${gameState.levelName}`;
+      }
+    }
+  });
+  loop(0);
 }
 
 init();
