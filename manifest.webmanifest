@@ -1,7 +1,7 @@
 {
-  "name": "Cyber Bots Runner",
+  "name": "Cyber Bots Adventure",
   "short_name": "Cyber Bots",
-  "description": "Juego de plataformas 2D para celular con dos botones grandes, tutorial por voz y modo instalable.",
+  "description": "Juego 2D de plataformas para celular con movimiento manual, salto, transformación visible y modo instalable.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

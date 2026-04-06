@@ -1,50 +1,106 @@
 const characters = [
-  { id: "orion", name: "Orion Pax", css: "hero-orion", color: "#4f7bff", accent: "#ff6a5c", robotSpeed: 220, vehicleSpeed: 310, jumpPower: 640, extraJump: true, dashBoost: 0, glide: false, breaker: false },
-  { id: "bee", name: "Bumblebee", css: "hero-bumblebee", color: "#ffd84d", accent: "#2d3240", robotSpeed: 235, vehicleSpeed: 360, jumpPower: 610, extraJump: false, dashBoost: 55, glide: false, breaker: false },
-  { id: "elita", name: "Elita-1", css: "hero-elita", color: "#ff78ba", accent: "#6454ff", robotSpeed: 225, vehicleSpeed: 320, jumpPower: 700, extraJump: false, dashBoost: 0, glide: true, breaker: false },
-  { id: "d16", name: "D-16", css: "hero-d16", color: "#bec6d9", accent: "#586173", robotSpeed: 210, vehicleSpeed: 300, jumpPower: 600, extraJump: false, dashBoost: 0, glide: false, breaker: true }
-];
-
-const tutorialScript = [
-  { key: "welcome", speak: "Vamos", demo: "Sigue adelante", wait: 1400 },
-  { key: "jumpGap", speak: "Toca para saltar", demo: "Salta", type: "jump" },
-  { key: "transformBarrier", speak: "Ahora transformate", demo: "Hazte auto", type: "transform" },
-  { key: "collect", speak: "Muy bien", demo: "Toma energon", wait: 1200 },
-  { key: "rescue", speak: "Rescata al mini bot", demo: "Sigue", wait: 1200 },
-  { key: "finish", speak: "Excelente", demo: "Meta brillante", wait: 1200 }
+  {
+    id: 'orion',
+    name: 'Orion Pax',
+    css: 'hero-orion',
+    colors: { main: '#497cff', accent: '#ff6d5f', dark: '#1c295a' },
+    description: 'Equilibrado. Ideal para aprender.',
+    tags: ['Balanceado', 'Salto medio', 'Velocidad media'],
+    robotSpeed: 280,
+    vehicleSpeed: 360,
+    jumpPower: 720
+  },
+  {
+    id: 'bee',
+    name: 'Bumblebee',
+    css: 'hero-bumblebee',
+    colors: { main: '#ffd84d', accent: '#2d3240', dark: '#1d2230' },
+    description: 'El más rápido sobre ruedas.',
+    tags: ['Muy rápido', 'Salto medio', 'Ágil'],
+    robotSpeed: 300,
+    vehicleSpeed: 410,
+    jumpPower: 700
+  },
+  {
+    id: 'elita',
+    name: 'Elita-1',
+    css: 'hero-elita',
+    colors: { main: '#ff7aba', accent: '#6d63ff', dark: '#30285d' },
+    description: 'Salta más alto y controla mejor el aire.',
+    tags: ['Salto alto', 'Precisa', 'Segura'],
+    robotSpeed: 285,
+    vehicleSpeed: 350,
+    jumpPower: 780
+  },
+  {
+    id: 'd16',
+    name: 'D-16',
+    css: 'hero-d16',
+    colors: { main: '#bec6d9', accent: '#586173', dark: '#2d3444' },
+    description: 'Pesado, firme y fácil de controlar.',
+    tags: ['Robusto', 'Estable', 'Salto corto'],
+    robotSpeed: 260,
+    vehicleSpeed: 330,
+    jumpPower: 680
+  }
 ];
 
 const screens = {
-  home: document.getElementById("homeScreen"),
-  roster: document.getElementById("rosterScreen"),
-  game: document.getElementById("gameScreen"),
-  reward: document.getElementById("rewardScreen")
+  home: document.getElementById('homeScreen'),
+  roster: document.getElementById('rosterScreen'),
+  game: document.getElementById('gameScreen'),
+  reward: document.getElementById('rewardScreen')
 };
 
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-const voiceBubble = document.getElementById("voiceBubble");
-const demoHint = document.getElementById("demoHint");
-const jumpButton = document.getElementById("jumpButton");
-const transformButton = document.getElementById("transformButton");
-const energyCount = document.getElementById("energyCount");
-const starCount = document.getElementById("starCount");
-const botCount = document.getElementById("botCount");
-const soundToggle = document.getElementById("soundToggle");
-const installButton = document.getElementById("installButton");
-const homeHero = document.getElementById("homeHero");
-const rewardHero = document.getElementById("rewardHero");
-const rewardLoot = document.getElementById("rewardLoot");
-const carousel = document.getElementById("characterCarousel");
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const voiceBubble = document.getElementById('voiceBubble');
+const goalLabel = document.getElementById('goalLabel');
+const energyCount = document.getElementById('energyCount');
+const starCount = document.getElementById('starCount');
+const botCount = document.getElementById('botCount');
+const formIndicator = document.getElementById('formIndicator');
+const rewardLoot = document.getElementById('rewardLoot');
+const carousel = document.getElementById('characterCarousel');
+const homeHeroCard = document.getElementById('homeHeroCard');
+const rewardHero = document.getElementById('rewardHero');
+const soundToggle = document.getElementById('soundToggle');
+const installButton = document.getElementById('installButton');
 
-const audioState = { enabled: true, context: null };
-const uiState = { screen: "home", selectedCharacter: characters[0], tutorialComplete: false };
-let deferredInstallPrompt = null;
+const uiState = {
+  selectedCharacter: characters[0],
+  screen: 'home'
+};
+
+const audioState = {
+  enabled: true
+};
+
 const gameState = {
-  running: false, mode: "tutorial", cameraX: 0, worldWidth: 5200, groundY: 590, energy: 0, stars: 0, bots: 0,
-  failStreak: 0, levelStart: 0, currentPrompt: null, promptRepeatAt: 0, tutorialStepIndex: 0, player: null,
-  entities: [], particles: [], skyBots: []
+  running: false,
+  completed: false,
+  energy: 0,
+  stars: 0,
+  bots: 0,
+  cameraX: 0,
+  worldWidth: 4300,
+  groundY: 0,
+  lastTime: 0,
+  currentHint: '',
+  player: null,
+  entities: [],
+  keys: { left: false, right: false },
+  tutorialIndex: 0,
+  tutorialDone: false
 };
+
+const tutorialSteps = [
+  { when: () => true, text: 'Muévete con los botones azules. Avanza a la derecha.', once: true },
+  { when: () => gameState.player && gameState.player.x > 240, text: 'Caja roja: salta para pasar.', once: true },
+  { when: () => gameState.player && gameState.player.x > 900, text: 'Hueco azul: salta antes del borde.', once: true },
+  { when: () => gameState.player && gameState.player.x > 1650, text: 'Túnel amarillo: transfórmate en vehículo para entrar.', once: true },
+  { when: () => gameState.player && gameState.player.x > 2600, text: 'Meta verde: llega hasta ahí.', once: true }
+];
 
 function resizeCanvas() {
   const ratio = Math.min(window.devicePixelRatio || 1, 2);
@@ -55,594 +111,545 @@ function resizeCanvas() {
   canvas.style.width = `${width}px`;
   canvas.style.height = `${height}px`;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-}
-
-function setupStandaloneMode() {
-  const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-  document.body.classList.toggle("standalone", Boolean(standalone));
-}
-
-function registerServiceWorker() {
-  if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
-  });
-}
-
-function setupInstallPrompt() {
-  window.addEventListener("beforeinstallprompt", (event) => {
-    event.preventDefault();
-    deferredInstallPrompt = event;
-    installButton.classList.add("show-install");
-  });
-
-  window.addEventListener("appinstalled", () => {
-    deferredInstallPrompt = null;
-    installButton.classList.remove("show-install");
-  });
-
-  installButton.addEventListener("click", async () => {
-    if (!deferredInstallPrompt) return;
-    deferredInstallPrompt.prompt();
-    await deferredInstallPrompt.userChoice.catch(() => null);
-    deferredInstallPrompt = null;
-    installButton.classList.remove("show-install");
-  });
+  gameState.groundY = height - 130;
 }
 
 function setScreen(name) {
-  Object.entries(screens).forEach(([key, node]) => node.classList.toggle("active", key === name));
+  Object.entries(screens).forEach(([key, node]) => node.classList.toggle('active', key === name));
   uiState.screen = name;
 }
 
-function clearHighlights() {
-  jumpButton.classList.remove("highlight");
-  transformButton.classList.remove("highlight");
-}
-
-function speak(text, button) {
+function speak(text) {
   voiceBubble.textContent = text;
-  voiceBubble.classList.add("show");
-  clearHighlights();
-  if (button === "jump") jumpButton.classList.add("highlight");
-  if (button === "transform") transformButton.classList.add("highlight");
-  if (audioState.enabled) {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "es-CL";
-    utterance.rate = 0.96;
-    utterance.pitch = 1.15;
-    window.speechSynthesis.speak(utterance);
-  }
-}
-
-function setDemoHint(text) {
-  demoHint.textContent = text || "";
-  demoHint.classList.toggle("hidden", !text);
-}
-
-function queuePrompt(text, button, demo, delay = 0) {
-  gameState.currentPrompt = { text, button, demo };
-  gameState.promptRepeatAt = performance.now() + 3600 + delay;
-  speak(text, button);
-  setDemoHint(demo);
-}
-
-function ensurePrompt(text, button, demo, delay = 0) {
-  const current = gameState.currentPrompt;
-  if (current && current.text === text && current.button === button && current.demo === demo) return;
-  queuePrompt(text, button, demo, delay);
-}
-
-function ensureAudio() {
-  if (!audioState.context) {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (AudioCtx) audioState.context = new AudioCtx();
-  }
-  if (audioState.context?.state === "suspended") audioState.context.resume();
-}
-
-function tone(freq, duration, type = "sine", gainValue = 0.05) {
+  gameState.currentHint = text;
   if (!audioState.enabled) return;
-  ensureAudio();
-  if (!audioState.context) return;
-  const now = audioState.context.currentTime;
-  const osc = audioState.context.createOscillator();
-  const gain = audioState.context.createGain();
-  osc.type = type;
-  osc.frequency.value = freq;
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(gainValue, now + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-  osc.connect(gain).connect(audioState.context.destination);
-  osc.start(now);
-  osc.stop(now + duration);
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'es-CL';
+  utterance.rate = 0.97;
+  utterance.pitch = 1.05;
+  window.speechSynthesis.speak(utterance);
 }
 
-function playSfx(kind) {
-  const map = {
-    jump: [420, 0.12, "triangle", 0.05],
-    transform: [180, 0.18, "sawtooth", 0.04],
-    energon: [780, 0.1, "square", 0.04],
-    rescue: [540, 0.16, "triangle", 0.05],
-    finish: [660, 0.28, "sine", 0.06],
-    fail: [160, 0.2, "sawtooth", 0.03]
-  };
-  tone(...(map[kind] || map.energon));
-}
-
-function makeCharacterCard(character, index) {
-  const card = document.createElement("button");
-  card.className = "character-card";
-  card.innerHTML = `<div class="character-orb" style="color:${character.color}; background:${character.color}"></div><div class="hero-avatar ${character.css}"><div class="hero-core"></div><div class="hero-vehicle"></div></div>`;
-  card.addEventListener("click", () => selectCharacter(index));
-  return card;
-}
-
-function renderCharacterCards() {
-  carousel.innerHTML = "";
-  characters.forEach((character, index) => carousel.appendChild(makeCharacterCard(character, index)));
-  selectCharacter(0);
-}
-
-function updateHeroClasses() {
-  const cssClasses = characters.map((item) => item.css);
-  [homeHero, rewardHero].forEach((node) => {
-    node.classList.remove(...cssClasses);
-    node.classList.add(uiState.selectedCharacter.css);
+function renderRoster() {
+  carousel.innerHTML = '';
+  characters.forEach((character) => {
+    const card = document.createElement('button');
+    card.className = `character-card ${uiState.selectedCharacter.id === character.id ? 'selected' : ''}`;
+    card.innerHTML = `
+      <div class="card-hero ${character.css}">
+        <div class="robot-swatch">
+          <div class="robot-head"></div>
+          <div class="robot-body"></div>
+        </div>
+        <div class="vehicle-swatch"></div>
+      </div>
+      <div class="card-copy">
+        <h3>${character.name}</h3>
+        <p>${character.description}</p>
+        <div class="tag-row">${character.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div>
+      </div>`;
+    card.addEventListener('click', () => {
+      uiState.selectedCharacter = character;
+      homeHeroCard.className = `home-hero-card ${character.css}`;
+      rewardHero.className = `reward-hero ${character.css}`;
+      renderRoster();
+    });
+    carousel.appendChild(card);
   });
-}
-
-function selectCharacter(index) {
-  uiState.selectedCharacter = characters[index];
-  [...carousel.children].forEach((card, idx) => card.classList.toggle("selected", idx === index));
-  updateHeroClasses();
-  speak(uiState.selectedCharacter.name);
-  tone(620, 0.08, "triangle", 0.03);
 }
 
 function createPlayer() {
-  const chosen = uiState.selectedCharacter;
-  return { x: 210, y: gameState.groundY - 132, width: 92, height: 132, vx: chosen.robotSpeed, vy: 0, onGround: true, form: "robot", jumpCount: 0, transformFlash: 0 };
+  const c = uiState.selectedCharacter;
+  return {
+    x: 120,
+    y: gameState.groundY - 108,
+    width: 86,
+    height: 108,
+    vx: 0,
+    vy: 0,
+    onGround: true,
+    form: 'robot',
+    character: c,
+    transformCooldown: 0,
+    spawnedAt: 120
+  };
 }
 
-function createTutorialLevel() {
-  gameState.worldWidth = 3400;
+function setPlayerForm(form) {
+  const player = gameState.player;
+  if (!player || player.form === form) return;
+  player.form = form;
+  if (form === 'vehicle') {
+    player.width = 128;
+    player.height = 62;
+    player.y = Math.min(player.y + 46, gameState.groundY - player.height);
+    formIndicator.textContent = 'Modo Vehículo';
+  } else {
+    player.width = 86;
+    player.height = 108;
+    player.y = Math.min(player.y, gameState.groundY - player.height);
+    formIndicator.textContent = 'Modo Robot';
+  }
+}
+
+function toggleTransform() {
+  const player = gameState.player;
+  if (!player || player.transformCooldown > 0) return;
+  setPlayerForm(player.form === 'robot' ? 'vehicle' : 'robot');
+  player.transformCooldown = 0.22;
+}
+
+function buildLevel() {
   return [
-    { type: "gap", x: 760, width: 140, guided: "jumpGap" },
-    { type: "lowBarrier", x: 1160, width: 160, height: 64, guided: "transformBarrier" },
-    { type: "energon", x: 1440, y: 460 },
-    { type: "energon", x: 1520, y: 420 },
-    { type: "miniBot", x: 1840, y: 506 },
-    { type: "ramp", x: 2140, width: 220, height: 110 },
-    { type: "finish", x: 2860, width: 140 }
+    { type: 'pickup', x: 540, y: gameState.groundY - 170, w: 34, h: 34, label: 'energón', taken: false },
+    { type: 'crate', x: 760, y: gameState.groundY - 90, w: 70, h: 90, label: 'Saltar' },
+    { type: 'pickup', x: 980, y: gameState.groundY - 160, w: 34, h: 34, label: 'energón', taken: false },
+    { type: 'gap', x: 1240, y: gameState.groundY, w: 170, h: 220, label: 'Salta el hueco' },
+    { type: 'platform', x: 1510, y: gameState.groundY - 76, w: 200, h: 18 },
+    { type: 'pickup', x: 1600, y: gameState.groundY - 118, w: 34, h: 34, label: 'energón', taken: false },
+    { type: 'tunnel', x: 1900, y: gameState.groundY - 74, w: 250, h: 74, label: 'Vehículo' },
+    { type: 'pickup', x: 2250, y: gameState.groundY - 160, w: 34, h: 34, label: 'energón', taken: false },
+    { type: 'crate', x: 2560, y: gameState.groundY - 70, w: 60, h: 70, label: 'Saltar' },
+    { type: 'platform', x: 2760, y: gameState.groundY - 130, w: 190, h: 18 },
+    { type: 'bot', x: 2815, y: gameState.groundY - 176, w: 48, h: 48, rescued: false, label: 'Mini bot' },
+    { type: 'gap', x: 3160, y: gameState.groundY, w: 140, h: 220, label: 'Salta el hueco' },
+    { type: 'pickup', x: 3380, y: gameState.groundY - 170, w: 34, h: 34, label: 'energón', taken: false },
+    { type: 'goal', x: 3900, y: gameState.groundY - 170, w: 70, h: 170, label: 'Meta' }
   ];
 }
 
-function createMainLevel() {
-  gameState.worldWidth = 5200;
-  return [
-    { type: "energon", x: 620, y: 450 },
-    { type: "gap", x: 860, width: 120 },
-    { type: "ramp", x: 1180, width: 200, height: 90 },
-    { type: "lowBarrier", x: 1540, width: 160, height: 58 },
-    { type: "energon", x: 1740, y: 410 },
-    { type: "wall", x: 2060, width: 100, height: 132 },
-    { type: "platform", x: 2340, y: 430, width: 220, height: 24 },
-    { type: "energon", x: 2420, y: 350 },
-    { type: "drone", x: 2700, y: 420, range: 120 },
-    { type: "gap", x: 3020, width: 130 },
-    { type: "miniBot", x: 3340, y: 506 },
-    { type: "lowBarrier", x: 3660, width: 180, height: 60 },
-    { type: "platform", x: 3940, y: 390, width: 180, height: 24 },
-    { type: "energon", x: 4020, y: 320 },
-    { type: "turret", x: 4300, y: 520, cooldown: 0 },
-    { type: "finish", x: 4780, width: 180 }
-  ];
-}
-
-function updateCounters() {
-  energyCount.textContent = gameState.energy;
-  starCount.textContent = gameState.stars;
-  botCount.textContent = gameState.bots;
-}
-
-function startGame(mode) {
+function resetGame() {
   gameState.running = true;
-  gameState.mode = mode;
+  gameState.completed = false;
   gameState.energy = 0;
   gameState.stars = 0;
   gameState.bots = 0;
-  gameState.failStreak = 0;
   gameState.cameraX = 0;
-  gameState.levelStart = performance.now();
   gameState.player = createPlayer();
-  gameState.entities = mode === "tutorial" ? createTutorialLevel() : createMainLevel();
-  gameState.particles = [];
-  gameState.skyBots = Array.from({ length: 6 }, (_, index) => ({ x: 180 + index * 220, y: 110 + (index % 3) * 56, size: 12 + (index % 2) * 6 }));
-  gameState.tutorialStepIndex = mode === "tutorial" ? 1 : 0;
-  setScreen("game");
-  updateCounters();
-  queuePrompt("Vamos", null, "Sigue adelante");
+  gameState.entities = buildLevel();
+  gameState.tutorialIndex = 0;
+  goalLabel.textContent = 'Objetivo: encuentra la meta verde';
+  setPlayerForm('robot');
+  updateHud();
+  speak('Muévete con los botones azules. Avanza a la derecha.');
 }
 
-function spawnBurst(x, y, color) {
-  for (let i = 0; i < 10; i += 1) {
-    gameState.particles.push({ x, y, vx: (Math.random() - 0.5) * 220, vy: (Math.random() - 0.7) * 220, life: 0.6 + Math.random() * 0.4, color });
-  }
+function updateHud() {
+  energyCount.textContent = String(gameState.energy);
+  starCount.textContent = String(gameState.stars);
+  botCount.textContent = String(gameState.bots);
 }
 
-function resolveTutorialAction(type) {
-  if (gameState.mode !== "tutorial") return;
-  const current = tutorialScript[gameState.tutorialStepIndex];
-  if (!current || current.type !== type) return;
-  gameState.tutorialStepIndex += 1;
-  const next = tutorialScript[gameState.tutorialStepIndex];
-  if (next) window.setTimeout(() => queuePrompt(next.speak, next.type, next.demo), 350);
-}
-
-function handleJump() {
-  if (!gameState.running) return;
+function jump() {
   const player = gameState.player;
-  const chosen = uiState.selectedCharacter;
-  const canDouble = chosen.extraJump && player.jumpCount < 2;
-  const canNormal = player.onGround || (!player.onGround && canDouble);
-  if (!canNormal) return;
-  player.vy = -chosen.jumpPower;
+  if (!player || !player.onGround) return;
+  const base = player.character.jumpPower;
+  const modifier = player.form === 'vehicle' ? 0.82 : 1;
+  player.vy = -base * modifier;
   player.onGround = false;
-  player.jumpCount += 1;
-  playSfx("jump");
-  spawnBurst(player.x + 40, player.y + 120, chosen.color);
-  resolveTutorialAction("jump");
 }
 
-function handleTransform() {
-  if (!gameState.running) return;
-  const player = gameState.player;
-  const chosen = uiState.selectedCharacter;
-  player.form = player.form === "robot" ? "vehicle" : "robot";
-  player.transformFlash = 18;
-  if (player.form === "vehicle") {
-    player.height = 78;
-    player.width = 124;
-    player.y += 54;
-    player.vx = chosen.vehicleSpeed + chosen.dashBoost;
-  } else {
-    player.y -= 54;
-    player.height = 132;
-    player.width = 92;
-    player.vx = chosen.robotSpeed;
-  }
-  playSfx("transform");
-  spawnBurst(player.x + 40, player.y + 30, chosen.accent);
-  resolveTutorialAction("transform");
-}
-
-function pointerAction(button, handler) {
-  const trigger = (event) => { event.preventDefault(); ensureAudio(); handler(); };
-  button.addEventListener("pointerdown", trigger);
-  button.addEventListener("touchstart", trigger, { passive: false });
-}
-
-function findGroundYAt(x) {
-  let ground = gameState.groundY;
-  for (const entity of gameState.entities) {
-    if ((entity.type === "platform" || entity.type === "ramp") && x > entity.x && x < entity.x + entity.width) {
-      if (entity.type === "platform") ground = Math.min(ground, entity.y);
-      if (entity.type === "ramp") ground = Math.min(ground, gameState.groundY - entity.height * ((x - entity.x) / entity.width));
+function getSolidSurfaces() {
+  const surfaces = [{ x: -2000, y: gameState.groundY, w: gameState.worldWidth + 4000, h: 2000, kind: 'ground' }];
+  gameState.entities.forEach((entity) => {
+    if (entity.type === 'gap') {
+      surfaces.push({ x: entity.x, y: gameState.groundY, w: entity.w, h: 2000, hole: true });
     }
-  }
-  return ground;
-}
-
-function simplifyObstacle(entity) {
-  if (!entity || entity.simplified) return;
-  entity.simplified = true;
-  if (entity.type === "gap") entity.width = Math.max(70, entity.width - 50);
-  if (entity.type === "lowBarrier") entity.height = Math.max(38, entity.height - 22);
-  if (entity.type === "wall") entity.height = 0;
-  if (entity.type === "turret") entity.disabled = true;
-}
-
-function respawnNearObstacle(entity) {
-  const player = gameState.player;
-  player.x = Math.max(180, (entity?.x || player.x) - 180);
-  player.y = gameState.groundY - 132;
-  player.vy = 0;
-  player.onGround = true;
-  player.jumpCount = 0;
-  if (player.form === "vehicle") {
-    player.form = "robot";
-    player.width = 92;
-    player.height = 132;
-    player.vx = uiState.selectedCharacter.robotSpeed;
-  }
-}
-
-function handleFail(entity) {
-  gameState.failStreak += 1;
-  playSfx("fail");
-  spawnBurst(gameState.player.x + 40, gameState.player.y + 40, "#ff6a5c");
-  if (gameState.failStreak >= 2) {
-    simplifyObstacle(entity);
-    queuePrompt("Prueba otra vez", entity?.type === "gap" ? "jump" : "transform", "Te ayudo", 400);
-  }
-  respawnNearObstacle(entity);
-}
-
-function applyAdaptiveHelp(now) {
-  const ahead = gameState.entities.find((entity) => entity.x + (entity.width || 0) > gameState.player.x + 40 && !entity.collected && entity.type !== "finish");
-  if (!ahead) return;
-  if (ahead.guided === "jumpGap" && ahead.x - gameState.player.x < 220 && gameState.tutorialStepIndex <= 1) ensurePrompt("Toca para saltar", "jump", "Salta");
-  if (ahead.guided === "transformBarrier" && ahead.x - gameState.player.x < 220 && gameState.tutorialStepIndex <= 2) ensurePrompt("Ahora transformate", "transform", "Hazte auto");
-  if (gameState.currentPrompt && now > gameState.promptRepeatAt) queuePrompt(gameState.currentPrompt.text, gameState.currentPrompt.button, gameState.currentPrompt.demo, 1100);
-}
-
-function endLevel() {
-  gameState.running = false;
-  playSfx("finish");
-  uiState.tutorialComplete = true;
-  rewardHero.className = `reward-hero ${uiState.selectedCharacter.css}`;
-  rewardLoot.innerHTML = `<div class="reward-pill">⚡ ${gameState.energy} energon</div><div class="reward-pill">★ ${Math.max(3, gameState.stars || 3)} estrellas</div><div class="reward-pill">🎖 sticker nuevo</div>`;
-  speak("Excelente");
-  setScreen("reward");
-}
-
-function checkInteractions(now, dt) {
-  const player = gameState.player;
-  const footX = player.x + player.width * 0.5;
-  for (const entity of gameState.entities) {
-    if (entity.collected) continue;
-    if (entity.type === "energon") {
-      const dx = entity.x - (player.x + player.width / 2);
-      const dy = entity.y - (player.y + player.height / 2);
-      if (Math.abs(dx) < 52 && Math.abs(dy) < 52) {
-        entity.collected = true;
-        gameState.energy += 1;
-        if (gameState.energy % 3 === 0) gameState.stars += 1;
-        updateCounters();
-        playSfx("energon");
-        spawnBurst(entity.x, entity.y, "#44efff");
-      }
+    if (entity.type === 'platform') {
+      surfaces.push({ x: entity.x, y: entity.y, w: entity.w, h: 20, kind: 'platform' });
     }
-    if (entity.type === "miniBot" && Math.abs(entity.x - footX) < 56 && Math.abs(entity.y - (player.y + player.height)) < 90) {
-      entity.collected = true;
-      gameState.bots += 1;
-      gameState.stars += 1;
-      updateCounters();
-      playSfx("rescue");
-      queuePrompt("Muy bien", null, "Mini bot rescatado", 400);
-    }
-    if (entity.type === "gap") {
-      const withinGap = footX > entity.x && footX < entity.x + entity.width;
-      const floorHere = findGroundYAt(footX);
-      if (withinGap && player.y + player.height >= floorHere - 4) handleFail(entity);
-    }
-    if (entity.type === "lowBarrier" && !entity.simplified) {
-      const hit = player.x + player.width > entity.x && player.x < entity.x + entity.width && player.y + player.height > gameState.groundY - entity.height;
-      if (hit && player.form !== "vehicle") handleFail(entity);
-    }
-    if (entity.type === "wall" && !entity.simplified) {
-      const hit = player.x + player.width > entity.x && player.x < entity.x + entity.width;
-      if (hit) {
-        if (uiState.selectedCharacter.breaker || player.form === "vehicle") {
-          entity.simplified = true;
-          playSfx("transform");
-          spawnBurst(entity.x, gameState.groundY - 60, "#ffd84d");
-        } else {
-          handleFail(entity);
-        }
-      }
-    }
-    if (entity.type === "drone") {
-      entity.phase = (entity.phase || 0) + dt * 1.5;
-      entity.y += Math.sin(entity.phase) * 18 * dt;
-      if (Math.abs(entity.x - (player.x + 40)) < 42 && Math.abs(entity.y - (player.y + 44)) < 44) handleFail(entity);
-    }
-    if (entity.type === "turret" && !entity.disabled) {
-      entity.cooldown = (entity.cooldown || 0) - dt;
-      if (entity.cooldown <= 0 && entity.x > player.x && entity.x - player.x < 420) {
-        entity.cooldown = 2.6;
-        gameState.particles.push({ projectile: true, x: entity.x, y: entity.y - 38, vx: -250, vy: -12, life: 3, color: "#ff6a5c" });
-      }
-    }
-    if (entity.type === "finish" && player.x + player.width > entity.x) endLevel();
-  }
-  gameState.particles = gameState.particles.filter((particle) => {
-    particle.life -= dt;
-    particle.x += particle.vx * dt;
-    particle.y += particle.vy * dt;
-    if (!particle.projectile) particle.vy += 380 * dt;
-    if (particle.projectile && Math.abs(particle.x - (player.x + 40)) < 28 && Math.abs(particle.y - (player.y + 40)) < 34) {
-      handleFail({ type: "turret" });
-      return false;
-    }
-    return particle.life > 0;
   });
+  return surfaces;
 }
 
-function updateGame(dt, now) {
+function getFloorYAt(xCenter) {
+  let floorY = gameState.groundY;
+  for (const entity of gameState.entities) {
+    if (entity.type === 'gap' && xCenter >= entity.x && xCenter <= entity.x + entity.w) {
+      floorY = Infinity;
+    }
+    if (entity.type === 'platform' && xCenter >= entity.x && xCenter <= entity.x + entity.w) {
+      floorY = Math.min(floorY, entity.y);
+    }
+  }
+  return floorY;
+}
+
+function rectsOverlap(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function failAndRespawn(text) {
   const player = gameState.player;
-  const chosen = uiState.selectedCharacter;
-  player.vx = player.form === "vehicle" ? chosen.vehicleSpeed + chosen.dashBoost : chosen.robotSpeed;
+  player.x = player.spawnedAt;
+  player.vx = 0;
+  player.vy = 0;
+  setPlayerForm('robot');
+  player.y = gameState.groundY - player.height;
+  player.onGround = true;
+  speak(text);
+}
+
+function updateTutorialHints() {
+  const step = tutorialSteps[gameState.tutorialIndex];
+  if (!step) return;
+  if (step.when()) {
+    speak(step.text);
+    gameState.tutorialIndex += 1;
+  }
+}
+
+function update(dt) {
+  const player = gameState.player;
+  if (!player) return;
+
+  updateTutorialHints();
+
+  const speed = player.form === 'vehicle' ? player.character.vehicleSpeed : player.character.robotSpeed;
+  const target = (gameState.keys.right ? 1 : 0) - (gameState.keys.left ? 1 : 0);
+  player.vx = target * speed;
   player.x += player.vx * dt;
-  player.vy += (chosen.glide && player.form === "robot" && player.vy > 160 ? 500 : 1250) * dt;
+  player.transformCooldown = Math.max(0, player.transformCooldown - dt);
+
+  player.vy += 1800 * dt;
   player.y += player.vy * dt;
-  const floor = findGroundYAt(player.x + player.width * 0.5);
-  if (player.y + player.height >= floor) {
-    player.y = floor - player.height;
+
+  const footCenter = player.x + player.width / 2;
+  const floorY = getFloorYAt(footCenter);
+  if (player.vy >= 0 && player.y + player.height >= floorY) {
+    player.y = floorY - player.height;
     player.vy = 0;
-    player.onGround = true;
-    player.jumpCount = 0;
+    player.onGround = floorY !== Infinity;
   } else {
     player.onGround = false;
   }
-  if (player.y > canvas.height + 120) handleFail({ type: "gap", x: player.x });
-  gameState.cameraX = Math.max(0, Math.min(player.x - canvas.clientWidth * 0.24, gameState.worldWidth - canvas.clientWidth));
-  if (player.transformFlash > 0) player.transformFlash -= 1;
-  applyAdaptiveHelp(now);
-  checkInteractions(now, dt);
+
+  if (player.y > canvas.clientHeight + 220 || player.x < 0) {
+    failAndRespawn('Intenta otra vez. Salta antes del hueco.');
+    return;
+  }
+
+  const playerRect = { x: player.x, y: player.y, w: player.width, h: player.height };
+
+  for (const entity of gameState.entities) {
+    if (entity.type === 'pickup' && !entity.taken && rectsOverlap(playerRect, entity)) {
+      entity.taken = true;
+      gameState.energy += 1;
+      gameState.stars = Math.floor(gameState.energy / 2);
+      updateHud();
+    }
+
+    if (entity.type === 'bot' && !entity.rescued && rectsOverlap(playerRect, entity)) {
+      entity.rescued = true;
+      gameState.bots += 1;
+      updateHud();
+      speak('Rescataste un mini bot. Sigue avanzando.');
+    }
+
+    if (entity.type === 'crate' && rectsOverlap(playerRect, entity)) {
+      failAndRespawn('La caja roja se pasa saltando.');
+      return;
+    }
+
+    if (entity.type === 'tunnel' && player.x + player.width > entity.x && player.x < entity.x + entity.w) {
+      if (player.form !== 'vehicle' || player.height > entity.h) {
+        failAndRespawn('El túnel amarillo es para el modo vehículo.');
+        return;
+      }
+    }
+
+    if (entity.type === 'goal' && rectsOverlap(playerRect, entity)) {
+      finishLevel();
+      return;
+    }
+  }
+
+  player.spawnedAt = Math.max(120, Math.min(player.spawnedAt, player.x));
+  if (player.onGround) {
+    player.spawnedAt = Math.max(player.spawnedAt, player.x - 40);
+  }
+
+  gameState.cameraX = Math.max(0, Math.min(player.x - canvas.clientWidth * 0.35, gameState.worldWidth - canvas.clientWidth));
 }
 
-function drawBackground(width, height) {
-  const gradient = ctx.createLinearGradient(0, 0, 0, height);
-  gradient.addColorStop(0, "#0b1128");
-  gradient.addColorStop(0.48, "#182759");
-  gradient.addColorStop(1, "#0a0f22");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
-  for (let i = 0; i < 36; i += 1) {
-    const x = (i * 170 - gameState.cameraX * 0.15) % (width + 200);
-    const y = 80 + (i % 5) * 72;
-    ctx.fillStyle = i % 2 ? "rgba(68,239,255,0.12)" : "rgba(255,216,77,0.08)";
-    ctx.beginPath();
-    ctx.arc(x, y, 2 + (i % 3), 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.save();
-  ctx.translate(-gameState.cameraX * 0.35, 0);
-  for (let i = 0; i < 10; i += 1) {
-    ctx.fillStyle = i % 2 ? "rgba(61,139,255,0.22)" : "rgba(196,102,255,0.16)";
-    const baseX = i * 420;
-    ctx.beginPath();
-    ctx.moveTo(baseX, height - 220);
-    ctx.lineTo(baseX + 120, height - 420);
-    ctx.lineTo(baseX + 240, height - 240);
-    ctx.lineTo(baseX + 380, height - 380);
-    ctx.lineTo(baseX + 460, height - 220);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.restore();
+function finishLevel() {
+  if (gameState.completed) return;
+  gameState.completed = true;
+  gameState.running = false;
+  const totalStars = Math.max(1, gameState.stars);
+  rewardLoot.innerHTML = [
+    `<span class="reward-pill">⚡ Energón: ${gameState.energy}</span>`,
+    `<span class="reward-pill">★ Estrellas: ${totalStars}</span>`,
+    `<span class="reward-pill">🤖 Mini bots: ${gameState.bots}</span>`
+  ].join('');
+  setTimeout(() => setScreen('reward'), 350);
 }
 
-function drawGround(width, height) {
-  ctx.fillStyle = "#131a33";
-  ctx.fillRect(0, gameState.groundY, width, height - gameState.groundY);
-  ctx.fillStyle = "rgba(68,239,255,0.18)";
-  for (let x = -gameState.cameraX % 80; x < width; x += 80) ctx.fillRect(x, gameState.groundY, 44, 8);
+function drawBackground(viewWidth, viewHeight) {
+  const sky = ctx.createLinearGradient(0, 0, 0, viewHeight);
+  sky.addColorStop(0, '#1d2d68');
+  sky.addColorStop(0.45, '#122247');
+  sky.addColorStop(1, '#09101f');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, viewWidth, viewHeight);
+
+  for (let i = 0; i < 8; i += 1) {
+    const x = ((i * 320) - (gameState.cameraX * 0.18)) % (viewWidth + 320) - 120;
+    ctx.fillStyle = 'rgba(71, 228, 255, 0.08)';
+    ctx.fillRect(x, 140 + (i % 3) * 26, 180, viewHeight - 320);
+  }
+
+  ctx.fillStyle = '#1f3f5d';
+  ctx.fillRect(0, gameState.groundY, viewWidth, viewHeight - gameState.groundY);
+  ctx.fillStyle = '#2d6f85';
+  ctx.fillRect(0, gameState.groundY - 18, viewWidth, 18);
+}
+
+function drawSigns(entity, screenX) {
+  if (!entity.label) return;
+  ctx.fillStyle = 'rgba(6, 13, 30, 0.86)';
+  ctx.fillRect(screenX - 10, entity.y - 66, Math.max(94, entity.label.length * 8), 36);
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.strokeRect(screenX - 10, entity.y - 66, Math.max(94, entity.label.length * 8), 36);
+  ctx.fillStyle = '#f6f8ff';
+  ctx.font = 'bold 16px Inter, sans-serif';
+  ctx.fillText(entity.label, screenX, entity.y - 42);
 }
 
 function drawEntity(entity) {
   const x = entity.x - gameState.cameraX;
-  if (x < -220 || x > canvas.clientWidth + 220) return;
-  if (entity.type === "gap") { ctx.fillStyle = "#070b14"; ctx.fillRect(x, gameState.groundY, entity.width, 240); return; }
-  if (entity.type === "platform") { ctx.fillStyle = "#6e7db8"; ctx.fillRect(x, entity.y, entity.width, entity.height); return; }
-  if (entity.type === "ramp") {
-    ctx.fillStyle = "#22d7ff";
-    ctx.beginPath(); ctx.moveTo(x, gameState.groundY); ctx.lineTo(x + entity.width, gameState.groundY); ctx.lineTo(x + entity.width, gameState.groundY - entity.height); ctx.closePath(); ctx.fill(); return;
-  }
-  if (entity.type === "lowBarrier") { ctx.fillStyle = entity.simplified ? "rgba(255,216,77,0.3)" : "#ffb347"; ctx.fillRect(x, gameState.groundY - entity.height, entity.width, entity.height); return; }
-  if (entity.type === "wall") { if (entity.simplified) return; ctx.fillStyle = "#9ca8c7"; ctx.fillRect(x, gameState.groundY - entity.height, entity.width, entity.height); return; }
-  if (entity.type === "energon") {
-    if (entity.collected) return;
-    ctx.save(); ctx.translate(x, entity.y); ctx.rotate(performance.now() / 500); ctx.fillStyle = "#44efff";
-    ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(16, 0); ctx.lineTo(0, 18); ctx.lineTo(-16, 0); ctx.closePath(); ctx.fill(); ctx.restore(); return;
-  }
-  if (entity.type === "miniBot") { if (entity.collected) return; ctx.fillStyle = "#ffe768"; ctx.fillRect(x - 20, entity.y - 34, 40, 34); ctx.fillStyle = "#2d3240"; ctx.fillRect(x - 10, entity.y - 48, 20, 12); return; }
-  if (entity.type === "drone") { ctx.fillStyle = "#ff6a5c"; ctx.beginPath(); ctx.arc(x, entity.y, 22, 0, Math.PI * 2); ctx.fill(); return; }
-  if (entity.type === "turret" && !entity.disabled) { ctx.fillStyle = "#c466ff"; ctx.fillRect(x - 20, entity.y - 40, 40, 40); ctx.fillRect(x, entity.y - 56, 26, 12); return; }
-  if (entity.type === "finish") {
-    ctx.fillStyle = "#44efff"; ctx.fillRect(x, gameState.groundY - 180, 20, 180); ctx.fillStyle = "#ffe768";
-    ctx.beginPath(); ctx.moveTo(x + 20, gameState.groundY - 180); ctx.lineTo(x + entity.width, gameState.groundY - 136); ctx.lineTo(x + 20, gameState.groundY - 100); ctx.closePath(); ctx.fill();
-  }
-}
+  if (x > canvas.clientWidth + 200 || x < -250) return;
 
-function drawPlayer() {
-  const player = gameState.player;
-  const x = player.x - gameState.cameraX;
-  const y = player.y;
-  const chosen = uiState.selectedCharacter;
-  ctx.save();
-  if (player.transformFlash > 0) { ctx.shadowBlur = 20; ctx.shadowColor = chosen.color; }
-  if (player.form === "vehicle") {
-    ctx.fillStyle = chosen.color;
-    ctx.fillRect(x, y + 26, player.width, player.height - 26);
-    ctx.fillStyle = chosen.accent;
-    ctx.fillRect(x + 16, y + 8, player.width - 34, 28);
-    ctx.fillStyle = "#111827";
-    ctx.beginPath(); ctx.arc(x + 24, y + player.height - 4, 12, 0, Math.PI * 2); ctx.arc(x + player.width - 24, y + player.height - 4, 12, 0, Math.PI * 2); ctx.fill();
-  } else {
-    ctx.fillStyle = chosen.color;
-    ctx.fillRect(x + 18, y + 18, player.width - 36, 44);
-    ctx.fillRect(x + 8, y + 58, player.width - 16, 52);
-    ctx.fillStyle = chosen.accent;
-    ctx.fillRect(x + 24, y, player.width - 48, 28);
-    ctx.fillRect(x, y + 52, 18, 56);
-    ctx.fillRect(x + player.width - 18, y + 52, 18, 56);
-    ctx.fillRect(x + 18, y + 98, 20, 34);
-    ctx.fillRect(x + player.width - 38, y + 98, 20, 34);
+  if (entity.type === 'crate') {
+    ctx.fillStyle = '#ff6c60';
+    ctx.fillRect(x, entity.y, entity.w, entity.h);
+    ctx.strokeStyle = '#ffd8d0';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x + 4, entity.y + 4, entity.w - 8, entity.h - 8);
+    drawSigns(entity, x);
   }
-  ctx.restore();
-}
 
-function drawParticles() {
-  gameState.particles.forEach((particle) => {
-    ctx.fillStyle = particle.color;
-    ctx.globalAlpha = Math.max(0, particle.life);
+  if (entity.type === 'gap') {
+    ctx.fillStyle = '#08306d';
+    ctx.fillRect(x, gameState.groundY, entity.w, 220);
+    ctx.fillStyle = 'rgba(71,228,255,0.26)';
+    ctx.fillRect(x, gameState.groundY + 24, entity.w, 22);
+    drawSigns(entity, x + 12);
+  }
+
+  if (entity.type === 'platform') {
+    ctx.fillStyle = '#5d6ff2';
+    ctx.fillRect(x, entity.y, entity.w, entity.h);
+    ctx.fillStyle = '#8f9cff';
+    ctx.fillRect(x, entity.y, entity.w, 6);
+  }
+
+  if (entity.type === 'tunnel') {
+    ctx.fillStyle = '#ffd84d';
+    ctx.fillRect(x, entity.y, entity.w, entity.h);
+    ctx.fillStyle = '#09101f';
+    ctx.fillRect(x + 24, entity.y + 10, entity.w - 48, entity.h - 10);
+    ctx.fillStyle = '#ffd84d';
+    ctx.fillRect(x + entity.w - 56, entity.y + 18, 28, 18);
+    drawSigns(entity, x + 18);
+  }
+
+  if (entity.type === 'pickup' && !entity.taken) {
+    ctx.save();
+    ctx.translate(x + entity.w / 2, entity.y + entity.h / 2 + Math.sin(performance.now() / 180) * 6);
+    ctx.rotate(performance.now() / 700);
+    ctx.fillStyle = '#47e4ff';
     ctx.beginPath();
-    ctx.arc(particle.x - gameState.cameraX, particle.y, particle.projectile ? 10 : 6, 0, Math.PI * 2);
+    for (let i = 0; i < 4; i += 1) {
+      ctx.lineTo(Math.cos(i * Math.PI / 2) * 18, Math.sin(i * Math.PI / 2) * 18);
+      ctx.lineTo(Math.cos((i + 0.5) * Math.PI / 2) * 8, Math.sin((i + 0.5) * Math.PI / 2) * 8);
+    }
+    ctx.closePath();
     ctx.fill();
-    ctx.globalAlpha = 1;
-  });
+    ctx.restore();
+  }
+
+  if (entity.type === 'bot' && !entity.rescued) {
+    ctx.fillStyle = '#9fe8ff';
+    ctx.fillRect(x, entity.y, entity.w, entity.h);
+    ctx.fillStyle = '#09101f';
+    ctx.fillRect(x + 10, entity.y + 10, entity.w - 20, 10);
+    ctx.fillRect(x + 12, entity.y + 24, 8, 16);
+    ctx.fillRect(x + entity.w - 20, entity.y + 24, 8, 16);
+    drawSigns(entity, x);
+  }
+
+  if (entity.type === 'goal') {
+    ctx.fillStyle = '#38df8f';
+    ctx.fillRect(x, entity.y, entity.w, entity.h);
+    ctx.fillStyle = '#daf9ea';
+    ctx.fillRect(x + 10, entity.y + 10, entity.w - 20, entity.h - 20);
+    drawSigns(entity, x);
+  }
+}
+
+function drawRobot(player, screenX) {
+  const y = player.y;
+  ctx.fillStyle = player.character.colors.main;
+  ctx.fillRect(screenX + 16, y + 30, 54, 64);
+  ctx.fillStyle = player.character.colors.accent;
+  ctx.fillRect(screenX + 20, y + 6, 46, 38);
+  ctx.fillStyle = '#caf6ff';
+  ctx.fillRect(screenX + 30, y + 20, 8, 6);
+  ctx.fillRect(screenX + 48, y + 20, 8, 6);
+  ctx.fillStyle = player.character.colors.dark;
+  ctx.fillRect(screenX + 8, y + 36, 12, 56);
+  ctx.fillRect(screenX + 66, y + 36, 12, 56);
+  ctx.fillRect(screenX + 26, y + 94, 14, 14);
+  ctx.fillRect(screenX + 46, y + 94, 14, 14);
+}
+
+function drawVehicle(player, screenX) {
+  const y = player.y;
+  ctx.fillStyle = player.character.colors.main;
+  ctx.fillRect(screenX + 10, y + 18, 96, 30);
+  ctx.fillRect(screenX + 26, y + 2, 44, 24);
+  ctx.fillStyle = player.character.colors.accent;
+  ctx.fillRect(screenX + 82, y + 20, 26, 16);
+  ctx.fillStyle = '#caf6ff';
+  ctx.fillRect(screenX + 38, y + 8, 22, 12);
+  ctx.fillStyle = '#232634';
+  ctx.beginPath();
+  ctx.arc(screenX + 32, y + 52, 14, 0, Math.PI * 2);
+  ctx.arc(screenX + 88, y + 52, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#7e88a8';
+  ctx.beginPath();
+  ctx.arc(screenX + 32, y + 52, 6, 0, Math.PI * 2);
+  ctx.arc(screenX + 88, y + 52, 6, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function render() {
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
-  ctx.clearRect(0, 0, width, height);
-  drawBackground(width, height);
-  drawGround(width, height);
+  const viewWidth = canvas.clientWidth;
+  const viewHeight = canvas.clientHeight;
+  drawBackground(viewWidth, viewHeight);
   gameState.entities.forEach(drawEntity);
-  drawParticles();
-  if (gameState.player) drawPlayer();
+
+  const player = gameState.player;
+  if (!player) return;
+  const screenX = player.x - gameState.cameraX;
+  if (player.form === 'robot') {
+    drawRobot(player, screenX);
+  } else {
+    drawVehicle(player, screenX);
+  }
 }
 
-let lastTime = performance.now();
-function loop(now) {
-  const dt = Math.min((now - lastTime) / 1000, 0.033);
-  lastTime = now;
-  if (gameState.running) updateGame(dt, now);
-  if (uiState.screen === "game") render();
+function loop(timestamp) {
+  if (!gameState.lastTime) gameState.lastTime = timestamp;
+  const dt = Math.min((timestamp - gameState.lastTime) / 1000, 0.032);
+  gameState.lastTime = timestamp;
+  if (gameState.running) {
+    update(dt);
+    render();
+  }
   requestAnimationFrame(loop);
 }
 
-document.getElementById("playButton").addEventListener("click", () => { ensureAudio(); startGame(uiState.tutorialComplete ? "main" : "tutorial"); });
-document.getElementById("openRosterButton").addEventListener("click", () => { setScreen("roster"); speak("Elige tu robot"); });
-document.getElementById("rosterBackButton").addEventListener("click", () => setScreen("home"));
-document.getElementById("selectCharacterButton").addEventListener("click", () => { setScreen("home"); speak("Listo"); });
-document.getElementById("rosterPrev").addEventListener("click", () => {
-  const current = characters.findIndex((item) => item.id === uiState.selectedCharacter.id);
-  selectCharacter((current + characters.length - 1) % characters.length);
-});
-document.getElementById("rosterNext").addEventListener("click", () => {
-  const current = characters.findIndex((item) => item.id === uiState.selectedCharacter.id);
-  selectCharacter((current + 1) % characters.length);
-});
-document.getElementById("playAgainButton").addEventListener("click", () => startGame("main"));
-document.getElementById("homeButton").addEventListener("click", () => { setScreen("home"); clearHighlights(); setDemoHint(""); });
-soundToggle.addEventListener("click", () => {
-  audioState.enabled = !audioState.enabled;
-  soundToggle.textContent = audioState.enabled ? "🔊" : "◔";
-  if (!audioState.enabled) {
-    window.speechSynthesis.cancel();
-  } else {
-    ensureAudio();
-  }
-});
+function setupButtons() {
+  document.getElementById('playButton').addEventListener('click', () => {
+    setScreen('game');
+    resetGame();
+  });
+  document.getElementById('openRosterButton').addEventListener('click', () => setScreen('roster'));
+  document.getElementById('rosterBackButton').addEventListener('click', () => setScreen('home'));
+  document.getElementById('selectCharacterButton').addEventListener('click', () => setScreen('home'));
+  document.getElementById('playAgainButton').addEventListener('click', () => {
+    setScreen('game');
+    resetGame();
+  });
+  document.getElementById('homeButton').addEventListener('click', () => setScreen('home'));
+  document.getElementById('jumpButton').addEventListener('click', jump);
+  document.getElementById('transformButton').addEventListener('click', toggleTransform);
 
-pointerAction(jumpButton, handleJump);
-pointerAction(transformButton, handleTransform);
-window.addEventListener("keydown", (event) => {
-  if (event.code === "Space" || event.code === "ArrowUp") handleJump();
-  if (event.code === "ShiftLeft" || event.code === "ShiftRight" || event.code === "ArrowDown") handleTransform();
-});
-window.addEventListener("resize", resizeCanvas);
+  const leftButton = document.getElementById('leftButton');
+  const rightButton = document.getElementById('rightButton');
 
-renderCharacterCards();
-updateHeroClasses();
-setupStandaloneMode();
-setupInstallPrompt();
-registerServiceWorker();
-resizeCanvas();
-requestAnimationFrame(loop);
+  const bindHold = (button, key) => {
+    const start = (event) => {
+      event.preventDefault();
+      gameState.keys[key] = true;
+    };
+    const stop = (event) => {
+      event.preventDefault();
+      gameState.keys[key] = false;
+    };
+    button.addEventListener('pointerdown', start);
+    button.addEventListener('pointerup', stop);
+    button.addEventListener('pointerleave', stop);
+    button.addEventListener('pointercancel', stop);
+  };
+
+  bindHold(leftButton, 'left');
+  bindHold(rightButton, 'right');
+
+  soundToggle.addEventListener('click', () => {
+    audioState.enabled = !audioState.enabled;
+    soundToggle.textContent = audioState.enabled ? '🔊' : '🔈';
+    if (!audioState.enabled) window.speechSynthesis.cancel();
+  });
+}
+
+function setupKeyboard() {
+  window.addEventListener('keydown', (event) => {
+    if (event.repeat) return;
+    if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') gameState.keys.left = true;
+    if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') gameState.keys.right = true;
+    if (event.key === 'ArrowUp' || event.key === ' ') {
+      event.preventDefault();
+      jump();
+    }
+    if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's' || event.key.toLowerCase() === 't') {
+      event.preventDefault();
+      toggleTransform();
+    }
+  });
+
+  window.addEventListener('keyup', (event) => {
+    if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') gameState.keys.left = false;
+    if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') gameState.keys.right = false;
+  });
+}
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+function setupInstallPrompt() {
+  let deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    installButton.classList.add('show-install');
+  });
+  installButton.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice.catch(() => null);
+    deferredInstallPrompt = null;
+    installButton.classList.remove('show-install');
+  });
+}
+
+function init() {
+  resizeCanvas();
+  renderRoster();
+  setupButtons();
+  setupKeyboard();
+  registerServiceWorker();
+  setupInstallPrompt();
+  window.addEventListener('resize', resizeCanvas);
+  requestAnimationFrame(loop);
+}
+
+init();
