@@ -2,13 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Cyber Bots Adventure X</title>
-  <meta name="theme-color" content="#081120">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <title>Cyber Bots: Vertical Slice</title>
+  <meta name="theme-color" content="#0b1226">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Cyber Bots X">
+  <meta name="apple-mobile-web-app-title" content="Cyber Bots">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icons/icon-192.svg">
@@ -16,124 +16,117 @@
 </head>
 <body>
   <div id="app">
-    <section id="homeScreen" class="screen active menu-screen">
-      <div class="menu-backdrop">
-        <div class="nebula nebula-a"></div>
-        <div class="nebula nebula-b"></div>
-        <div class="horizon-grid"></div>
-      </div>
-
-      <header class="top-bar">
-        <div class="brand-pill">2D · táctil · PWA</div>
-        <div class="top-actions">
-          <button id="installButton" class="icon-button hidden-install" aria-label="Instalar">＋</button>
-          <button id="soundToggle" class="icon-button" aria-label="Audio">🔊</button>
-        </div>
-      </header>
-
-      <main class="home-shell">
-        <div class="home-copy glass-panel">
-          <p class="eyebrow">Transformers One inspirado</p>
-          <h1>Cyber Bots Adventure X</h1>
-          <p class="lead">Un plataformas 2D hecho para celular. Tú decides cómo avanzar. Obstáculos claros. Transformación real entre robot y vehículo.</p>
-          <div class="legend-strip">
-            <span class="legend-item red">Saltar</span>
-            <span class="legend-item blue">Hueco</span>
-            <span class="legend-item amber">Vehículo</span>
-            <span class="legend-item green">Meta</span>
+    <section id="homeScreen" class="screen active">
+      <div class="screen-bg"></div>
+      <div class="home-shell">
+        <header class="panel top-panel">
+          <div class="header-copy">
+            <p class="eyebrow">Cyber Bots: Vertical Slice</p>
+            <h1>Una misión corta, clara y bien pulida</h1>
+            <p class="muted">Vertical slice con combate, telegraphs claros, rutas de ventaja por personaje y un remix final para probar el corazón comercial del juego.</p>
           </div>
-        </div>
+          <div class="top-actions">
+            <button id="installButton" class="mini-btn hidden-install" aria-label="Instalar">＋</button>
+            <button id="soundToggle" class="mini-btn" aria-label="Audio">🔊</button>
+          </div>
+        </header>
 
-        <div class="hero-stage glass-panel">
-          <div class="hero-name-row">
-            <div>
-              <p class="eyebrow small">Bot activo</p>
+        <main class="home-main">
+          <article class="panel hero-panel">
+            <div class="hero-copy">
               <h2 id="heroName">Orion Pax</h2>
+              <p id="heroRole" class="hero-role">Vanguardia versátil</p>
+              <p id="heroDesc">Versión premium de una sola fase: menos relleno, más intención.</p>
+
+              <div class="stat-grid">
+                <div class="stat-box"><span>Control</span><strong id="statControl">8</strong></div>
+                <div class="stat-box"><span>Salto</span><strong id="statJump">8</strong></div>
+                <div class="stat-box"><span>Velocidad</span><strong id="statSpeed">7</strong></div>
+                <div class="stat-box"><span>Poder</span><strong id="statPower">6</strong></div>
+              </div>
+
+              <div class="ability-list">
+                <div class="ability-item">✦ <span id="abilityPrimary">Resistencia frontal</span></div>
+                <div class="ability-item">✦ <span id="abilitySecondary">Recuperación segura</span></div>
+              </div>
+
+              <div class="legend-grid">
+                <div class="legend-item"><span class="legend-color red"></span>Caja roja: salta</div>
+                <div class="legend-item"><span class="legend-color blue"></span>Hueco azul: toma impulso y salta</div>
+                <div class="legend-item"><span class="legend-color yellow"></span>Plataformas: identidad y remix por personaje</div>
+                <div class="legend-item"><span class="legend-color purple"></span>Enemigo púrpura: siempre telegrafía antes de atacar</div>
+              </div>
             </div>
-            <div id="heroStats" class="stat-chips"></div>
+            <div class="hero-stage">
+              <div class="hero-glow"></div>
+              <img id="heroPreview" class="hero-preview" alt="personaje seleccionado">
+            </div>
+          </article>
+
+          <aside class="panel roster-panel">
+            <div class="roster-header">
+              <h3>Escuadrón</h3>
+              <span id="selectedTag" class="tag">Versátil</span>
+            </div>
+            <div id="characterCarousel" class="character-carousel"></div>
+          </aside>
+        </main>
+
+        <footer class="bottom-dock panel">
+          <button id="playButton" class="dock-btn primary">Jugar</button>
+          <button id="toggleFormPreviewButton" class="dock-btn secondary">Ver vehículo</button>
+        </footer>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <canvas id="gameCanvas" width="1280" height="720"></canvas>
+
+      <div class="hud panel">
+        <div class="progress-meter" aria-label="Progreso del nivel"><div id="progressFill" class="progress-fill"></div></div>
+        <div class="hud-pill">⚡ <span id="energyCount">0</span></div>
+        <div class="hud-pill">★ <span id="starCount">0</span></div>
+        <div class="hud-pill">🤖 <span id="botCount">0</span></div>
+      </div>
+
+      <div id="voiceBubble" class="voice-bubble panel show">Usa el joystick para moverte y observa el color de cada obstáculo.</div>
+
+      <div class="game-actions panel">
+        <button id="pauseToHomeButton" class="mini-btn">⌂</button>
+      </div>
+
+      <div class="controls-wrap">
+        <div class="panel joystick-panel">
+          <div id="joystickBase" class="joystick-base">
+            <div id="joystickKnob" class="joystick-knob"></div>
           </div>
-          <div class="hero-preview">
-            <div class="preview-lane"></div>
-            <div id="heroRobot" class="hero-robot"></div>
-            <div id="heroVehicle" class="hero-vehicle"></div>
-          </div>
-          <p id="heroDescription" class="hero-description"></p>
+          <div class="joystick-help">Mover</div>
         </div>
-      </main>
 
-      <footer class="menu-dock">
-        <button id="playButton" class="cta primary-cta">Jugar</button>
-        <button id="openRosterButton" class="cta secondary-cta">Elegir bot</button>
-      </footer>
-    </section>
-
-    <section id="rosterScreen" class="screen menu-screen">
-      <div class="menu-backdrop roster-backdrop">
-        <div class="nebula nebula-a"></div>
-        <div class="nebula nebula-b"></div>
-      </div>
-      <header class="top-bar">
-        <button id="rosterBackButton" class="icon-button back-button" aria-label="Volver">←</button>
-        <div class="brand-pill">Selecciona personaje</div>
-      </header>
-      <main class="roster-shell glass-panel">
-        <div class="roster-header">
-          <div>
-            <p class="eyebrow">Plantel</p>
-            <h2>Elige tu Cyber Bot</h2>
-          </div>
-          <p class="roster-help">Desliza. Toca una tarjeta. Luego confirma.</p>
+        <div class="panel action-panel">
+          <button id="jumpButton" class="control-btn jump">Saltar</button>
+          <button id="attackButton" class="control-btn attack">Atacar</button>
+          <button id="transformButton" class="control-btn transform">Transformar</button>
         </div>
-        <div id="characterCarousel" class="character-carousel"></div>
-      </main>
-      <footer class="menu-dock compact">
-        <button id="selectCharacterButton" class="cta primary-cta">Confirmar</button>
-      </footer>
-    </section>
-
-    <section id="gameScreen" class="screen game-screen">
-      <div class="hud hud-left">
-        <div class="hud-pill"><span>⚡</span><span id="energyCount">0</span></div>
-        <div class="hud-pill"><span>★</span><span id="starCount">0</span></div>
-        <div class="hud-pill"><span>🤖</span><span id="botCount">0</span></div>
-      </div>
-      <div class="hud hud-right">
-        <div id="formIndicator" class="hud-pill accent">Modo Robot</div>
-      </div>
-      <div id="voiceBubble" class="voice-bubble"></div>
-      <div id="goalLabel" class="goal-label"></div>
-      <canvas id="gameCanvas" aria-label="Juego de plataformas 2D"></canvas>
-
-      <div class="control-bar movement-bar">
-        <button id="leftButton" class="control-button move" aria-label="Izquierda">◀</button>
-        <button id="rightButton" class="control-button move" aria-label="Derecha">▶</button>
-      </div>
-      <div class="control-bar action-bar">
-        <button id="jumpButton" class="control-button jump" aria-label="Saltar">Saltar</button>
-        <button id="transformButton" class="control-button transform" aria-label="Transformar">Transformar</button>
       </div>
     </section>
 
-    <section id="rewardScreen" class="screen menu-screen">
-      <div class="menu-backdrop reward-backdrop">
-        <div class="nebula nebula-a"></div>
-        <div class="nebula nebula-b"></div>
-      </div>
-      <main class="reward-shell glass-panel">
-        <p class="eyebrow">Nivel completado</p>
-        <h2>Misión lograda</h2>
-        <div class="reward-showcase">
-          <div id="rewardRobot" class="hero-robot"></div>
-          <div id="rewardVehicle" class="hero-vehicle"></div>
+    <section id="rewardScreen" class="screen">
+      <div class="screen-bg"></div>
+      <div class="reward-shell panel">
+        <h2>Misión completada</h2>
+        <div class="reward-hero-stage">
+          <img id="rewardRobot" class="reward-sprite" alt="personaje">
         </div>
         <div id="rewardLoot" class="reward-loot"></div>
-      </main>
-      <footer class="menu-dock">
-        <button id="playAgainButton" class="cta primary-cta">Jugar otra vez</button>
-        <button id="homeButton" class="cta secondary-cta">Inicio</button>
-      </footer>
+        <div class="reward-actions">
+          <button id="playAgainButton" class="dock-btn primary">Jugar otra vez</button>
+          <button id="homeButton" class="dock-btn secondary">Inicio</button>
+        </div>
+      </div>
     </section>
   </div>
+
   <script src="./app.js"></script>
 </body>
 </html>

@@ -1,31 +1,17 @@
 {
-  "name": "Cyber Bots Adventure X",
-  "short_name": "Cyber Bots X",
-  "description": "Juego 2D táctil con transformación robot-vehículo, diseñado para celular.",
+  "name": "Cyber Bots Vertical Slice",
+  "short_name": "Cyber Bots",
+  "description": "Vertical slice premium de un juego de plataformas 2D para celular en horizontal.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#081120",
-  "theme_color": "#081120",
   "orientation": "landscape",
-  "lang": "es-CL",
+  "background_color": "#08101f",
+  "theme_color": "#08101f",
+  "lang": "es",
   "icons": [
-    {
-      "src": "./icons/icon-192.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "./icons/icon-512.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "./icons/icon-maskable.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
-    }
+    {"src": "./icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any"},
+    {"src": "./icons/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any"},
+    {"src": "./icons/icon-maskable.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable"}
   ]
 }
