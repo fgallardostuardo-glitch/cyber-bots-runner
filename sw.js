@@ -1,8 +1,10 @@
-const CACHE_NAME = "cyber-bots-vertical-slice-v1";
+const CACHE_NAME = "cyber-bots-vertical-slice-v2";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./style.css",
+  "./game-data.js",
+  "./game-systems.js",
   "./app.js",
   "./manifest.webmanifest",
   "./icons/icon-192.svg",

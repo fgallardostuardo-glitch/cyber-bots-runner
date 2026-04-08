@@ -1,71 +1,5 @@
-const SPRITE_BASE = './sprites';
-
-const characters = [
-  {
-    id: 'orion',
-    name: 'Orion Pax',
-    role: 'Vanguardia',
-    fantasy: 'Camión heroico de primera línea',
-    desc: 'Versátil y fiable. Tiene combo de tres golpes con hacha, tajo aéreo y alcance medio para abrir paso sin sentirse roto.',
-    color: '#d6413b', accent: '#52b5ff',
-    stats: { control: 8, jump: 8, speed: 7, power: 8 },
-    abilities: ['Combo de hacha x3', 'Tajo aéreo con rebote'],
-    robotFrames: [1,2,3].map(n => `${SPRITE_BASE}/orion-robot-${n}.svg`),
-    vehicleFrames: [1,2,3].map(n => `${SPRITE_BASE}/orion-vehicle-${n}.svg`),
-    robotAccel: 1700, robotMaxSpeed: 282, vehicleAccel: 1920, vehicleMaxSpeed: 358,
-    jumpVelocity: 740, gravity: 1300, airControl: 0.98, extraJumps: 0, glideGravity: 1,
-    robotSize: { width: 92, height: 138 }, vehicleSize: { width: 150, height: 86 },
-    combat: { kind: 'orion', cadence: 0.2, reach: 92 }
-  },
-  {
-    id: 'bee',
-    name: 'Bumblebee',
-    role: 'Interceptor',
-    fantasy: 'Auto deportivo de choque rápido',
-    desc: 'El más rápido. Ataques cortos y veloces, además de un dash slash horizontal que convierte velocidad en agresión.',
-    color: '#f2b51c', accent: '#202738',
-    stats: { control: 8, jump: 8, speed: 10, power: 5 },
-    abilities: ['Cadena de cortes rápidos', 'Dash slash horizontal'],
-    robotFrames: [1,2,3].map(n => `${SPRITE_BASE}/bee-robot-${n}.svg`),
-    vehicleFrames: [1,2,3].map(n => `${SPRITE_BASE}/bee-vehicle-${n}.svg`),
-    robotAccel: 1960, robotMaxSpeed: 308, vehicleAccel: 2360, vehicleMaxSpeed: 430,
-    jumpVelocity: 742, gravity: 1330, airControl: 1.03, extraJumps: 0, glideGravity: 1,
-    robotSize: { width: 82, height: 118 }, vehicleSize: { width: 145, height: 78 },
-    combat: { kind: 'bee', cadence: 0.1, reach: 68 }
-  },
-  {
-    id: 'elita',
-    name: 'Elita-1',
-    role: 'Acróbata',
-    fantasy: 'Moto táctica de movilidad total',
-    desc: 'La reina del aire. Doble salto, planeo corto y ruta alta con más margen para un plataformas comercialmente amable.',
-    color: '#d85aa6', accent: '#6756ff',
-    stats: { control: 9, jump: 10, speed: 8, power: 4 },
-    abilities: ['Doble salto', 'Planeo ligero'],
-    robotFrames: [1,2,3].map(n => `${SPRITE_BASE}/elita-robot-${n}.svg`),
-    vehicleFrames: [1,2,3].map(n => `${SPRITE_BASE}/elita-vehicle-${n}.svg`),
-    robotAccel: 1680, robotMaxSpeed: 276, vehicleAccel: 1840, vehicleMaxSpeed: 348,
-    jumpVelocity: 724, gravity: 1240, airControl: 1.15, extraJumps: 1, glideGravity: 0.56,
-    robotSize: { width: 74, height: 130 }, vehicleSize: { width: 132, height: 74 },
-    combat: { kind: 'none' }
-  },
-  {
-    id: 'd16',
-    name: 'D-16',
-    role: 'Destructor',
-    fantasy: 'Tanque de sitio pesado',
-    desc: 'Pesado y devastador. Su cañón tiene retroceso leve y carga una ráfaga perforante para abrir la ruta de ventaja.',
-    color: '#737d8e', accent: '#cfd5e2',
-    stats: { control: 6, jump: 8, speed: 6, power: 10 },
-    abilities: ['Cañón con retroceso', 'Disparo cargado'],
-    robotFrames: [1,2,3].map(n => `${SPRITE_BASE}/d16-robot-${n}.svg`),
-    vehicleFrames: [1,2,3].map(n => `${SPRITE_BASE}/d16-vehicle-${n}.svg`),
-    robotAccel: 1540, robotMaxSpeed: 258, vehicleAccel: 1730, vehicleMaxSpeed: 332,
-    jumpVelocity: 748, gravity: 1350, airControl: 0.9, extraJumps: 0, glideGravity: 1,
-    robotSize: { width: 100, height: 146 }, vehicleSize: { width: 156, height: 88 },
-    combat: { kind: 'd16', cadence: 0.34, reach: 0 }
-  }
-];
+const { characters, levelTemplate } = window.GameData;
+const Systems = window.GameSystems;
 
 const screens = {
   home: document.getElementById('homeScreen'),
@@ -130,83 +64,20 @@ const game = {
 
 const joystickBase = document.getElementById('joystickBase');
 const joystickKnob = document.getElementById('joystickKnob');
+const timing = { hitStop: 0 };
 
-const levelTemplate = {
-  worldWidth: 6400,
-  terrain: [
-    { from: 0, to: 940, y: 580 },
-    { from: 1120, to: 1850, y: 580 },
-    { from: 1850, to: 2100, y: 520 },
-    { from: 2100, to: 2820, y: 580 },
-    { from: 3040, to: 3720, y: 580 },
-    { from: 3720, to: 3980, y: 520 },
-    { from: 3980, to: 4720, y: 580 },
-    { from: 4970, to: 6400, y: 580 }
-  ],
-  entities: [
-    { type: 'energon', x: 240, y: 500 },
-    { type: 'energon', x: 390, y: 455 },
-    { type: 'barrier', x: 640, width: 96, height: 60, label: 'SALTA' },
-    { type: 'gap', x: 940, width: 180, label: 'APERTURA' },
-    { type: 'checkpoint', x: 1280 },
-
-    { type: 'platform', x: 1360, y: 486, width: 132, height: 18 },
-    { type: 'platform', x: 1555, y: 420, width: 138, height: 18 },
-    { type: 'platform', x: 1745, y: 354, width: 144, height: 18 },
-    { type: 'energon', x: 1618, y: 382 },
-    { type: 'energon', x: 1818, y: 314 },
-    { type: 'platform', x: 1960, y: 420, width: 120, height: 18 },
-    { type: 'platform', x: 2110, y: 356, width: 120, height: 18 },
-    { type: 'platform', x: 2265, y: 292, width: 120, height: 18 },
-    { type: 'energon', x: 2325, y: 248 },
-    { type: 'wall', x: 2440, width: 110, height: 132, label: 'RUTA D-16' },
-    { type: 'gap', x: 2820, width: 220, label: 'REMIX' },
-
-    { type: 'platform', x: 3120, y: 504, width: 148, height: 18 },
-    { type: 'platform', x: 3310, y: 444, width: 144, height: 18 },
-    { type: 'crumble', x: 3500, y: 386, width: 142, height: 18 },
-    { type: 'crumble', x: 3670, y: 334, width: 140, height: 18 },
-    { type: 'platform', x: 3860, y: 282, width: 150, height: 18 },
-    { type: 'energon', x: 3570, y: 348 },
-    { type: 'energon', x: 3926, y: 238 },
-    { type: 'checkpoint', x: 4100 },
-
-    { type: 'platform', x: 4310, y: 498, width: 144, height: 18 },
-    { type: 'platform', x: 4495, y: 430, width: 144, height: 18 },
-    { type: 'platform', x: 4680, y: 362, width: 144, height: 18 },
-    { type: 'gap', x: 4720, width: 250, label: 'CIERRE' },
-    { type: 'platform', x: 5080, y: 484, width: 154, height: 18 },
-    { type: 'platform', x: 5285, y: 420, width: 154, height: 18 },
-    { type: 'platform', x: 5490, y: 356, width: 154, height: 18 },
-    { type: 'energon', x: 5360, y: 378 },
-    { type: 'energon', x: 5562, y: 314 },
-    { type: 'miniBot', x: 5950, y: 478 },
-    { type: 'finish', x: 6110, width: 160 }
-  ],
-  enemies: [
-    { type: 'patroller', x: 470, left: 330, right: 860 },
-    { type: 'rusher', x: 1160, left: 1128, right: 1500 },
-    { type: 'hopper', x: 2050, left: 1960, right: 2340 },
-    { type: 'shield', x: 2520, left: 2480, right: 2780 },
-    { type: 'turret', x: 3200, left: 3200, right: 3200 },
-    { type: 'drone', x: 3630, y: 260, left: 3410, right: 3880, baseY: 260 },
-    { type: 'patroller', x: 4380, left: 4310, right: 4700 },
-    { type: 'hopper', x: 5210, left: 5070, right: 5480 },
-    { type: 'bruiser', x: 5660, left: 5500, right: 5920 }
-  ],
-  intro: 'Vertical slice premium. Apertura clara, bloque de identidad y remix. Usa el joystick, el salto, el ataque y la transformación con intención.',
-  beats: [
-    { x: 0, message: 'Apertura: aprende el ritmo. Salta, ataca y lee el color del peligro.' },
-    { x: 1250, message: 'Bloque de identidad: aprovecha tu ventaja única.' },
-    { x: 3200, message: 'Remix: mezcla plataformas, telegraphs y combate sin perder el flujo.' }
-  ]
-};
 
 function structuredCloneLocal(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+function getEnemyTargetBox(enemy, proj = null) { return Systems.getEnemyTargetBox(enemy, proj); }
+function addRingFX(x, y, color, burst = false) { Systems.pushRingFX(game, x, y, color, burst); }
+function addSparkFX(x, y, color, count = 5, spread = 1) { Systems.pushSparkFX(game, x, y, color, count, spread); }
+function addFloatText(x, y, text, color = '#ffffff') { Systems.pushFloatText(game, x, y, text, color); }
+function addHitStop(duration) { timing.hitStop = Math.max(timing.hitStop, duration); }
 function setScreen(name) { Object.entries(screens).forEach(([k, el]) => el.classList.toggle('active', k === name)); }
 function resizeCanvas() {
   const ratio = Math.min(window.devicePixelRatio || 1, 2);
-  const w = window.innerWidth, h = window.innerHeight;
+  const w = window.innerWidth, h = window.visualViewport?.height || window.innerHeight;
   canvas.width = Math.floor(w * ratio); canvas.height = Math.floor(h * ratio);
   canvas.style.width = `${w}px`; canvas.style.height = `${h}px`;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -214,14 +85,40 @@ function resizeCanvas() {
 function preloadAssets() {
   const urls = new Set();
   characters.forEach(c => { c.robotFrames.forEach(s => urls.add(s)); c.vehicleFrames.forEach(s => urls.add(s)); });
-  return Promise.all([...urls].map(src => new Promise(resolve => {
-    const img = new Image(); img.onload = () => { assets.images[src] = img; resolve(); }; img.onerror = () => resolve(); img.src = src;
-  })));
+  const tasks = [...urls].map(src => new Promise(resolve => {
+    const img = new Image();
+    let settled = false;
+    const done = () => { if (settled) return; settled = true; resolve(); };
+    img.onload = () => { assets.images[src] = img; done(); };
+    img.onerror = done;
+    img.src = src;
+    setTimeout(done, 1200);
+  }));
+  return Promise.allSettled(tasks);
+}
+function makeSpriteFallback(character, form = 'robot') {
+  const label = (character?.name || '?').split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
+  const accent = character?.accent || '#52b5ff';
+  const base = character?.color || '#243b66';
+  const kind = form === 'vehicle' ? 'VEHÍCULO' : 'ROBOT';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="${base}"/><stop offset="1" stop-color="${accent}"/></linearGradient></defs><rect width="320" height="320" rx="44" fill="#08162f"/><rect x="20" y="20" width="280" height="280" rx="34" fill="url(#g)" opacity=".18"/><circle cx="160" cy="138" r="72" fill="url(#g)" opacity=".22"/><rect x="92" y="88" width="136" height="96" rx="22" fill="url(#g)" opacity=".85"/><rect x="112" y="194" width="96" height="24" rx="12" fill="#dfe9ff" opacity=".9"/><text x="160" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff">${label}</text><text x="160" y="258" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#d7ecff">${kind}</text></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+function setImageWithFallback(imgEl, src, fallbackSrc) {
+  if (!imgEl) return;
+  imgEl.onerror = () => {
+    if (imgEl.dataset.fallbackApplied === '1') return;
+    imgEl.dataset.fallbackApplied = '1';
+    imgEl.src = fallbackSrc;
+  };
+  imgEl.dataset.fallbackApplied = '0';
+  imgEl.src = src || fallbackSrc;
 }
 function updateHomePreview() {
   const c = state.selectedCharacter;
   const previewSrc = state.previewForm === 'robot' ? c.robotFrames[1] : c.vehicleFrames[1];
-  ui.heroName.textContent = c.name; ui.heroRole.textContent = c.fantasy; ui.heroDesc.textContent = c.desc; ui.heroPreview.src = previewSrc;
+  ui.heroName.textContent = c.name; ui.heroRole.textContent = c.fantasy; ui.heroDesc.textContent = c.desc;
+  setImageWithFallback(ui.heroPreview, previewSrc, makeSpriteFallback(c, state.previewForm));
   ui.selectedTag.textContent = c.role; ui.previewButton.textContent = state.previewForm === 'robot' ? 'Ver vehículo' : 'Ver robot';
   ui.abilityPrimary.textContent = c.abilities[0]; ui.abilitySecondary.textContent = c.abilities[1] || 'Ruta principal completa';
   ui.statControl.textContent = c.stats.control; ui.statJump.textContent = c.stats.jump; ui.statSpeed.textContent = c.stats.speed; ui.statPower.textContent = c.stats.power;
@@ -230,7 +127,9 @@ function renderCharacterCards() {
   ui.carousel.innerHTML = '';
   characters.forEach((c, index) => {
     const card = document.createElement('button'); card.className = 'character-card';
-    card.innerHTML = `<img class="card-sprite" src="${c.robotFrames[1]}" alt="${c.name}"><div class="card-meta"><div class="card-name">${c.name}</div><div class="card-role">${c.fantasy}</div><div class="card-stats">Ctrl ${c.stats.control} · Salto ${c.stats.jump} · Vel ${c.stats.speed}</div></div>`;
+    card.innerHTML = `<img class="card-sprite" alt="${c.name}"><div class="card-meta"><div class="card-name">${c.name}</div><div class="card-role">${c.fantasy}</div><div class="card-stats">Ctrl ${c.stats.control} · Salto ${c.stats.jump} · Vel ${c.stats.speed}</div></div>`;
+    const sprite = card.querySelector('.card-sprite');
+    setImageWithFallback(sprite, c.robotFrames[1], makeSpriteFallback(c, 'robot'));
     card.addEventListener('click', () => selectCharacter(index)); ui.carousel.appendChild(card);
   });
   selectCharacter(characters.findIndex(c => c.id === state.selectedCharacter.id));
@@ -370,19 +269,23 @@ function beginAttack() {
 }
 function releaseAttack() {
   const p = game.player, c = getPlayerStats(); if (!p || c.id !== 'd16' || !p.charging) return;
-  const charged = p.chargeTime >= 0.46; const power = charged ? 2.4 : 1.25;
-  game.projectiles.push({ owner: 'player', kind: charged ? 'charged' : 'shot', x: p.x + p.width * 0.55, y: p.y + 44, vx: p.facing * (charged ? 560 : 430), width: charged ? 34 : 22, height: charged ? 20 : 12, damage: power, dir: p.facing, life: charged ? 1.4 : 1.0 });
+  const charged = p.chargeTime >= 0.46;
+  game.projectiles.push(Systems.createD16Projectile(p, charged));
   p.vx -= p.facing * (charged ? 70 : 34); p.attackCooldown = charged ? 0.45 : 0.28; p.charging = false; p.chargeTime = 0; robotBeep(charged ? 'charge' : 'shoot');
 }
 function applyDamageToEnemy(enemy, source) {
   if (!enemy.active) return false;
   if (enemy.type === 'shield' && source.dir && enemy.dir === source.dir && !source.aerial && source.kind !== 'charged') {
-    enemy.telegraph = 0.35; game.fx.push({ x: enemy.x + enemy.width / 2, y: enemy.y + 24, t: 0.16, color: '#b4d7ff' }); return false;
+    enemy.telegraph = 0.35; addRingFX(enemy.x + enemy.width / 2, enemy.y + 24, '#b4d7ff'); addSparkFX(enemy.x + enemy.width / 2, enemy.y + 28, '#d8f2ff', 4, 0.9); return false;
   }
-  enemy.hp -= source.damage || 1; enemy.damageFlash = 0.15; robotBeep('hit');
+  enemy.hp -= source.damage || 1; enemy.damageFlash = 0.18; robotBeep('hit');
+  const cx = enemy.x + enemy.width / 2, cy = enemy.y + enemy.height * 0.45;
+  addHitStop((source.damage || 1) >= 2 ? Systems.CombatTuning.heavyHitStop : Systems.CombatTuning.lightHitStop);
+  addSparkFX(cx, cy, source.kind === 'charged' ? '#ffd48a' : '#9fe8ff', source.kind === 'charged' ? 7 : 5, source.kind === 'charged' ? 1.3 : 1);
+  addFloatText(cx, enemy.y - 10, enemy.hp <= 0 ? 'KO' : 'HIT', enemy.hp <= 0 ? '#ffd84d' : '#dff8ff');
   if (enemy.hp <= 0) {
     enemy.active = false; game.stars += enemy.type === 'bruiser' ? 3 : 1; updateCounters();
-    game.fx.push({ x: enemy.x + enemy.width / 2, y: enemy.y + enemy.height / 2, t: 0.25, color: '#9cf7ff', burst: true });
+    addRingFX(cx, enemy.y + enemy.height / 2, '#9cf7ff', true); addSparkFX(cx, cy, '#9cf7ff', enemy.type === 'bruiser' ? 10 : 7, enemy.type === 'bruiser' ? 1.5 : 1.1);
   }
   return true;
 }
@@ -514,7 +417,7 @@ function updateEnemies(dt) {
 function updateProjectiles(dt) {
   for (const proj of game.projectiles) {
     if (!proj.active) proj.active = true;
-    proj.x += proj.vx * dt; proj.life -= dt;
+    proj.x += proj.vx * dt; proj.life -= dt; Systems.pushProjectileTrail(proj); Systems.updateProjectileTrail(proj, dt);
     if (proj.life <= 0 || proj.x < -80 || proj.x > game.worldWidth + 80) { proj.active = false; continue; }
     if (proj.owner === 'player') {
       for (const entity of game.entities) {
@@ -523,14 +426,22 @@ function updateProjectiles(dt) {
         const hitbox = { x: entity.x, y: ground - entity.height, width: entity.width, height: entity.height };
         if (intersect(proj, hitbox) && proj.kind === 'charged') {
           entity.destroyed = true; proj.active = false; game.stars += 1; updateCounters(); showMessage('Cañón cargado: ruta de ventaja abierta.');
+          addRingFX(proj.x + proj.width / 2, proj.y + proj.height / 2, '#ffc76c', true); addSparkFX(proj.x + proj.width / 2, proj.y + proj.height / 2, '#ffd58a', 9, 1.4);
         }
       }
       for (const enemy of game.enemies) {
-        if (!enemy.active) continue; if (intersect(proj, { x: enemy.x, y: enemy.y, width: enemy.width, height: enemy.height })) {
-          if (applyDamageToEnemy(enemy, { damage: proj.damage, dir: proj.dir, kind: proj.kind })) proj.active = proj.kind === 'charged' ? proj.life > 0.2 : false;
+        if (!enemy.active) continue;
+        const target = getEnemyTargetBox(enemy, proj);
+        if (intersect(proj, target)) {
+          if (applyDamageToEnemy(enemy, { damage: proj.damage, dir: proj.dir, kind: proj.kind })) {
+            addRingFX(proj.x + proj.width / 2, proj.y + proj.height / 2, proj.kind === 'charged' ? '#ffc76c' : '#9ae8ff');
+            proj.active = proj.kind === 'charged' ? proj.life > 0.2 : false;
+          }
         }
       }
-    } else if (proj.owner === 'enemy' && intersect(game.player, proj)) { proj.active = false; hurtPlayer('Disparo enemigo. Lee la carga antes del tiro.'); }
+    } else if (proj.owner === 'enemy' && intersect(game.player, proj)) {
+      proj.active = false; addRingFX(proj.x + proj.width / 2, proj.y + proj.height / 2, '#ffd8ff'); hurtPlayer('Disparo enemigo. Lee la carga antes del tiro.');
+    }
   }
   game.projectiles = game.projectiles.filter(p => p.active !== false);
 }
@@ -538,7 +449,7 @@ function stompedEnemy(enemy) { return game.player.vy > 90 && game.player.y + gam
 function handleEnemyCollisions() {
   const p = game.player;
   for (const enemy of game.enemies) {
-    if (!enemy.active) continue; const body = { x: enemy.x, y: enemy.y, width: enemy.width, height: enemy.height };
+    if (!enemy.active) continue; const body = getEnemyTargetBox(enemy);
     if (intersect(p, body)) {
       if (stompedEnemy(enemy) || (state.selectedCharacter.id === 'd16' && p.form === 'robot' && Math.abs(p.vy) > 250)) { applyDamageToEnemy(enemy, { damage: 1.5, aerial: true, dir: p.facing }); p.vy = -320; }
       else if (enemy.type !== 'drone' || enemy.state === 'dive') { hurtPlayer('Enemigo encima. Espera el telegraph y responde.'); }
@@ -583,7 +494,7 @@ function updateEntities(dt) {
   for (const beat of game.currentLevel.beats) if (!beat.done && p.x >= beat.x) { beat.done = true; showMessage(beat.message, beat.x === 0); }
 }
 function completeLevel() {
-  game.justCompleted = true; game.running = false; ui.rewardRobot.src = state.selectedCharacter.robotFrames[1];
+  game.justCompleted = true; game.running = false; setImageWithFallback(ui.rewardRobot, state.selectedCharacter.robotFrames[1], makeSpriteFallback(state.selectedCharacter, 'robot'));
   ui.rewardLoot.innerHTML = `<div class="reward-pill">⚡ Energón: ${game.energy}</div><div class="reward-pill">★ Estrellas: ${game.stars}</div><div class="reward-pill">🤖 Bots rescatados: ${game.bots}</div><div class="reward-pill">Ruta de ventaja: ${state.selectedCharacter.abilities[0]}</div>`; setScreen('reward');
 }
 function updateCamera() { const target = game.player.x + game.player.width * 0.5 - canvas.clientWidth * 0.38; const maxCamera = Math.max(0, game.worldWidth - canvas.clientWidth); game.cameraX += (Math.max(0, Math.min(maxCamera, target)) - game.cameraX) * 0.12; }
@@ -630,7 +541,14 @@ function drawEntities() {
 }
 function drawEnemyTelegraph(enemy, x, y) {
   if ((enemy.state === 'telegraph' || enemy.telegraph > 0) && enemy.active) {
-    ctx.fillStyle = 'rgba(255,225,125,.95)'; ctx.beginPath(); ctx.roundRect(x + enemy.width * 0.25, y - 22, enemy.width * 0.5, 12, 6); ctx.fill(); ctx.fillStyle = '#2f1a04'; ctx.fillRect(x + enemy.width * 0.3, y - 18, enemy.width * 0.4, 4);
+    const pulse = 0.72 + Math.abs(Math.sin(performance.now() * 0.014)) * 0.28;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255,216,77,${0.45 + pulse * 0.25})`; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(x - 4, y - 4, enemy.width + 8, enemy.height + 8, 18); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,225,125,.96)'; ctx.beginPath(); ctx.roundRect(x + enemy.width * 0.18, y - 28, enemy.width * 0.64, 16, 8); ctx.fill();
+    ctx.fillStyle = '#2f1a04'; ctx.fillRect(x + enemy.width * 0.24, y - 22, enemy.width * 0.52, 4);
+    ctx.fillStyle = '#fff6ce'; ctx.font = '900 12px Inter, Arial'; ctx.fillText('!', x + enemy.width * 0.48, y - 15);
+    ctx.restore();
   }
 }
 function drawEnemies() {
@@ -662,13 +580,34 @@ function drawEnemies() {
 }
 function drawProjectiles() {
   for (const proj of game.projectiles) {
-    const x = worldToScreenX(proj.x); ctx.fillStyle = proj.owner === 'player' ? (proj.kind === 'charged' ? '#ffc76c' : '#9ae8ff') : '#f4d7ff'; ctx.beginPath(); ctx.roundRect(x, proj.y, proj.width, proj.height, 5); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(x + 4, proj.y + 2, proj.width - 8, 2);
+    if (proj.trail?.length) {
+      for (const step of proj.trail) {
+        const tx = worldToScreenX(step.x);
+        ctx.globalAlpha = Math.max(0, step.t / Systems.CombatTuning.projectileTrailLife) * 0.65;
+        ctx.fillStyle = step.color;
+        ctx.beginPath(); ctx.arc(tx, step.y, step.size * (0.35 + step.t / Systems.CombatTuning.projectileTrailLife), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    const x = worldToScreenX(proj.x);
+    const fill = proj.owner === 'player' ? (proj.kind === 'charged' ? '#ffc76c' : '#9ae8ff') : '#f4d7ff';
+    ctx.fillStyle = fill; ctx.beginPath(); ctx.roundRect(x, proj.y, proj.width, proj.height, proj.kind === 'charged' ? 9 : 6); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.58)'; ctx.fillRect(x + 4, proj.y + 3, Math.max(6, proj.width - 8), 3);
+    ctx.strokeStyle = proj.kind === 'charged' ? 'rgba(255,212,138,.82)' : 'rgba(216,251,255,.8)'; ctx.lineWidth = 2; ctx.stroke();
   }
 }
-function drawFX() {
-  game.fx = game.fx.filter(fx => (fx.t -= 0.016) > 0);
+function drawFX(dt = 0.016) {
+  game.fx = game.fx.filter((fx) => (fx.t -= dt) > 0);
   for (const fx of game.fx) {
-    const x = worldToScreenX(fx.x); ctx.globalAlpha = Math.max(0, fx.t / 0.25); ctx.strokeStyle = fx.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, fx.y, fx.burst ? (1 - fx.t / 0.25) * 30 : 12, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+    const x = worldToScreenX(fx.x);
+    if (fx.kind === 'spark') {
+      fx.x += (fx.vx || 0) * dt; fx.y += (fx.vy || 0) * dt; fx.vy = (fx.vy || 0) + 120 * dt;
+      ctx.globalAlpha = Math.max(0, fx.t / 0.34); ctx.fillStyle = fx.color; ctx.beginPath(); ctx.arc(worldToScreenX(fx.x), fx.y, fx.size || 3, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; continue;
+    }
+    if (fx.kind === 'text') {
+      fx.y += (fx.vy || -28) * dt; ctx.globalAlpha = Math.max(0, fx.t / 0.55); ctx.fillStyle = fx.color; ctx.font = '900 14px Inter, Arial'; ctx.fillText(fx.text, x - 12, fx.y); ctx.globalAlpha = 1; continue;
+    }
+    ctx.globalAlpha = Math.max(0, fx.t / 0.28); ctx.strokeStyle = fx.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, fx.y, fx.burst ? (1 - fx.t / 0.28) * 34 : 12 + (1 - fx.t / 0.18) * 8, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
   }
 }
 function drawPlayerAttack() {
@@ -681,10 +620,11 @@ function drawPlayer() {
   if (p.charging) { ctx.fillStyle = 'rgba(255, 199, 108, .8)'; ctx.beginPath(); ctx.arc(sx + p.width * .7, p.y + 46, 12 + p.chargeTime * 18, 0, Math.PI * 2); ctx.fill(); }
   ctx.restore(); drawPlayerAttack();
 }
-function render() { drawBackground(); drawTerrain(); drawEntities(); drawEnemies(); drawProjectiles(); drawFX(); drawPlayer(); }
+function render(dt = 0.016) { drawBackground(); drawTerrain(); drawEntities(); drawEnemies(); drawProjectiles(); drawFX(dt); drawPlayer(); }
 function updateLoop(now) {
   if (!game.frameTime) game.frameTime = now; const dt = Math.min(0.025, (now - game.frameTime) / 1000); game.frameTime = now;
-  if (game.running) { updatePlayer(dt); updateCombat(dt); updateEnemies(dt); updateProjectiles(dt); updateEntities(dt); handleEnemyCollisions(); updateCamera(); render(); if (game.messageTimer > 0) game.messageTimer -= dt; }
+  if (timing.hitStop > 0) { timing.hitStop = Math.max(0, timing.hitStop - dt); render(dt); requestAnimationFrame(updateLoop); return; }
+  if (game.running) { updatePlayer(dt); updateCombat(dt); updateEnemies(dt); updateProjectiles(dt); updateEntities(dt); handleEnemyCollisions(); updateCamera(); render(dt); if (game.messageTimer > 0) game.messageTimer -= dt; }
   requestAnimationFrame(updateLoop);
 }
 function setupButtons() {
@@ -695,7 +635,7 @@ function setupButtons() {
   const jumpButton = document.getElementById('jumpButton'), transformButton = document.getElementById('transformButton'), attackButton = document.getElementById('attackButton');
   const activateJump = e => { e.preventDefault(); handleJumpPress(); }, releaseJump = e => { e.preventDefault(); game.input.jumpHeld = false; };
   ['pointerdown', 'touchstart'].forEach(evt => jumpButton.addEventListener(evt, activateJump, { passive: false })); ['pointerup', 'pointercancel', 'touchend'].forEach(evt => jumpButton.addEventListener(evt, releaseJump, { passive: false }));
-  transformButton.addEventListener('click', handleTransform);
+  ['click','pointerdown'].forEach(evt => transformButton.addEventListener(evt, e => { e.preventDefault(); handleTransform(); }, { passive: false }));
   const attackDown = e => { e.preventDefault(); game.input.attackPressed = true; game.input.attackHeld = true; };
   const attackUp = e => { e.preventDefault(); game.input.attackHeld = false; game.input.attackReleased = true; };
   ['pointerdown', 'touchstart'].forEach(evt => attackButton.addEventListener(evt, attackDown, { passive: false })); ['pointerup', 'pointercancel', 'touchend'].forEach(evt => attackButton.addEventListener(evt, attackUp, { passive: false }));
@@ -723,8 +663,31 @@ function setupJoystick() {
   joystickBase.addEventListener('pointermove', e => { if (!game.joystick.active || e.pointerId !== game.joystick.pointerId) return; onMove(e.clientX, e.clientY); });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(evt => joystickBase.addEventListener(evt, e => { if (game.joystick.pointerId !== null && e.pointerId !== game.joystick.pointerId) return; resetJoystick(); }));
 }
+let initialized = false;
 function init() {
-  const savedChar = localStorage.getItem('cyber-bot-selected'); state.selectedCharacter = getCharacterById(savedChar || characters[0].id); audioState.enabled = localStorage.getItem('cyber-bot-audio') !== '0'; ui.soundToggle.textContent = audioState.enabled ? '🔊' : '🔇';
-  renderCharacterCards(); updateHomePreview(); setupButtons(); setupJoystick(); setupInstallPrompt(); registerServiceWorker(); resizeCanvas(); requestAnimationFrame(updateLoop);
+  if (initialized) return;
+  initialized = true;
+  const savedChar = localStorage.getItem('cyber-bot-selected');
+  state.selectedCharacter = getCharacterById(savedChar || characters[0].id);
+  audioState.enabled = localStorage.getItem('cyber-bot-audio') !== '0';
+  ui.soundToggle.textContent = audioState.enabled ? '🔊' : '🔇';
+  document.documentElement.classList.toggle('touch-device', window.matchMedia ? matchMedia('(pointer: coarse)').matches : false);
+  renderCharacterCards();
+  updateHomePreview();
+  setupButtons();
+  setupJoystick();
+  setupInstallPrompt();
+  registerServiceWorker();
+  resizeCanvas();
+  requestAnimationFrame(updateLoop);
+  preloadAssets().then(() => {
+    renderCharacterCards();
+    updateHomePreview();
+  }).catch(() => {});
 }
-window.addEventListener('resize', resizeCanvas); preloadAssets().then(init);
+window.addEventListener('resize', resizeCanvas);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init, { once: true });
+} else {
+  init();
+}
