@@ -64,7 +64,7 @@ const game = {
 
 const joystickBase = document.getElementById('joystickBase');
 const joystickKnob = document.getElementById('joystickKnob');
-const timing = { hitStop: 0 };
+const timing = { hitStop: 0, shakeTime: 0, shakeMag: 0, shakeX: 0, shakeY: 0 };
 
 
 function structuredCloneLocal(obj) { return JSON.parse(JSON.stringify(obj)); }
@@ -74,7 +74,33 @@ function addRingFX(x, y, color, burst = false) { Systems.pushRingFX(game, x, y, 
 function addSparkFX(x, y, color, count = 5, spread = 1) { Systems.pushSparkFX(game, x, y, color, count, spread); }
 function addFloatText(x, y, text, color = '#ffffff') { Systems.pushFloatText(game, x, y, text, color); }
 function addHitStop(duration) { timing.hitStop = Math.max(timing.hitStop, duration); }
+function addScreenShake(magnitude = 6, duration = 0.14) { timing.shakeMag = Math.max(timing.shakeMag, magnitude); timing.shakeTime = Math.max(timing.shakeTime, duration); }
+function updateScreenShake(dt) {
+  if (timing.shakeTime <= 0) { timing.shakeTime = 0; timing.shakeMag = 0; timing.shakeX = 0; timing.shakeY = 0; return; }
+  timing.shakeTime = Math.max(0, timing.shakeTime - dt);
+  const falloff = Math.max(0, timing.shakeTime / 0.18);
+  const mag = timing.shakeMag * falloff;
+  timing.shakeX = (Math.random() * 2 - 1) * mag;
+  timing.shakeY = (Math.random() * 2 - 1) * mag * 0.55;
+  if (timing.shakeTime === 0) { timing.shakeMag = 0; timing.shakeX = 0; timing.shakeY = 0; }
+}
+function vibratePulse(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_) {} }
 function setScreen(name) { Object.entries(screens).forEach(([k, el]) => el.classList.toggle('active', k === name)); }
+function animateHomePreview() {
+  ui.heroPreview.classList.remove('is-swapping');
+  void ui.heroPreview.offsetWidth;
+  ui.heroPreview.classList.add('is-swapping');
+}
+function applyCharacterTheme(character) {
+  if (!character) return;
+  document.documentElement.style.setProperty('--accent-current', character.color || '#44efff');
+  document.documentElement.style.setProperty('--accent-current-2', character.accent || '#ffd84d');
+  screens.home?.style.setProperty('--hero-accent', character.color || '#44efff');
+  screens.home?.style.setProperty('--hero-accent-2', character.accent || '#ffd84d');
+}
+function setButtonPressed(button, pressed) { if (!button) return; button.classList.toggle('is-pressed', !!pressed); }
+function safeGetStorage(key) { try { return window.localStorage ? localStorage.getItem(key) : null; } catch (_) { return null; } }
+function safeSetStorage(key, value) { try { if (window.localStorage) localStorage.setItem(key, value); } catch (_) {} }
 function resizeCanvas() {
   const ratio = Math.min(window.devicePixelRatio || 1, 2);
   const w = window.innerWidth, h = window.visualViewport?.height || window.innerHeight;
@@ -118,6 +144,8 @@ function updateHomePreview() {
   const c = state.selectedCharacter;
   const previewSrc = state.previewForm === 'robot' ? c.robotFrames[1] : c.vehicleFrames[1];
   ui.heroName.textContent = c.name; ui.heroRole.textContent = c.fantasy; ui.heroDesc.textContent = c.desc;
+  animateHomePreview();
+  applyCharacterTheme(c);
   setImageWithFallback(ui.heroPreview, previewSrc, makeSpriteFallback(c, state.previewForm));
   ui.selectedTag.textContent = c.role; ui.previewButton.textContent = state.previewForm === 'robot' ? 'Ver vehículo' : 'Ver robot';
   ui.abilityPrimary.textContent = c.abilities[0]; ui.abilitySecondary.textContent = c.abilities[1] || 'Ruta principal completa';
@@ -126,17 +154,24 @@ function updateHomePreview() {
 function renderCharacterCards() {
   ui.carousel.innerHTML = '';
   characters.forEach((c, index) => {
-    const card = document.createElement('button'); card.className = 'character-card';
-    card.innerHTML = `<img class="card-sprite" alt="${c.name}"><div class="card-meta"><div class="card-name">${c.name}</div><div class="card-role">${c.fantasy}</div><div class="card-stats">Ctrl ${c.stats.control} · Salto ${c.stats.jump} · Vel ${c.stats.speed}</div></div>`;
+    const card = document.createElement('button');
+    card.className = 'character-card';
+    card.style.setProperty('--card-accent', c.color || '#44efff');
+    card.style.setProperty('--card-accent-2', c.accent || '#ffd84d');
+    card.innerHTML = `<div class="card-art-wrap"><img class="card-sprite" alt="${c.name}"></div><div class="card-meta"><div class="card-head"><div class="card-name">${c.name}</div><span class="card-badge">${c.role}</span></div><div class="card-role">${c.fantasy}</div><div class="card-ability">✦ ${c.abilities[0]}</div><div class="card-stats">Ctrl ${c.stats.control} · Salto ${c.stats.jump} · Vel ${c.stats.speed} · Poder ${c.stats.power}</div></div>`;
     const sprite = card.querySelector('.card-sprite');
     setImageWithFallback(sprite, c.robotFrames[1], makeSpriteFallback(c, 'robot'));
-    card.addEventListener('click', () => selectCharacter(index)); ui.carousel.appendChild(card);
+    card.addEventListener('click', () => selectCharacter(index));
+    ui.carousel.appendChild(card);
   });
-  selectCharacter(characters.findIndex(c => c.id === state.selectedCharacter.id));
+  selectCharacter(Math.max(0, characters.findIndex(c => c.id === state.selectedCharacter.id)));
 }
 function selectCharacter(index) {
-  state.selectedCharacter = characters[index]; [...ui.carousel.children].forEach((el, i) => el.classList.toggle('selected', i === index));
-  state.previewForm = 'robot'; updateHomePreview(); localStorage.setItem('cyber-bot-selected', state.selectedCharacter.id);
+  state.selectedCharacter = characters[index];
+  [...ui.carousel.children].forEach((el, i) => el.classList.toggle('selected', i === index));
+  state.previewForm = 'robot';
+  updateHomePreview();
+  safeSetStorage('cyber-bot-selected', state.selectedCharacter.id);
 }
 function getAudioContext() {
   if (!audioCtx) { const Ctx = window.AudioContext || window.webkitAudioContext; if (Ctx) audioCtx = new Ctx(); }
@@ -149,7 +184,9 @@ function robotBeep(type = 'jump') {
   osc2.type = type === 'attack' ? 'square' : 'triangle'; filter.type = 'bandpass';
   const map = {
     jump: [260, 420, 140, 190, 840, 0.12], transform: [180, 520, 90, 240, 1200, 0.22],
-    attack: [160, 330, 120, 210, 900, 0.14], charge: [120, 620, 80, 180, 620, 0.24], shoot: [100, 520, 70, 150, 720, 0.16], hit: [220, 110, 160, 100, 540, 0.11]
+    attack: [160, 330, 120, 210, 900, 0.14], charge: [120, 620, 80, 180, 620, 0.24], shoot: [100, 520, 70, 150, 720, 0.16],
+    hit: [220, 110, 160, 100, 540, 0.11], hitHeavy: [110, 70, 80, 65, 420, 0.16], destroy: [320, 120, 220, 80, 760, 0.22],
+    block: [180, 160, 240, 200, 980, 0.09], pickup: [420, 640, 220, 320, 1300, 0.08], checkpoint: [280, 520, 180, 260, 960, 0.14]
   }[type] || [260, 420, 140, 190, 840, 0.12];
   filter.frequency.value = map[4];
   osc.frequency.setValueAtTime(map[0], now); osc.frequency.exponentialRampToValueAtTime(map[1], now + map[5] * 0.75);
@@ -236,6 +273,9 @@ function hurtPlayer(reason = 'Golpe') {
 function respawnPlayer() {
   const p = game.player; const c = getPlayerStats(); if (!p) return; p.x = game.respawnX; const ground = getGroundYAt(p.x + 40) ?? 580;
   p.form = 'robot'; p.width = c.robotSize.width; p.height = c.robotSize.height; p.y = ground - p.height; p.vx = 0; p.vy = 0; p.onGround = true; p.extraJumpsLeft = c.extraJumps; p.invuln = 1; p.attack = null; p.charging = false;
+  addRingFX(p.x + p.width * 0.5, p.y + p.height * 0.5, '#65f0a6', true);
+  addScreenShake(6, 0.12);
+  robotBeep('checkpoint');
   showMessage('Checkpoint seguro. Reintenta sin castigo duro.', true);
 }
 function getAttackHitbox(p, attack) {
@@ -275,17 +315,34 @@ function releaseAttack() {
 }
 function applyDamageToEnemy(enemy, source) {
   if (!enemy.active) return false;
+  const sourceDamage = source.damage || 1;
   if (enemy.type === 'shield' && source.dir && enemy.dir === source.dir && !source.aerial && source.kind !== 'charged') {
-    enemy.telegraph = 0.35; addRingFX(enemy.x + enemy.width / 2, enemy.y + 24, '#b4d7ff'); addSparkFX(enemy.x + enemy.width / 2, enemy.y + 28, '#d8f2ff', 4, 0.9); return false;
+    enemy.telegraph = 0.35;
+    addRingFX(enemy.x + enemy.width / 2, enemy.y + 24, '#b4d7ff');
+    addSparkFX(enemy.x + enemy.width / 2, enemy.y + 28, '#d8f2ff', 4, 0.9);
+    addHitStop(0.03);
+    addScreenShake(3, 0.08);
+    robotBeep('block');
+    addFloatText(enemy.x + enemy.width / 2, enemy.y - 10, 'BLOCK', '#d6efff');
+    vibratePulse(12);
+    return false;
   }
-  enemy.hp -= source.damage || 1; enemy.damageFlash = 0.18; robotBeep('hit');
+  enemy.hp -= sourceDamage; enemy.damageFlash = 0.18;
   const cx = enemy.x + enemy.width / 2, cy = enemy.y + enemy.height * 0.45;
-  addHitStop((source.damage || 1) >= 2 ? Systems.CombatTuning.heavyHitStop : Systems.CombatTuning.lightHitStop);
-  addSparkFX(cx, cy, source.kind === 'charged' ? '#ffd48a' : '#9fe8ff', source.kind === 'charged' ? 7 : 5, source.kind === 'charged' ? 1.3 : 1);
-  addFloatText(cx, enemy.y - 10, enemy.hp <= 0 ? 'KO' : 'HIT', enemy.hp <= 0 ? '#ffd84d' : '#dff8ff');
+  const heavy = sourceDamage >= 2 || enemy.type === 'bruiser' || source.kind === 'charged';
+  addHitStop(heavy ? Systems.CombatTuning.heavyHitStop : Systems.CombatTuning.lightHitStop);
+  addScreenShake(heavy ? 9 : 4.5, heavy ? 0.14 : 0.09);
+  robotBeep(enemy.hp <= 0 ? 'destroy' : heavy ? 'hitHeavy' : 'hit');
+  addSparkFX(cx, cy, source.kind === 'charged' ? '#ffd48a' : '#9fe8ff', source.kind === 'charged' ? 9 : heavy ? 7 : 5, source.kind === 'charged' ? 1.45 : heavy ? 1.18 : 1);
+  addRingFX(cx, cy, source.kind === 'charged' ? '#ffd48a' : heavy ? '#ffbfa0' : '#9ae8ff', heavy);
+  addFloatText(cx, enemy.y - 10, enemy.hp <= 0 ? 'KO' : heavy ? 'CRASH' : 'HIT', enemy.hp <= 0 ? '#ffd84d' : heavy ? '#ffd3b4' : '#dff8ff');
   if (enemy.hp <= 0) {
     enemy.active = false; game.stars += enemy.type === 'bruiser' ? 3 : 1; updateCounters();
-    addRingFX(cx, enemy.y + enemy.height / 2, '#9cf7ff', true); addSparkFX(cx, cy, '#9cf7ff', enemy.type === 'bruiser' ? 10 : 7, enemy.type === 'bruiser' ? 1.5 : 1.1);
+    addRingFX(cx, enemy.y + enemy.height / 2, '#9cf7ff', true);
+    addSparkFX(cx, cy, '#9cf7ff', enemy.type === 'bruiser' ? 12 : 8, enemy.type === 'bruiser' ? 1.6 : 1.15);
+    vibratePulse(enemy.type === 'bruiser' ? [14, 20, 24] : 18);
+  } else if (heavy) {
+    vibratePulse(14);
   }
   return true;
 }
@@ -426,7 +483,7 @@ function updateProjectiles(dt) {
         const hitbox = { x: entity.x, y: ground - entity.height, width: entity.width, height: entity.height };
         if (intersect(proj, hitbox) && proj.kind === 'charged') {
           entity.destroyed = true; proj.active = false; game.stars += 1; updateCounters(); showMessage('Cañón cargado: ruta de ventaja abierta.');
-          addRingFX(proj.x + proj.width / 2, proj.y + proj.height / 2, '#ffc76c', true); addSparkFX(proj.x + proj.width / 2, proj.y + proj.height / 2, '#ffd58a', 9, 1.4);
+          addRingFX(proj.x + proj.width / 2, proj.y + proj.height / 2, '#ffc76c', true); addSparkFX(proj.x + proj.width / 2, proj.y + proj.height / 2, '#ffd58a', 9, 1.4); addHitStop(0.08); addScreenShake(10, 0.18); robotBeep('destroy');
         }
       }
       for (const enemy of game.enemies) {
@@ -435,12 +492,13 @@ function updateProjectiles(dt) {
         if (intersect(proj, target)) {
           if (applyDamageToEnemy(enemy, { damage: proj.damage, dir: proj.dir, kind: proj.kind })) {
             addRingFX(proj.x + proj.width / 2, proj.y + proj.height / 2, proj.kind === 'charged' ? '#ffc76c' : '#9ae8ff');
+            if (proj.kind === 'charged') addSparkFX(proj.x + proj.width / 2, proj.y + proj.height / 2, '#ffd58a', 5, 1.2);
             proj.active = proj.kind === 'charged' ? proj.life > 0.2 : false;
           }
         }
       }
     } else if (proj.owner === 'enemy' && intersect(game.player, proj)) {
-      proj.active = false; addRingFX(proj.x + proj.width / 2, proj.y + proj.height / 2, '#ffd8ff'); hurtPlayer('Disparo enemigo. Lee la carga antes del tiro.');
+      proj.active = false; addRingFX(proj.x + proj.width / 2, proj.y + proj.height / 2, '#ffd8ff'); addSparkFX(proj.x + proj.width / 2, proj.y + proj.height / 2, '#ffd8ff', 4, 0.95); hurtPlayer('Disparo enemigo. Lee la carga antes del tiro.');
     }
   }
   game.projectiles = game.projectiles.filter(p => p.active !== false);
@@ -465,15 +523,15 @@ function updateEntities(dt) {
 
     if (entity.type === 'energon') {
       const hitbox = { x: entity.x - 18, y: entity.y - 18, width: 36, height: 36 };
-      if (intersect(p, hitbox)) { entity.collected = true; game.energy += 1; if (game.energy % 4 === 0) game.stars += 1; updateCounters(); }
+      if (intersect(p, hitbox)) { entity.collected = true; game.energy += 1; if (game.energy % 4 === 0) game.stars += 1; updateCounters(); addRingFX(entity.x, entity.y, '#65f0ff'); addSparkFX(entity.x, entity.y, '#65f0ff', 4, 0.9); robotBeep('pickup'); }
     }
     if (entity.type === 'miniBot') {
       const hitbox = { x: entity.x - 32, y: entity.y - 40, width: 64, height: 64 };
-      if (intersect(p, hitbox)) { entity.collected = true; game.bots += 1; game.stars += 2; updateCounters(); showMessage('Mini bot rescatado. Buen cierre.', true); }
+      if (intersect(p, hitbox)) { entity.collected = true; game.bots += 1; game.stars += 2; updateCounters(); addRingFX(entity.x, entity.y - 16, '#8dffba', true); addSparkFX(entity.x, entity.y - 16, '#8dffba', 8, 1.2); addScreenShake(5, 0.08); robotBeep('pickup'); showMessage('Mini bot rescatado. Buen cierre.', true); }
     }
     if (entity.type === 'checkpoint') {
       const hitbox = { x: entity.x - 18, y: 0, width: 36, height: 720 };
-      if (intersect(p, hitbox)) { game.respawnX = entity.x - 80; game.checkpointIndex = Math.max(game.checkpointIndex, game.checkpoints.indexOf(entity)); }
+      if (intersect(p, hitbox) && game.respawnX !== entity.x - 80) { game.respawnX = entity.x - 80; game.checkpointIndex = Math.max(game.checkpointIndex, game.checkpoints.indexOf(entity)); addRingFX(entity.x, 496, '#65f0a6', true); robotBeep('checkpoint'); showMessage('Checkpoint activado. El avance ya está asegurado.'); }
     }
     if (entity.type === 'barrier') {
       const ground = getGroundYAt(entity.x + entity.width / 2) ?? 580; const hitbox = { x: entity.x, y: ground - entity.height, width: entity.width, height: entity.height };
@@ -482,7 +540,7 @@ function updateEntities(dt) {
     if (entity.type === 'wall') {
       const ground = getGroundYAt(entity.x + entity.width / 2) ?? 580; const hitbox = { x: entity.x, y: ground - entity.height, width: entity.width, height: entity.height };
       if (intersect(p, hitbox)) {
-        if (state.selectedCharacter.id === 'd16' && (Math.abs(p.vx) > 120 || game.projectiles.some(pr => pr.owner === 'player' && pr.kind === 'charged' && intersect(pr, hitbox)))) { entity.destroyed = true; game.stars += 1; updateCounters(); showMessage('Ruta de ventaja abierta por D-16.'); }
+        if (state.selectedCharacter.id === 'd16' && (Math.abs(p.vx) > 120 || game.projectiles.some(pr => pr.owner === 'player' && pr.kind === 'charged' && intersect(pr, hitbox)))) { entity.destroyed = true; game.stars += 1; updateCounters(); addScreenShake(10, 0.16); addRingFX(entity.x + entity.width / 2, ground - entity.height * 0.45, '#ffc76c', true); robotBeep('destroy'); showMessage('Ruta de ventaja abierta por D-16.'); }
         else { p.x = p.vx > 0 ? hitbox.x - p.width - 2 : hitbox.x + hitbox.width + 2; p.vx = 0; showMessage('Muro pesado: la ruta principal sigue abierta, pero D-16 domina esta ventaja.'); }
       }
     }
@@ -494,8 +552,12 @@ function updateEntities(dt) {
   for (const beat of game.currentLevel.beats) if (!beat.done && p.x >= beat.x) { beat.done = true; showMessage(beat.message, beat.x === 0); }
 }
 function completeLevel() {
-  game.justCompleted = true; game.running = false; setImageWithFallback(ui.rewardRobot, state.selectedCharacter.robotFrames[1], makeSpriteFallback(state.selectedCharacter, 'robot'));
-  ui.rewardLoot.innerHTML = `<div class="reward-pill">⚡ Energón: ${game.energy}</div><div class="reward-pill">★ Estrellas: ${game.stars}</div><div class="reward-pill">🤖 Bots rescatados: ${game.bots}</div><div class="reward-pill">Ruta de ventaja: ${state.selectedCharacter.abilities[0]}</div>`; setScreen('reward');
+  game.justCompleted = true; game.running = false;
+  addScreenShake(12, 0.18);
+  robotBeep('destroy');
+  setImageWithFallback(ui.rewardRobot, state.selectedCharacter.robotFrames[1], makeSpriteFallback(state.selectedCharacter, 'robot'));
+  ui.rewardLoot.innerHTML = `<div class="reward-pill">⚡ Energón: ${game.energy}</div><div class="reward-pill">★ Estrellas: ${game.stars}</div><div class="reward-pill">🤖 Bots rescatados: ${game.bots}</div><div class="reward-pill">Ruta de ventaja: ${state.selectedCharacter.abilities[0]}</div>`;
+  setScreen('reward');
 }
 function updateCamera() { const target = game.player.x + game.player.width * 0.5 - canvas.clientWidth * 0.38; const maxCamera = Math.max(0, game.worldWidth - canvas.clientWidth); game.cameraX += (Math.max(0, Math.min(maxCamera, target)) - game.cameraX) * 0.12; }
 function getFrameSource(character, form, animationTime, speed) {
@@ -528,15 +590,15 @@ function drawLabel(x, y, text, color) { ctx.font = '700 14px Inter, Arial'; cons
 function drawEntities() {
   for (const entity of game.entities) {
     if (entity.collected || entity.destroyed) continue; const x = worldToScreenX(entity.x);
-    if (entity.type === 'energon') { ctx.save(); ctx.translate(x, entity.y); ctx.rotate(performance.now() * 0.002); ctx.fillStyle = '#65f0ff'; ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(14, 0); ctx.lineTo(0, 18); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill(); ctx.restore(); }
+    if (entity.type === 'energon') { const pulse = 0.72 + Math.sin(performance.now() * 0.008 + entity.x * 0.01) * 0.18; ctx.save(); ctx.globalAlpha = 0.25 + pulse * 0.2; ctx.fillStyle = '#65f0ff'; ctx.beginPath(); ctx.arc(x, entity.y, 24 + pulse * 6, 0, Math.PI * 2); ctx.fill(); ctx.restore(); ctx.save(); ctx.translate(x, entity.y); ctx.rotate(performance.now() * 0.002); ctx.fillStyle = '#65f0ff'; ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(14, 0); ctx.lineTo(0, 18); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill(); ctx.restore(); }
     if (entity.type === 'gap') { const gapGrad = ctx.createLinearGradient(x, 580, x, canvas.clientHeight); gapGrad.addColorStop(0, 'rgba(61,164,255,.65)'); gapGrad.addColorStop(1, 'rgba(5,12,25,.88)'); ctx.fillStyle = gapGrad; ctx.fillRect(x, 580, entity.width, canvas.clientHeight - 580); ctx.fillStyle = '#9ee3ff'; ctx.fillRect(x, 580, entity.width, 12); drawLabel(x + entity.width / 2, 548, entity.label, '#3da4ff'); drawChevronStrip(x + 12, 594, entity.width - 24, '#9ee3ff'); }
     if (entity.type === 'barrier') {
       const ground = getGroundYAt(entity.x + entity.width / 2) ?? 580, top = ground - entity.height; const fireGrad = ctx.createLinearGradient(x, top, x, ground); fireGrad.addColorStop(0, '#ffe27a'); fireGrad.addColorStop(0.32, '#ff8f3c'); fireGrad.addColorStop(1, '#b51f13'); ctx.fillStyle = fireGrad; ctx.beginPath(); ctx.roundRect(x, top, entity.width, entity.height, 14); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.18)'; for (let fx = x + 8; fx < x + entity.width - 8; fx += 18) { ctx.beginPath(); ctx.moveTo(fx, ground - 8); ctx.quadraticCurveTo(fx + 8, top + 18, fx + 14, ground - 20); ctx.quadraticCurveTo(fx + 18, top + 36, fx + 24, ground - 10); ctx.closePath(); ctx.fill(); } ctx.strokeStyle = '#ffd67f'; ctx.lineWidth = 3; ctx.strokeRect(x + 4, top + 4, entity.width - 8, entity.height - 8); drawLabel(x + entity.width / 2, top - 22, entity.label, '#ffb35f');
     }
     if (entity.type === 'wall') { const ground = getGroundYAt(entity.x + entity.width / 2) ?? 580; ctx.fillStyle = '#707b8f'; ctx.fillRect(x, ground - entity.height, entity.width, entity.height); ctx.fillStyle = '#cfd6e3'; for (let yy = ground - entity.height + 10; yy < ground - 10; yy += 22) ctx.fillRect(x + 10, yy, entity.width - 20, 6); drawLabel(x + entity.width / 2, ground - entity.height - 22, entity.label, '#c3cad8'); }
-    if (entity.type === 'checkpoint') { ctx.fillStyle = '#65f0a6'; ctx.fillRect(x - 5, 440, 10, 140); ctx.fillStyle = 'rgba(101,240,166,.18)'; ctx.fillRect(x + 5, 452, 50, 30); }
-    if (entity.type === 'miniBot') { ctx.fillStyle = '#8dffba'; ctx.beginPath(); ctx.roundRect(x - 26, entity.y - 42, 52, 52, 14); ctx.fill(); ctx.fillStyle = '#173523'; ctx.fillRect(x - 12, entity.y - 26, 8, 8); ctx.fillRect(x + 4, entity.y - 26, 8, 8); }
-    if (entity.type === 'finish') { const ground = getGroundYAt(entity.x + entity.width / 2) ?? 580; ctx.fillStyle = '#65f0a6'; ctx.fillRect(x, ground - 150, 14, 150); ctx.fillStyle = '#d9fff0'; ctx.beginPath(); ctx.moveTo(x + 14, ground - 146); ctx.lineTo(x + entity.width, ground - 122); ctx.lineTo(x + 14, ground - 96); ctx.closePath(); ctx.fill(); }
+    if (entity.type === 'checkpoint') { const pulse = 0.7 + Math.abs(Math.sin(performance.now() * 0.007)) * 0.3; ctx.fillStyle = '#65f0a6'; ctx.fillRect(x - 5, 440, 10, 140); ctx.fillStyle = `rgba(101,240,166,${0.18 + pulse * 0.18})`; ctx.fillRect(x + 5, 452, 58, 34); ctx.beginPath(); ctx.arc(x, 518, 26 + pulse * 10, 0, Math.PI * 2); ctx.strokeStyle = `rgba(101,240,166,${0.2 + pulse * 0.25})`; ctx.lineWidth = 3; ctx.stroke(); drawLabel(x + 30, 430, 'CHECK', '#65f0a6'); }
+    if (entity.type === 'miniBot') { const pulse = 0.76 + Math.sin(performance.now() * 0.01 + entity.x * 0.01) * 0.16; ctx.fillStyle = `rgba(141,255,186,${0.16 + pulse * 0.12})`; ctx.beginPath(); ctx.arc(x, entity.y - 16, 28 + pulse * 6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#8dffba'; ctx.beginPath(); ctx.roundRect(x - 26, entity.y - 42, 52, 52, 14); ctx.fill(); ctx.fillStyle = '#173523'; ctx.fillRect(x - 12, entity.y - 26, 8, 8); ctx.fillRect(x + 4, entity.y - 26, 8, 8); drawLabel(x, entity.y - 58, 'BOT', '#8dffba'); }
+    if (entity.type === 'finish') { const ground = getGroundYAt(entity.x + entity.width / 2) ?? 580; const pulse = 0.75 + Math.abs(Math.sin(performance.now() * 0.008)) * 0.25; ctx.fillStyle = `rgba(101,240,166,${0.15 + pulse * 0.14})`; ctx.beginPath(); ctx.arc(x + 16, ground - 118, 34 + pulse * 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#65f0a6'; ctx.fillRect(x, ground - 150, 14, 150); ctx.fillStyle = '#d9fff0'; ctx.beginPath(); ctx.moveTo(x + 14, ground - 146); ctx.lineTo(x + entity.width, ground - 122); ctx.lineTo(x + 14, ground - 96); ctx.closePath(); ctx.fill(); drawLabel(x + entity.width * 0.55, ground - 166, 'META', '#65f0a6'); }
   }
 }
 function drawEnemyTelegraph(enemy, x, y) {
@@ -545,6 +607,8 @@ function drawEnemyTelegraph(enemy, x, y) {
     ctx.save();
     ctx.strokeStyle = `rgba(255,216,77,${0.45 + pulse * 0.25})`; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.roundRect(x - 4, y - 4, enemy.width + 8, enemy.height + 8, 18); ctx.stroke();
+    ctx.fillStyle = `rgba(255,216,77,${0.08 + pulse * 0.12})`;
+    ctx.beginPath(); ctx.ellipse(x + enemy.width / 2, y + enemy.height + 10, Math.max(20, enemy.width * 0.58 + pulse * 6), 10 + pulse * 4, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = 'rgba(255,225,125,.96)'; ctx.beginPath(); ctx.roundRect(x + enemy.width * 0.18, y - 28, enemy.width * 0.64, 16, 8); ctx.fill();
     ctx.fillStyle = '#2f1a04'; ctx.fillRect(x + enemy.width * 0.24, y - 22, enemy.width * 0.52, 4);
     ctx.fillStyle = '#fff6ce'; ctx.font = '900 12px Inter, Arial'; ctx.fillText('!', x + enemy.width * 0.48, y - 15);
@@ -613,32 +677,71 @@ function drawFX(dt = 0.016) {
 function drawPlayerAttack() {
   const p = game.player; if (!p?.attack) return; const box = getAttackHitbox(p, p.attack); if (!box) return; const x = worldToScreenX(box.x); ctx.fillStyle = 'rgba(154,232,255,.18)'; ctx.fillRect(x, box.y, box.width, box.height); ctx.strokeStyle = 'rgba(154,232,255,.55)'; ctx.strokeRect(x, box.y, box.width, box.height);
 }
+function drawFallbackPlayerSprite(sx, p, c) {
+  const accent = c?.accent || '#44efff';
+  const base = c?.color || '#274b7a';
+  ctx.fillStyle = base;
+  ctx.beginPath();
+  ctx.roundRect(sx + p.width * 0.16, p.y + p.height * 0.08, p.width * 0.68, p.height * 0.64, 18);
+  ctx.fill();
+  ctx.fillStyle = accent;
+  ctx.fillRect(sx + p.width * 0.28, p.y + p.height * 0.24, p.width * 0.44, p.height * 0.14);
+  ctx.fillStyle = '#dfeaff';
+  ctx.beginPath();
+  ctx.roundRect(sx + p.width * 0.3, p.y + p.height * 0.72, p.width * 0.4, p.height * 0.12, 10);
+  ctx.fill();
+}
+
 function drawPlayer() {
   const p = game.player, c = state.selectedCharacter, img = getFrameSource(c, p.form, p.animationTime, p.vx), sx = worldToScreenX(p.x);
-  ctx.save(); if (p.invuln > 0 && Math.floor(p.invuln * 10) % 2 === 0) ctx.globalAlpha = 0.5; if (p.facing < 0) { ctx.translate(sx + p.width / 2, 0); ctx.scale(-1, 1); ctx.drawImage(img, -p.width / 2, p.y, p.width, p.height); } else ctx.drawImage(img, sx, p.y, p.width, p.height);
+  ctx.save();
+  const shadowGrad = ctx.createRadialGradient(sx + p.width * 0.5, p.y + p.height * 0.88, 4, sx + p.width * 0.5, p.y + p.height * 0.88, p.width * 0.68);
+  shadowGrad.addColorStop(0, 'rgba(0,0,0,.22)'); shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = shadowGrad; ctx.beginPath(); ctx.ellipse(sx + p.width * 0.5, p.y + p.height * 0.92, p.width * 0.42, 14, 0, 0, Math.PI * 2); ctx.fill();
+  if (p.invuln > 0 && Math.floor(p.invuln * 10) % 2 === 0) ctx.globalAlpha = 0.5;
+  try {
+    if (!img || typeof img !== 'object') throw new Error('missing player sprite');
+    if (p.facing < 0) { ctx.translate(sx + p.width / 2, 0); ctx.scale(-1, 1); ctx.drawImage(img, -p.width / 2, p.y, p.width, p.height); } else ctx.drawImage(img, sx, p.y, p.width, p.height);
+  } catch (_) {
+    if (p.facing < 0) { ctx.translate(sx + p.width / 2, 0); ctx.scale(-1, 1); drawFallbackPlayerSprite(-p.width / 2, p, c); } else drawFallbackPlayerSprite(sx, p, c);
+  }
   if (c.id === 'elita' && !p.onGround && game.input.jumpHeld && p.vy > 0) { ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.moveTo(sx + p.width / 2, p.y + 48); ctx.lineTo(sx - 10, p.y + 84); ctx.lineTo(sx + p.width + 10, p.y + 84); ctx.closePath(); ctx.fill(); }
   if (p.charging) { ctx.fillStyle = 'rgba(255, 199, 108, .8)'; ctx.beginPath(); ctx.arc(sx + p.width * .7, p.y + 46, 12 + p.chargeTime * 18, 0, Math.PI * 2); ctx.fill(); }
+  if (Math.abs(p.vx) > 220 && p.onGround) { ctx.fillStyle = 'rgba(154,232,255,.12)'; ctx.fillRect(sx - p.facing * 10, p.y + p.height - 22, 18, 8); }
   ctx.restore(); drawPlayerAttack();
 }
-function render(dt = 0.016) { drawBackground(); drawTerrain(); drawEntities(); drawEnemies(); drawProjectiles(); drawFX(dt); drawPlayer(); }
+function render(dt = 0.016) {
+  ctx.save();
+  ctx.translate(timing.shakeX || 0, timing.shakeY || 0);
+  drawBackground(); drawTerrain(); drawEntities(); drawEnemies(); drawProjectiles(); drawFX(dt); drawPlayer();
+  ctx.restore();
+}
 function updateLoop(now) {
   if (!game.frameTime) game.frameTime = now; const dt = Math.min(0.025, (now - game.frameTime) / 1000); game.frameTime = now;
+  updateScreenShake(dt);
   if (timing.hitStop > 0) { timing.hitStop = Math.max(0, timing.hitStop - dt); render(dt); requestAnimationFrame(updateLoop); return; }
   if (game.running) { updatePlayer(dt); updateCombat(dt); updateEnemies(dt); updateProjectiles(dt); updateEntities(dt); handleEnemyCollisions(); updateCamera(); render(dt); if (game.messageTimer > 0) game.messageTimer -= dt; }
   requestAnimationFrame(updateLoop);
 }
 function setupButtons() {
-  document.getElementById('playButton').addEventListener('click', startGame); document.getElementById('playAgainButton').addEventListener('click', startGame); document.getElementById('homeButton').addEventListener('click', () => setScreen('home'));
-  document.getElementById('pauseToHomeButton').addEventListener('click', () => { game.running = false; setScreen('home'); });
+  const playButton = document.getElementById('playButton');
+  const playAgainButton = document.getElementById('playAgainButton');
+  const homeButton = document.getElementById('homeButton');
+  const pauseButton = document.getElementById('pauseToHomeButton');
+  playButton.addEventListener('click', startGame); playAgainButton.addEventListener('click', startGame); homeButton.addEventListener('click', () => setScreen('home'));
+  pauseButton.addEventListener('click', () => { game.running = false; setScreen('home'); });
   ui.previewButton.addEventListener('click', () => { state.previewForm = state.previewForm === 'robot' ? 'vehicle' : 'robot'; updateHomePreview(); });
-  ui.soundToggle.addEventListener('click', () => { audioState.enabled = !audioState.enabled; ui.soundToggle.textContent = audioState.enabled ? '🔊' : '🔇'; localStorage.setItem('cyber-bot-audio', audioState.enabled ? '1' : '0'); if (!audioState.enabled && 'speechSynthesis' in window) window.speechSynthesis.cancel(); });
+  ui.soundToggle.addEventListener('click', () => { audioState.enabled = !audioState.enabled; ui.soundToggle.textContent = audioState.enabled ? '🔊' : '🔇'; safeSetStorage('cyber-bot-audio', audioState.enabled ? '1' : '0'); if (!audioState.enabled && 'speechSynthesis' in window) window.speechSynthesis.cancel(); });
   const jumpButton = document.getElementById('jumpButton'), transformButton = document.getElementById('transformButton'), attackButton = document.getElementById('attackButton');
-  const activateJump = e => { e.preventDefault(); handleJumpPress(); }, releaseJump = e => { e.preventDefault(); game.input.jumpHeld = false; };
-  ['pointerdown', 'touchstart'].forEach(evt => jumpButton.addEventListener(evt, activateJump, { passive: false })); ['pointerup', 'pointercancel', 'touchend'].forEach(evt => jumpButton.addEventListener(evt, releaseJump, { passive: false }));
-  ['click','pointerdown'].forEach(evt => transformButton.addEventListener(evt, e => { e.preventDefault(); handleTransform(); }, { passive: false }));
-  const attackDown = e => { e.preventDefault(); game.input.attackPressed = true; game.input.attackHeld = true; };
-  const attackUp = e => { e.preventDefault(); game.input.attackHeld = false; game.input.attackReleased = true; };
-  ['pointerdown', 'touchstart'].forEach(evt => attackButton.addEventListener(evt, attackDown, { passive: false })); ['pointerup', 'pointercancel', 'touchend'].forEach(evt => attackButton.addEventListener(evt, attackUp, { passive: false }));
+  const pressUI = (button, pressed) => setButtonPressed(button, pressed);
+  const activateJump = e => { e.preventDefault(); handleJumpPress(); pressUI(jumpButton, true); };
+  const releaseJump = e => { e.preventDefault(); game.input.jumpHeld = false; pressUI(jumpButton, false); };
+  ['pointerdown', 'touchstart'].forEach(evt => jumpButton.addEventListener(evt, activateJump, { passive: false })); ['pointerup', 'pointercancel', 'touchend', 'pointerleave'].forEach(evt => jumpButton.addEventListener(evt, releaseJump, { passive: false }));
+  ['pointerdown', 'touchstart'].forEach(evt => transformButton.addEventListener(evt, e => { e.preventDefault(); pressUI(transformButton, true); handleTransform(); setTimeout(() => pressUI(transformButton, false), 120); }, { passive: false }));
+  ['pointerup', 'pointercancel', 'touchend', 'pointerleave'].forEach(evt => transformButton.addEventListener(evt, () => pressUI(transformButton, false), { passive: true }));
+  const attackDown = e => { e.preventDefault(); game.input.attackPressed = true; game.input.attackHeld = true; pressUI(attackButton, true); };
+  const attackUp = e => { e.preventDefault(); game.input.attackHeld = false; game.input.attackReleased = true; pressUI(attackButton, false); };
+  ['pointerdown', 'touchstart'].forEach(evt => attackButton.addEventListener(evt, attackDown, { passive: false })); ['pointerup', 'pointercancel', 'touchend', 'pointerleave'].forEach(evt => attackButton.addEventListener(evt, attackUp, { passive: false }));
   window.addEventListener('keydown', e => {
     if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); handleJumpPress(); }
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyX') { e.preventDefault(); handleTransform(); }
@@ -652,14 +755,14 @@ function setupButtons() {
   });
 }
 function updateJoystickVisual(nx, ny) { joystickKnob.style.transform = `translate(calc(-50% + ${nx * game.joystick.radius}px), calc(-50% + ${ny * game.joystick.radius}px))`; }
-function resetJoystick() { game.joystick.active = false; game.joystick.pointerId = null; game.joystick.dirX = 0; updateJoystickVisual(0, 0); }
+function resetJoystick() { game.joystick.active = false; game.joystick.pointerId = null; game.joystick.dirX = 0; joystickBase.classList.remove('active'); joystickBase.closest('.joystick-panel')?.classList.remove('active'); updateJoystickVisual(0, 0); }
 function setupJoystick() {
   const onMove = (clientX, clientY) => {
     const rect = joystickBase.getBoundingClientRect(), cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2; let dx = clientX - cx, dy = clientY - cy; const distance = Math.hypot(dx, dy), max = rect.width * 0.32;
     if (distance > max) { dx = (dx / distance) * max; dy = (dy / distance) * max; }
     const nx = dx / max, ny = dy / max; game.joystick.dirX = Math.abs(nx) < 0.18 ? 0 : nx; updateJoystickVisual(nx, ny);
   };
-  joystickBase.addEventListener('pointerdown', e => { e.preventDefault(); game.joystick.active = true; game.joystick.pointerId = e.pointerId; joystickBase.setPointerCapture(e.pointerId); onMove(e.clientX, e.clientY); });
+  joystickBase.addEventListener('pointerdown', e => { e.preventDefault(); game.joystick.active = true; game.joystick.pointerId = e.pointerId; joystickBase.classList.add('active'); joystickBase.closest('.joystick-panel')?.classList.add('active'); joystickBase.setPointerCapture(e.pointerId); onMove(e.clientX, e.clientY); });
   joystickBase.addEventListener('pointermove', e => { if (!game.joystick.active || e.pointerId !== game.joystick.pointerId) return; onMove(e.clientX, e.clientY); });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(evt => joystickBase.addEventListener(evt, e => { if (game.joystick.pointerId !== null && e.pointerId !== game.joystick.pointerId) return; resetJoystick(); }));
 }
@@ -667,11 +770,12 @@ let initialized = false;
 function init() {
   if (initialized) return;
   initialized = true;
-  const savedChar = localStorage.getItem('cyber-bot-selected');
+  const savedChar = safeGetStorage('cyber-bot-selected');
   state.selectedCharacter = getCharacterById(savedChar || characters[0].id);
-  audioState.enabled = localStorage.getItem('cyber-bot-audio') !== '0';
+  audioState.enabled = safeGetStorage('cyber-bot-audio') !== '0';
   ui.soundToggle.textContent = audioState.enabled ? '🔊' : '🔇';
   document.documentElement.classList.toggle('touch-device', window.matchMedia ? matchMedia('(pointer: coarse)').matches : false);
+  applyCharacterTheme(state.selectedCharacter);
   renderCharacterCards();
   updateHomePreview();
   setupButtons();
