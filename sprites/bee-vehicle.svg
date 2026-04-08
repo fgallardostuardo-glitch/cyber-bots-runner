@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">
+    <defs><filter id="s"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#09101e" flood-opacity="0.35"/></filter></defs>
+    <g filter="url(#s)">
+      <path d="M34 118 L72 78 C82 68 98 62 114 62 H188 C205 62 218 58 232 48 L258 30 C266 24 274 22 284 22 H298 C306 22 312 28 312 36 V110 C312 126 300 138 284 138 H56 C42 138 30 132 34 118 Z" fill="#ffd84d"/>
+      <path d="M96 66 H182 C198 66 212 60 224 50 L246 34 H280 C288 34 294 40 294 48 V88 H76 L86 74 C88 68 92 66 96 66 Z" fill="#2d3240"/>
+      <rect x="104" y="72" width="62" height="22" rx="10" fill="#fff6b5" opacity="0.7"/>
+      <rect x="174" y="72" width="46" height="22" rx="10" fill="#fff6b5" opacity="0.45"/>
+      <circle cx="92" cy="138" r="26" fill="#111827"/><circle cx="252" cy="138" r="26" fill="#111827"/>
+      <circle cx="92" cy="138" r="12" fill="#fff6b5" opacity="0.45"/><circle cx="252" cy="138" r="12" fill="#fff6b5" opacity="0.45"/>
+      <rect x="20" y="100" width="34" height="18" rx="8" fill="#2d3240"/>
+      <path d="M302 58 L318 66 L302 74 Z" fill="#fff6b5"/>
+    </g></svg>
