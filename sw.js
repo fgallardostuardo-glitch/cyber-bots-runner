@@ -1,4 +1,4 @@
-const CACHE_NAME = "cyber-bots-vertical-slice-v3";
+const CACHE_NAME = "cyber-bots-vertical-slice-v4";
 const APP_ASSETS = [
   "./",
   "./index.html",

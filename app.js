@@ -58,7 +58,8 @@ const game = {
   projectiles: [],
   fx: [],
   messageTimer: 0,
-  joystick: { active: false, pointerId: null, radius: 56, dirX: 0 },
+  stepBlockers: [],
+  joystick: { active: false, pointerId: null, radius: 56, dirX: 0, dirY: 0, jumpLatched: false },
   input: { jumpPressed: false, jumpHeld: false, attackPressed: false, attackHeld: false, attackReleased: false }
 };
 
@@ -85,7 +86,11 @@ function updateScreenShake(dt) {
   if (timing.shakeTime === 0) { timing.shakeMag = 0; timing.shakeX = 0; timing.shakeY = 0; }
 }
 function vibratePulse(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_) {} }
-function setScreen(name) { Object.entries(screens).forEach(([k, el]) => el.classList.toggle('active', k === name)); }
+function setScreen(name) {
+  Object.entries(screens).forEach(([k, el]) => el.classList.toggle('active', k === name));
+  syncViewportMetrics();
+  if (name === 'game') resizeCanvas();
+}
 function animateHomePreview() {
   ui.heroPreview.classList.remove('is-swapping');
   void ui.heroPreview.offsetWidth;
@@ -101,11 +106,24 @@ function applyCharacterTheme(character) {
 function setButtonPressed(button, pressed) { if (!button) return; button.classList.toggle('is-pressed', !!pressed); }
 function safeGetStorage(key) { try { return window.localStorage ? localStorage.getItem(key) : null; } catch (_) { return null; } }
 function safeSetStorage(key, value) { try { if (window.localStorage) localStorage.setItem(key, value); } catch (_) {} }
+function syncViewportMetrics() {
+  const vv = window.visualViewport;
+  const width = Math.max(320, Math.round(vv?.width || window.innerWidth || document.documentElement.clientWidth || 320));
+  const height = Math.max(320, Math.round(vv?.height || window.innerHeight || document.documentElement.clientHeight || 320));
+  document.documentElement.style.setProperty('--app-width', `${width}px`);
+  document.documentElement.style.setProperty('--app-height', `${height}px`);
+  return { width, height };
+}
 function resizeCanvas() {
   const ratio = Math.min(window.devicePixelRatio || 1, 2);
-  const w = window.innerWidth, h = window.visualViewport?.height || window.innerHeight;
-  canvas.width = Math.floor(w * ratio); canvas.height = Math.floor(h * ratio);
-  canvas.style.width = `${w}px`; canvas.style.height = `${h}px`;
+  const viewport = syncViewportMetrics();
+  const bounds = screens.game?.getBoundingClientRect?.() || { width: viewport.width, height: viewport.height };
+  const w = Math.max(320, Math.round(bounds.width || viewport.width));
+  const h = Math.max(320, Math.round(bounds.height || viewport.height));
+  canvas.width = Math.floor(w * ratio);
+  canvas.height = Math.floor(h * ratio);
+  canvas.style.width = `${w}px`;
+  canvas.style.height = `${h}px`;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 }
 function preloadAssets() {
@@ -222,12 +240,55 @@ function getGroundYAt(x) {
   for (const seg of terrain) if (x >= seg.from && x <= seg.to) ground = ground === null ? seg.y : Math.min(ground, seg.y);
   return ground;
 }
+function buildStepBlockers(terrain = []) {
+  const sorted = [...terrain].sort((a, b) => a.from - b.from);
+  const blockers = [];
+  for (let i = 0; i < sorted.length - 1; i += 1) {
+    const left = sorted[i], right = sorted[i + 1];
+    if (Math.abs(left.to - right.from) > 0.1) continue;
+    blockers.push({ x: right.from, leftY: left.y, rightY: right.y });
+  }
+  return blockers;
+}
+function resolveTerrainSteps(previousX) {
+  const p = game.player;
+  if (!p || !game.stepBlockers?.length || Math.abs(p.vx) < 0.001) return false;
+  const movingRight = p.vx > 0;
+  const prevFront = movingRight ? previousX + p.width : previousX;
+  const nextFront = movingRight ? p.x + p.width : p.x;
+  for (const blocker of game.stepBlockers) {
+    if (movingRight) {
+      if (!(prevFront <= blocker.x && nextFront >= blocker.x)) continue;
+      const rise = blocker.leftY - blocker.rightY;
+      if (rise <= 0) continue;
+      const feet = p.y + p.height;
+      const requiredTop = blocker.rightY + 4;
+      if (feet > requiredTop && p.vy >= -80) {
+        p.x = blocker.x - p.width - 0.01;
+        p.vx = Math.min(0, p.vx);
+        return true;
+      }
+    } else {
+      if (!(prevFront >= blocker.x && nextFront <= blocker.x)) continue;
+      const rise = blocker.rightY - blocker.leftY;
+      if (rise <= 0) continue;
+      const feet = p.y + p.height;
+      const requiredTop = blocker.leftY + 4;
+      if (feet > requiredTop && p.vy >= -80) {
+        p.x = blocker.x + 0.01;
+        p.vx = Math.max(0, p.vx);
+        return true;
+      }
+    }
+  }
+  return false;
+}
 function createPlayer() {
   const c = state.selectedCharacter;
   return {
     x: 120, y: 580 - c.robotSize.height, vx: 0, vy: 0, width: c.robotSize.width, height: c.robotSize.height,
     form: 'robot', facing: 1, onGround: true, coyote: 0, holdJumpTimer: 0, extraJumpsLeft: c.extraJumps,
-    transformLock: 0, invuln: 0, animationTime: 0, dashTimer: 0,
+    transformLock: 0, invuln: 0, animationTime: 0, dashTimer: 0, recoilTimer: 0,
     attack: null, attackCooldown: 0, comboWindow: 0, comboIndex: 0, charging: false, chargeTime: 0,
     groundBelow: 580
   };
@@ -250,6 +311,7 @@ function spawnLevel() {
   const clone = structuredCloneLocal(levelTemplate); game.currentLevel = clone; game.worldWidth = clone.worldWidth;
   game.entities = clone.entities.map(e => ({ ...e, collected: false, destroyed: false, timer: 0, falling: false, vy: 0 }));
   game.enemies = clone.enemies.map(makeEnemy); game.checkpoints = game.entities.filter(e => e.type === 'checkpoint'); game.checkpointIndex = 0;
+  game.stepBlockers = buildStepBlockers(clone.terrain);
   game.energy = 0; game.stars = 0; game.bots = 0; game.cameraX = 0; game.player = createPlayer(); game.respawnX = 120; game.justCompleted = false; game.projectiles = []; game.fx = [];
   updateCounters();
 }
@@ -311,7 +373,7 @@ function releaseAttack() {
   const p = game.player, c = getPlayerStats(); if (!p || c.id !== 'd16' || !p.charging) return;
   const charged = p.chargeTime >= 0.46;
   game.projectiles.push(Systems.createD16Projectile(p, charged));
-  p.vx -= p.facing * (charged ? 70 : 34); p.attackCooldown = charged ? 0.45 : 0.28; p.charging = false; p.chargeTime = 0; robotBeep(charged ? 'charge' : 'shoot');
+  p.vx -= p.facing * (charged ? 70 : 34); p.recoilTimer = charged ? 0.22 : 0.14; p.attackCooldown = charged ? 0.45 : 0.28; p.charging = false; p.chargeTime = 0; robotBeep(charged ? 'charge' : 'shoot');
 }
 function applyDamageToEnemy(enemy, source) {
   if (!enemy.active) return false;
@@ -394,9 +456,9 @@ function updatePlayer(dt) {
   if (game.input.attackReleased) { releaseAttack(); game.input.attackReleased = false; }
   if (game.input.jumpHeld && p.holdJumpTimer > 0 && p.vy < 0) { p.vy -= 390 * dt; p.holdJumpTimer -= dt; } else p.holdJumpTimer = 0;
   const glide = c.id === 'elita' && c.glideGravity < 1 && game.input.jumpHeld && !p.onGround && p.vy > 0; p.vy += c.gravity * (glide ? c.glideGravity : 1) * dt;
-  if (p.transformLock > 0) p.transformLock -= dt; if (p.invuln > 0) p.invuln -= dt; p.coyote -= dt;
-  const previousBottom = p.y + p.height; const previousVy = p.vy; const previousOnGround = p.onGround;
-  p.x += p.vx * dt; p.y += p.vy * dt; p.x = Math.max(0, Math.min(game.worldWidth - p.width, p.x)); p.onGround = false;
+  if (p.transformLock > 0) p.transformLock -= dt; if (p.invuln > 0) p.invuln -= dt; if (p.recoilTimer > 0) p.recoilTimer -= dt; p.coyote -= dt;
+  const previousX = p.x; const previousBottom = p.y + p.height; const previousVy = p.vy; const previousOnGround = p.onGround;
+  p.x += p.vx * dt; resolveTerrainSteps(previousX); p.y += p.vy * dt; p.x = Math.max(0, Math.min(game.worldWidth - p.width, p.x)); p.onGround = false;
   const footX = p.x + p.width * 0.5; const ground = getGroundYAt(footX); p.groundBelow = ground ?? 9999;
   if (ground !== null && p.vy >= 0 && p.y + p.height >= ground) { p.y = ground - p.height; p.vy = 0; p.onGround = true; } else resolvePlatforms(previousBottom);
   if (p.onGround) { p.coyote = 0.1; p.extraJumpsLeft = c.extraJumps; if (!previousOnGround && c.id === 'd16' && p.form === 'robot' && previousVy > 520) damageNearbyEnemies(p.x + p.width / 2, 92, 1.5); }
@@ -560,8 +622,72 @@ function completeLevel() {
   setScreen('reward');
 }
 function updateCamera() { const target = game.player.x + game.player.width * 0.5 - canvas.clientWidth * 0.38; const maxCamera = Math.max(0, game.worldWidth - canvas.clientWidth); game.cameraX += (Math.max(0, Math.min(maxCamera, target)) - game.cameraX) * 0.12; }
-function getFrameSource(character, form, animationTime, speed) {
-  const frames = form === 'vehicle' ? character.vehicleFrames : character.robotFrames; const moving = Math.abs(speed) > 30; const idx = moving ? Math.floor(animationTime * 7) % frames.length : 1; return assets.images[frames[idx]] || assets.images[frames[1]];
+function getAttackVisualState(p, character) {
+  if (!p || p.form !== 'robot') return null;
+  if (p.charging) {
+    return { frameIdx: 2, rotation: p.facing * (-0.04 - Math.min(0.16, p.chargeTime * 0.18)), offsetX: p.facing * 10, offsetY: -4, scaleX: 1.06, scaleY: 0.97, muzzle: true };
+  }
+  if (p.recoilTimer > 0) {
+    const t = 1 - p.recoilTimer / 0.22;
+    return { frameIdx: 2, rotation: p.facing * (0.16 - t * 0.28), offsetX: p.facing * (10 - t * 6), offsetY: -2, scaleX: 1.05, scaleY: 0.96, muzzle: true };
+  }
+  if (!p.attack) return null;
+  const t = Math.max(0, Math.min(1, p.attack.timer / Math.max(0.001, p.attack.duration)));
+  if (p.attack.type === 'orion' || p.attack.type === 'orion-air') {
+    return { frameIdx: t < 0.33 ? 0 : t < 0.66 ? 1 : 2, rotation: p.facing * (-0.28 + t * 0.7), offsetX: p.facing * (4 + 14 * t), offsetY: p.attack.type === 'orion-air' ? -12 * Math.sin(t * Math.PI) : -2, scaleX: 1.05 + 0.06 * Math.sin(t * Math.PI), scaleY: 0.98 };
+  }
+  if (p.attack.type === 'bee-slash') {
+    return { frameIdx: t < 0.4 ? 0 : t < 0.8 ? 1 : 2, rotation: p.facing * (-0.36 + t * 0.72), offsetX: p.facing * (8 + 18 * t), offsetY: -5, scaleX: 1.1, scaleY: 0.92 };
+  }
+  if (p.attack.type === 'bee-dash') {
+    return { frameIdx: 2, rotation: 0, offsetX: p.facing * 16, offsetY: -2, scaleX: 1.16, scaleY: 0.9 };
+  }
+  return null;
+}
+function getFrameSource(character, form, animationTime, speed, attackVisual = null) {
+  const frames = form === 'vehicle' ? character.vehicleFrames : character.robotFrames;
+  if (attackVisual && form === 'robot') {
+    const idx = Math.max(0, Math.min(frames.length - 1, attackVisual.frameIdx ?? 1));
+    return assets.images[frames[idx]] || assets.images[frames[1]];
+  }
+  const moving = Math.abs(speed) > 30; const idx = moving ? Math.floor(animationTime * 7) % frames.length : 1; return assets.images[frames[idx]] || assets.images[frames[1]];
+}
+function drawPlayerAttackFX(p, sx, visual) {
+  if (!p) return;
+  const centerX = sx + p.width * 0.5;
+  const centerY = p.y + p.height * 0.44;
+  if (p.attack?.type === 'orion' || p.attack?.type === 'orion-air') {
+    const t = p.attack.timer / Math.max(0.001, p.attack.duration);
+    ctx.save();
+    ctx.translate(centerX + p.facing * (18 + t * 18), centerY - 8);
+    if (p.facing < 0) ctx.scale(-1, 1);
+    ctx.rotate(-0.7 + t * 1.15);
+    const grad = ctx.createLinearGradient(0, 0, 92, 0); grad.addColorStop(0, 'rgba(255,255,255,0)'); grad.addColorStop(0.35, 'rgba(255,245,210,.75)'); grad.addColorStop(1, 'rgba(82,181,255,.22)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.moveTo(0, -14); ctx.quadraticCurveTo(48, -40, 102, -6); ctx.quadraticCurveTo(54, -2, 0, 16); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  if (p.attack?.type === 'bee-slash' || p.attack?.type === 'bee-dash') {
+    const dash = p.attack.type === 'bee-dash';
+    const t = p.attack.timer / Math.max(0.001, p.attack.duration);
+    ctx.save();
+    ctx.translate(centerX + p.facing * (dash ? 24 : 14), centerY + 4);
+    if (p.facing < 0) ctx.scale(-1, 1);
+    ctx.rotate(-0.35 + t * 0.5);
+    const grad = ctx.createLinearGradient(-10, 0, dash ? 136 : 92, 0); grad.addColorStop(0, 'rgba(255,255,255,0)'); grad.addColorStop(0.26, 'rgba(255,245,200,.82)'); grad.addColorStop(1, dash ? 'rgba(255,77,119,.18)' : 'rgba(68,239,255,.22)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.moveTo(-4, -12); ctx.quadraticCurveTo(dash ? 62 : 40, dash ? -26 : -20, dash ? 136 : 92, 0); ctx.quadraticCurveTo(dash ? 70 : 38, dash ? 18 : 16, -4, 10); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  if (visual?.muzzle) {
+    ctx.save();
+    const flareX = centerX + p.facing * (p.width * 0.22 + 18);
+    const flareY = p.y + p.height * 0.34;
+    const grad = ctx.createRadialGradient(flareX, flareY, 2, flareX, flareY, 24);
+    grad.addColorStop(0, 'rgba(255,244,209,.95)'); grad.addColorStop(0.45, 'rgba(255,199,108,.65)'); grad.addColorStop(1, 'rgba(255,199,108,0)');
+    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(flareX, flareY, 24, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
 }
 function drawBackground() {
   const w = canvas.clientWidth, h = canvas.clientHeight, cam = game.cameraX;
@@ -674,9 +800,7 @@ function drawFX(dt = 0.016) {
     ctx.globalAlpha = Math.max(0, fx.t / 0.28); ctx.strokeStyle = fx.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, fx.y, fx.burst ? (1 - fx.t / 0.28) * 34 : 12 + (1 - fx.t / 0.18) * 8, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
   }
 }
-function drawPlayerAttack() {
-  const p = game.player; if (!p?.attack) return; const box = getAttackHitbox(p, p.attack); if (!box) return; const x = worldToScreenX(box.x); ctx.fillStyle = 'rgba(154,232,255,.18)'; ctx.fillRect(x, box.y, box.width, box.height); ctx.strokeStyle = 'rgba(154,232,255,.55)'; ctx.strokeRect(x, box.y, box.width, box.height);
-}
+function drawPlayerAttack() {}
 function drawFallbackPlayerSprite(sx, p, c) {
   const accent = c?.accent || '#44efff';
   const base = c?.color || '#274b7a';
@@ -693,22 +817,29 @@ function drawFallbackPlayerSprite(sx, p, c) {
 }
 
 function drawPlayer() {
-  const p = game.player, c = state.selectedCharacter, img = getFrameSource(c, p.form, p.animationTime, p.vx), sx = worldToScreenX(p.x);
+  const p = game.player, c = state.selectedCharacter, visual = getAttackVisualState(p, c), img = getFrameSource(c, p.form, p.animationTime, p.vx, visual), sx = worldToScreenX(p.x);
   ctx.save();
   const shadowGrad = ctx.createRadialGradient(sx + p.width * 0.5, p.y + p.height * 0.88, 4, sx + p.width * 0.5, p.y + p.height * 0.88, p.width * 0.68);
   shadowGrad.addColorStop(0, 'rgba(0,0,0,.22)'); shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = shadowGrad; ctx.beginPath(); ctx.ellipse(sx + p.width * 0.5, p.y + p.height * 0.92, p.width * 0.42, 14, 0, 0, Math.PI * 2); ctx.fill();
   if (p.invuln > 0 && Math.floor(p.invuln * 10) % 2 === 0) ctx.globalAlpha = 0.5;
+  const centerX = sx + p.width * 0.5 + (visual?.offsetX || 0);
+  const centerY = p.y + p.height * 0.5 + (visual?.offsetY || 0);
+  ctx.translate(centerX, centerY);
+  if (p.facing < 0) ctx.scale(-1, 1);
+  ctx.rotate(visual?.rotation || 0);
+  ctx.scale(visual?.scaleX || 1, visual?.scaleY || 1);
   try {
     if (!img || typeof img !== 'object') throw new Error('missing player sprite');
-    if (p.facing < 0) { ctx.translate(sx + p.width / 2, 0); ctx.scale(-1, 1); ctx.drawImage(img, -p.width / 2, p.y, p.width, p.height); } else ctx.drawImage(img, sx, p.y, p.width, p.height);
+    ctx.drawImage(img, -p.width / 2, -p.height / 2, p.width, p.height);
   } catch (_) {
-    if (p.facing < 0) { ctx.translate(sx + p.width / 2, 0); ctx.scale(-1, 1); drawFallbackPlayerSprite(-p.width / 2, p, c); } else drawFallbackPlayerSprite(sx, p, c);
+    drawFallbackPlayerSprite(-p.width / 2, { ...p, y: -p.height / 2 }, c);
   }
-  if (c.id === 'elita' && !p.onGround && game.input.jumpHeld && p.vy > 0) { ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.moveTo(sx + p.width / 2, p.y + 48); ctx.lineTo(sx - 10, p.y + 84); ctx.lineTo(sx + p.width + 10, p.y + 84); ctx.closePath(); ctx.fill(); }
-  if (p.charging) { ctx.fillStyle = 'rgba(255, 199, 108, .8)'; ctx.beginPath(); ctx.arc(sx + p.width * .7, p.y + 46, 12 + p.chargeTime * 18, 0, Math.PI * 2); ctx.fill(); }
-  if (Math.abs(p.vx) > 220 && p.onGround) { ctx.fillStyle = 'rgba(154,232,255,.12)'; ctx.fillRect(sx - p.facing * 10, p.y + p.height - 22, 18, 8); }
-  ctx.restore(); drawPlayerAttack();
+  if (c.id === 'elita' && !p.onGround && game.input.jumpHeld && p.vy > 0) { ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.moveTo(0, -p.height * 0.1); ctx.lineTo(-p.width * 0.6, p.height * 0.24); ctx.lineTo(p.width * 0.6, p.height * 0.24); ctx.closePath(); ctx.fill(); }
+  if (p.charging) { ctx.fillStyle = 'rgba(255, 199, 108, .8)'; ctx.beginPath(); ctx.arc(p.width * .2, -p.height * 0.16, 12 + p.chargeTime * 18, 0, Math.PI * 2); ctx.fill(); }
+  if (Math.abs(p.vx) > 220 && p.onGround) { ctx.fillStyle = 'rgba(154,232,255,.12)'; ctx.fillRect(-p.width * 0.54 - p.facing * 10, p.height * 0.3, 18, 8); }
+  ctx.restore();
+  drawPlayerAttackFX(p, sx, visual);
 }
 function render(dt = 0.016) {
   ctx.save();
@@ -734,9 +865,12 @@ function setupButtons() {
   ui.soundToggle.addEventListener('click', () => { audioState.enabled = !audioState.enabled; ui.soundToggle.textContent = audioState.enabled ? '🔊' : '🔇'; safeSetStorage('cyber-bot-audio', audioState.enabled ? '1' : '0'); if (!audioState.enabled && 'speechSynthesis' in window) window.speechSynthesis.cancel(); });
   const jumpButton = document.getElementById('jumpButton'), transformButton = document.getElementById('transformButton'), attackButton = document.getElementById('attackButton');
   const pressUI = (button, pressed) => setButtonPressed(button, pressed);
-  const activateJump = e => { e.preventDefault(); handleJumpPress(); pressUI(jumpButton, true); };
-  const releaseJump = e => { e.preventDefault(); game.input.jumpHeld = false; pressUI(jumpButton, false); };
-  ['pointerdown', 'touchstart'].forEach(evt => jumpButton.addEventListener(evt, activateJump, { passive: false })); ['pointerup', 'pointercancel', 'touchend', 'pointerleave'].forEach(evt => jumpButton.addEventListener(evt, releaseJump, { passive: false }));
+  if (jumpButton) {
+    const activateJump = e => { e.preventDefault(); handleJumpPress(); pressUI(jumpButton, true); };
+    const releaseJump = e => { e.preventDefault(); game.input.jumpHeld = false; pressUI(jumpButton, false); };
+    ['pointerdown', 'touchstart'].forEach(evt => jumpButton.addEventListener(evt, activateJump, { passive: false }));
+    ['pointerup', 'pointercancel', 'touchend', 'pointerleave'].forEach(evt => jumpButton.addEventListener(evt, releaseJump, { passive: false }));
+  }
   ['pointerdown', 'touchstart'].forEach(evt => transformButton.addEventListener(evt, e => { e.preventDefault(); pressUI(transformButton, true); handleTransform(); setTimeout(() => pressUI(transformButton, false), 120); }, { passive: false }));
   ['pointerup', 'pointercancel', 'touchend', 'pointerleave'].forEach(evt => transformButton.addEventListener(evt, () => pressUI(transformButton, false), { passive: true }));
   const attackDown = e => { e.preventDefault(); game.input.attackPressed = true; game.input.attackHeld = true; pressUI(attackButton, true); };
@@ -755,12 +889,29 @@ function setupButtons() {
   });
 }
 function updateJoystickVisual(nx, ny) { joystickKnob.style.transform = `translate(calc(-50% + ${nx * game.joystick.radius}px), calc(-50% + ${ny * game.joystick.radius}px))`; }
-function resetJoystick() { game.joystick.active = false; game.joystick.pointerId = null; game.joystick.dirX = 0; joystickBase.classList.remove('active'); joystickBase.closest('.joystick-panel')?.classList.remove('active'); updateJoystickVisual(0, 0); }
+function syncJoystickJump(ny = 0) {
+  game.joystick.dirY = ny;
+  const trigger = ny <= -0.58;
+  const release = ny >= -0.24;
+  if (trigger && !game.joystick.jumpLatched) {
+    handleJumpPress();
+    game.joystick.jumpLatched = true;
+  }
+  game.input.jumpHeld = trigger || (game.input.jumpHeld && !release && game.joystick.jumpLatched);
+  if (release) {
+    game.input.jumpHeld = false;
+    game.joystick.jumpLatched = false;
+  }
+}
+function resetJoystick() {
+  game.joystick.active = false; game.joystick.pointerId = null; game.joystick.dirX = 0; game.joystick.dirY = 0; game.input.jumpHeld = false; game.joystick.jumpLatched = false;
+  joystickBase.classList.remove('active'); joystickBase.closest('.joystick-panel')?.classList.remove('active'); updateJoystickVisual(0, 0);
+}
 function setupJoystick() {
   const onMove = (clientX, clientY) => {
     const rect = joystickBase.getBoundingClientRect(), cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2; let dx = clientX - cx, dy = clientY - cy; const distance = Math.hypot(dx, dy), max = rect.width * 0.32;
     if (distance > max) { dx = (dx / distance) * max; dy = (dy / distance) * max; }
-    const nx = dx / max, ny = dy / max; game.joystick.dirX = Math.abs(nx) < 0.18 ? 0 : nx; updateJoystickVisual(nx, ny);
+    const nx = dx / max, ny = dy / max; game.joystick.dirX = Math.abs(nx) < 0.18 ? 0 : nx; syncJoystickJump(ny); updateJoystickVisual(nx, ny);
   };
   joystickBase.addEventListener('pointerdown', e => { e.preventDefault(); game.joystick.active = true; game.joystick.pointerId = e.pointerId; joystickBase.classList.add('active'); joystickBase.closest('.joystick-panel')?.classList.add('active'); joystickBase.setPointerCapture(e.pointerId); onMove(e.clientX, e.clientY); });
   joystickBase.addEventListener('pointermove', e => { if (!game.joystick.active || e.pointerId !== game.joystick.pointerId) return; onMove(e.clientX, e.clientY); });
@@ -782,6 +933,7 @@ function init() {
   setupJoystick();
   setupInstallPrompt();
   registerServiceWorker();
+  syncViewportMetrics();
   resizeCanvas();
   requestAnimationFrame(updateLoop);
   preloadAssets().then(() => {
@@ -790,6 +942,18 @@ function init() {
   }).catch(() => {});
 }
 window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 80));
+window.visualViewport?.addEventListener?.('resize', resizeCanvas);
+window.visualViewport?.addEventListener?.('scroll', syncViewportMetrics);
+
+window.__cyberBotsDebug = {
+  getGame: () => game,
+  getState: () => state,
+  triggerJump: () => handleJumpPress(),
+  setJoystick: (x = 0, y = 0) => { game.joystick.dirX = x; syncJoystickJump(y); },
+  releaseJoystick: () => resetJoystick()
+};
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init, { once: true });
 } else {
