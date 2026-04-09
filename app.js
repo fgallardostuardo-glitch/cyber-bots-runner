@@ -60,7 +60,8 @@ const game = {
   messageTimer: 0,
   stepBlockers: [],
   joystick: { active: false, pointerId: null, radius: 56, dirX: 0, dirY: 0, jumpLatched: false },
-  input: { jumpPressed: false, jumpHeld: false, attackPressed: false, attackHeld: false, attackReleased: false }
+  input: { jumpPressed: false, jumpHeld: false, attackPressed: false, attackHeld: false, attackReleased: false },
+  view: { scale: 1, width: 1280, height: 720, cssWidth: 1280, cssHeight: 720 }
 };
 
 const joystickBase = document.getElementById('joystickBase');
@@ -114,12 +115,21 @@ function syncViewportMetrics() {
   document.documentElement.style.setProperty('--app-height', `${height}px`);
   return { width, height };
 }
+const DESIGN_VIEW_HEIGHT = 720;
+function viewportWidth() { return game.view?.width || canvas.clientWidth || 1280; }
+function viewportHeight() { return game.view?.height || canvas.clientHeight || 720; }
 function resizeCanvas() {
   const ratio = Math.min(window.devicePixelRatio || 1, 2);
   const viewport = syncViewportMetrics();
   const bounds = screens.game?.getBoundingClientRect?.() || { width: viewport.width, height: viewport.height };
   const w = Math.max(320, Math.round(bounds.width || viewport.width));
   const h = Math.max(320, Math.round(bounds.height || viewport.height));
+  const scale = Math.min(1, h / DESIGN_VIEW_HEIGHT);
+  game.view.cssWidth = w;
+  game.view.cssHeight = h;
+  game.view.scale = scale;
+  game.view.height = DESIGN_VIEW_HEIGHT;
+  game.view.width = w / scale;
   canvas.width = Math.floor(w * ratio);
   canvas.height = Math.floor(h * ratio);
   canvas.style.width = `${w}px`;
@@ -463,7 +473,7 @@ function updatePlayer(dt) {
   if (ground !== null && p.vy >= 0 && p.y + p.height >= ground) { p.y = ground - p.height; p.vy = 0; p.onGround = true; } else resolvePlatforms(previousBottom);
   if (p.onGround) { p.coyote = 0.1; p.extraJumpsLeft = c.extraJumps; if (!previousOnGround && c.id === 'd16' && p.form === 'robot' && previousVy > 520) damageNearbyEnemies(p.x + p.width / 2, 92, 1.5); }
   else if (previousOnGround) p.coyote = 0.12;
-  if (ground === null && p.y > canvas.clientHeight + 240) respawnPlayer();
+  if (ground === null && p.y > viewportHeight() + 240) respawnPlayer();
   p.animationTime += dt * Math.max(0.8, Math.min(2.2, Math.abs(p.vx) / 90 + (p.onGround ? 0.25 : 0.1)));
   updateCounters();
 }
@@ -581,7 +591,7 @@ function updateEntities(dt) {
   for (const entity of game.entities) {
     if (entity.collected || entity.destroyed) continue;
     if (entity.type === 'crumble' && entity.timer > 0) { entity.timer -= dt; if (entity.timer <= 0) entity.falling = true; }
-    if (entity.falling) { entity.vy += 1000 * dt; entity.y += entity.vy * dt; if (entity.y > canvas.clientHeight + 120) entity.destroyed = true; }
+    if (entity.falling) { entity.vy += 1000 * dt; entity.y += entity.vy * dt; if (entity.y > viewportHeight() + 120) entity.destroyed = true; }
 
     if (entity.type === 'energon') {
       const hitbox = { x: entity.x - 18, y: entity.y - 18, width: 36, height: 36 };
@@ -621,7 +631,7 @@ function completeLevel() {
   ui.rewardLoot.innerHTML = `<div class="reward-pill">⚡ Energón: ${game.energy}</div><div class="reward-pill">★ Estrellas: ${game.stars}</div><div class="reward-pill">🤖 Bots rescatados: ${game.bots}</div><div class="reward-pill">Ruta de ventaja: ${state.selectedCharacter.abilities[0]}</div>`;
   setScreen('reward');
 }
-function updateCamera() { const target = game.player.x + game.player.width * 0.5 - canvas.clientWidth * 0.38; const maxCamera = Math.max(0, game.worldWidth - canvas.clientWidth); game.cameraX += (Math.max(0, Math.min(maxCamera, target)) - game.cameraX) * 0.12; }
+function updateCamera() { const vw = viewportWidth(); const target = game.player.x + game.player.width * 0.5 - vw * 0.38; const maxCamera = Math.max(0, game.worldWidth - vw); game.cameraX += (Math.max(0, Math.min(maxCamera, target)) - game.cameraX) * 0.12; }
 function getAttackVisualState(p, character) {
   if (!p || p.form !== 'robot') return null;
   if (p.charging) {
@@ -690,7 +700,7 @@ function drawPlayerAttackFX(p, sx, visual) {
   }
 }
 function drawBackground() {
-  const w = canvas.clientWidth, h = canvas.clientHeight, cam = game.cameraX;
+  const w = viewportWidth(), h = viewportHeight(), cam = game.cameraX;
   const sky = ctx.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, '#08162f'); sky.addColorStop(0.38, '#102b59'); sky.addColorStop(0.72, '#18355e'); sky.addColorStop(1, '#0d1730'); ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
   const sun = ctx.createRadialGradient(w * 0.78, h * 0.22, 20, w * 0.78, h * 0.22, 180); sun.addColorStop(0, 'rgba(255,220,128,.9)'); sun.addColorStop(0.3, 'rgba(255,160,95,.32)'); sun.addColorStop(1, 'rgba(255,160,95,0)'); ctx.fillStyle = sun; ctx.fillRect(0, 0, w, h);
   ctx.fillStyle = 'rgba(255,255,255,.05)'; for (let i = 0; i < 12; i += 1) { const starX = ((i * 173) - cam * 0.08) % (w + 220); const starY = 50 + (i % 5) * 38; ctx.fillRect(starX, starY, 2, 2); }
@@ -701,9 +711,9 @@ function drawBackground() {
 }
 function worldToScreenX(x) { return x - game.cameraX; }
 function drawTerrain() {
-  const h = canvas.clientHeight;
+  const h = viewportHeight();
   for (const seg of game.currentLevel.terrain) {
-    const sx = worldToScreenX(seg.from), ex = worldToScreenX(seg.to); if (ex < -100 || sx > canvas.clientWidth + 100) continue;
+    const sx = worldToScreenX(seg.from), ex = worldToScreenX(seg.to); if (ex < -100 || sx > viewportWidth() + 100) continue;
     ctx.fillStyle = '#1f3d68'; ctx.fillRect(sx, seg.y, ex - sx, h - seg.y); ctx.fillStyle = '#3e74ad'; ctx.fillRect(sx, seg.y, ex - sx, 16); ctx.fillStyle = '#7ed0ff'; for (let x = sx; x < ex; x += 42) ctx.fillRect(x, seg.y + 10, 16, 3);
   }
   for (const entity of game.entities) {
@@ -717,7 +727,7 @@ function drawEntities() {
   for (const entity of game.entities) {
     if (entity.collected || entity.destroyed) continue; const x = worldToScreenX(entity.x);
     if (entity.type === 'energon') { const pulse = 0.72 + Math.sin(performance.now() * 0.008 + entity.x * 0.01) * 0.18; ctx.save(); ctx.globalAlpha = 0.25 + pulse * 0.2; ctx.fillStyle = '#65f0ff'; ctx.beginPath(); ctx.arc(x, entity.y, 24 + pulse * 6, 0, Math.PI * 2); ctx.fill(); ctx.restore(); ctx.save(); ctx.translate(x, entity.y); ctx.rotate(performance.now() * 0.002); ctx.fillStyle = '#65f0ff'; ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(14, 0); ctx.lineTo(0, 18); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill(); ctx.restore(); }
-    if (entity.type === 'gap') { const gapGrad = ctx.createLinearGradient(x, 580, x, canvas.clientHeight); gapGrad.addColorStop(0, 'rgba(61,164,255,.65)'); gapGrad.addColorStop(1, 'rgba(5,12,25,.88)'); ctx.fillStyle = gapGrad; ctx.fillRect(x, 580, entity.width, canvas.clientHeight - 580); ctx.fillStyle = '#9ee3ff'; ctx.fillRect(x, 580, entity.width, 12); drawLabel(x + entity.width / 2, 548, entity.label, '#3da4ff'); drawChevronStrip(x + 12, 594, entity.width - 24, '#9ee3ff'); }
+    if (entity.type === 'gap') { const gapGrad = ctx.createLinearGradient(x, 580, x, viewportHeight()); gapGrad.addColorStop(0, 'rgba(61,164,255,.65)'); gapGrad.addColorStop(1, 'rgba(5,12,25,.88)'); ctx.fillStyle = gapGrad; ctx.fillRect(x, 580, entity.width, viewportHeight() - 580); ctx.fillStyle = '#9ee3ff'; ctx.fillRect(x, 580, entity.width, 12); drawLabel(x + entity.width / 2, 548, entity.label, '#3da4ff'); drawChevronStrip(x + 12, 594, entity.width - 24, '#9ee3ff'); }
     if (entity.type === 'barrier') {
       const ground = getGroundYAt(entity.x + entity.width / 2) ?? 580, top = ground - entity.height; const fireGrad = ctx.createLinearGradient(x, top, x, ground); fireGrad.addColorStop(0, '#ffe27a'); fireGrad.addColorStop(0.32, '#ff8f3c'); fireGrad.addColorStop(1, '#b51f13'); ctx.fillStyle = fireGrad; ctx.beginPath(); ctx.roundRect(x, top, entity.width, entity.height, 14); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.18)'; for (let fx = x + 8; fx < x + entity.width - 8; fx += 18) { ctx.beginPath(); ctx.moveTo(fx, ground - 8); ctx.quadraticCurveTo(fx + 8, top + 18, fx + 14, ground - 20); ctx.quadraticCurveTo(fx + 18, top + 36, fx + 24, ground - 10); ctx.closePath(); ctx.fill(); } ctx.strokeStyle = '#ffd67f'; ctx.lineWidth = 3; ctx.strokeRect(x + 4, top + 4, entity.width - 8, entity.height - 8); drawLabel(x + entity.width / 2, top - 22, entity.label, '#ffb35f');
     }
@@ -842,7 +852,10 @@ function drawPlayer() {
   drawPlayerAttackFX(p, sx, visual);
 }
 function render(dt = 0.016) {
+  ctx.clearRect(0, 0, game.view.cssWidth || canvas.clientWidth, game.view.cssHeight || canvas.clientHeight);
   ctx.save();
+  const scale = game.view?.scale || 1;
+  ctx.scale(scale, scale);
   ctx.translate(timing.shakeX || 0, timing.shakeY || 0);
   drawBackground(); drawTerrain(); drawEntities(); drawEnemies(); drawProjectiles(); drawFX(dt); drawPlayer();
   ctx.restore();

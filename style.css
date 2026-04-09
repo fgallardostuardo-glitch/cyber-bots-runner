@@ -16,10 +16,11 @@
   --shadow: rgba(0,0,0,.32);
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-html, body { margin: 0; width: 100%; min-height: 100%; font-family: Inter, Segoe UI, Arial, sans-serif; background: linear-gradient(180deg, var(--bg), var(--bg2)); color: var(--text); overscroll-behavior: none; }
+html, body { margin: 0; width: 100%; height: 100%; min-height: 100%; font-family: Inter, Segoe UI, Arial, sans-serif; background: linear-gradient(180deg, var(--bg), var(--bg2)); color: var(--text); overscroll-behavior: none; overflow: hidden; }
+#app { position: fixed; inset: 0; width: 100vw; height: var(--app-height, 100dvh); overflow: hidden; }
 button { border: 0; cursor: pointer; font: inherit; }
 #app, .screen { width: 100%; height: 100%; min-height: var(--app-height, 100dvh); }
-.screen { position: absolute; inset: 0; display: none; }
+.screen { position: fixed; inset: 0; display: none; }
 #homeScreen, #rewardScreen { overflow-y: auto; overscroll-behavior-y: contain; }
 .screen.active { display: block; }
 .screen-bg {
@@ -98,8 +99,8 @@ h1 { font-size: clamp(1.04rem, 2.3vw, 1.65rem); margin-bottom: 6px; line-height:
 .dock-btn.primary { background: linear-gradient(180deg, var(--yellow), #ff9b30); }
 .dock-btn.secondary { background: linear-gradient(180deg, var(--cyan), #1fb6ff); }
 
-#gameScreen { overflow: hidden; background: linear-gradient(180deg, #0b1226 0%, #172d5d 50%, #0b1226 100%); height: var(--app-height, 100dvh); min-height: var(--app-height, 100dvh); touch-action: none; }
-#gameCanvas { position: absolute; inset: 0; width: var(--app-width, 100vw); height: var(--app-height, 100dvh); }
+#gameScreen { overflow: hidden; background: linear-gradient(180deg, #0b1226 0%, #172d5d 50%, #0b1226 100%); height: var(--app-height, 100dvh); min-height: var(--app-height, 100dvh); width: 100vw; touch-action: none; }
+#gameCanvas { position: absolute; inset: 0; width: 100vw; height: var(--app-height, 100dvh); display: block; }
 .hud {
   position: absolute; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left));
   z-index: 3; border-radius: 16px; padding: 8px; display: flex; gap: 8px;
@@ -195,7 +196,8 @@ h1 { font-size: clamp(1.04rem, 2.3vw, 1.65rem); margin-bottom: 6px; line-height:
 
 @media (max-width: 720px) {
   html, body { overflow-x: hidden; }
-  .screen { position: relative; min-height: 100dvh; }
+  #homeScreen, #rewardScreen { position: relative; min-height: 100dvh; }
+  #gameScreen { position: fixed; min-height: var(--app-height, 100dvh); }
   .home-shell { height: auto; }
   .top-panel { flex-direction: column; align-items: stretch; }
   .top-actions { justify-content: flex-end; }
@@ -256,7 +258,7 @@ html.touch-device button { touch-action: manipulation; }
   .hud { left: 8px; top: max(8px, env(safe-area-inset-top)); gap: 6px; padding: 6px; flex-wrap: wrap; max-width: calc(100vw - 70px); }
   .progress-meter { width: min(180px, 48vw); margin-bottom: 0; }
   .hud-pill { padding: 6px 10px; font-size: .84rem; }
-  .voice-bubble { top: auto; bottom: calc(100% - 100dvh + 108px); width: min(84vw, 420px); padding: 9px 12px; font-size: .88rem; }
+  .voice-bubble { top: max(64px, calc(env(safe-area-inset-top) + 52px)); bottom: auto; width: min(84vw, 420px); padding: 9px 12px; font-size: .88rem; }
   .controls-wrap { left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); gap: 8px; align-items: flex-end; }
   .joystick-panel { width: min(42vw, 174px); padding: 10px; }
   .joystick-base { width: min(34vw, 132px); height: min(34vw, 132px); min-width: 112px; min-height: 112px; }
