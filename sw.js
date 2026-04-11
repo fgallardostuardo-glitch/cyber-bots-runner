@@ -1,53 +1,134 @@
-const CACHE_NAME = "cyber-bots-vertical-slice-v5";
-const APP_ASSETS = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./game-data.js",
-  "./game-systems.js",
-  "./app.js",
-  "./manifest.webmanifest",
-  "./icons/icon-192.svg",
-  "./icons/icon-512.svg",
-  "./icons/icon-maskable.svg",
-  "./sprites/orion-robot-1.svg",
-  "./sprites/orion-robot-2.svg",
-  "./sprites/orion-robot-3.svg",
-  "./sprites/orion-vehicle-1.svg",
-  "./sprites/orion-vehicle-2.svg",
-  "./sprites/orion-vehicle-3.svg",
-  "./sprites/bee-robot-1.svg",
-  "./sprites/bee-robot-2.svg",
-  "./sprites/bee-robot-3.svg",
-  "./sprites/bee-vehicle-1.svg",
-  "./sprites/bee-vehicle-2.svg",
-  "./sprites/bee-vehicle-3.svg",
-  "./sprites/elita-robot-1.svg",
-  "./sprites/elita-robot-2.svg",
-  "./sprites/elita-robot-3.svg",
-  "./sprites/elita-vehicle-1.svg",
-  "./sprites/elita-vehicle-2.svg",
-  "./sprites/elita-vehicle-3.svg",
-  "./sprites/d16-robot-1.svg",
-  "./sprites/d16-robot-2.svg",
-  "./sprites/d16-robot-3.svg",
-  "./sprites/d16-vehicle-1.svg",
-  "./sprites/d16-vehicle-2.svg",
-  "./sprites/d16-vehicle-3.svg"
-];
-self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_ASSETS)));
-  self.skipWaiting();
-});
-self.addEventListener("activate", (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))));
-  self.clients.claim();
-});
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
-    const clone = response.clone();
-    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-    return response;
-  }).catch(() => caches.match("./index.html"))));
-});
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <title>Cyber Bots: Vertical Slice</title>
+  <meta name="theme-color" content="#0b1226">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cyber Bots">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/icon-192.svg">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./mobile-hotfix.css">
+</head>
+<body>
+  <div id="app">
+    <section id="homeScreen" class="screen active">
+      <div class="screen-bg"></div>
+      <div class="home-shell">
+        <header class="panel top-panel">
+          <div class="header-copy">
+            <p class="eyebrow">Cyber Bots: Vertical Slice</p>
+            <h1>Una misión corta, clara y bien pulida</h1>
+            <p class="muted">Vertical slice con combate, telegraphs claros, rutas de ventaja por personaje y un remix final para probar el corazón comercial del juego.</p>
+          </div>
+          <div class="top-actions">
+            <button id="installButton" class="mini-btn hidden-install" aria-label="Instalar">＋</button>
+            <button id="soundToggle" class="mini-btn" aria-label="Audio">🔊</button>
+          </div>
+        </header>
+
+        <main class="home-main">
+          <article class="panel hero-panel">
+            <div class="hero-copy">
+              <h2 id="heroName">Orion Pax</h2>
+              <p id="heroRole" class="hero-role">Vanguardia versátil</p>
+              <p id="heroDesc">Versión premium de una sola fase: menos relleno, más intención.</p>
+
+              <div class="stat-grid">
+                <div class="stat-box"><span>Control</span><strong id="statControl">8</strong></div>
+                <div class="stat-box"><span>Salto</span><strong id="statJump">8</strong></div>
+                <div class="stat-box"><span>Velocidad</span><strong id="statSpeed">7</strong></div>
+                <div class="stat-box"><span>Poder</span><strong id="statPower">6</strong></div>
+              </div>
+
+              <div class="ability-list">
+                <div class="ability-item">✦ <span id="abilityPrimary">Resistencia frontal</span></div>
+                <div class="ability-item">✦ <span id="abilitySecondary">Recuperación segura</span></div>
+              </div>
+
+              <div class="legend-grid">
+                <div class="legend-item"><span class="legend-color red"></span>Caja roja: salta</div>
+                <div class="legend-item"><span class="legend-color blue"></span>Hueco azul: toma impulso y salta</div>
+                <div class="legend-item"><span class="legend-color yellow"></span>Plataformas: identidad y remix por personaje</div>
+                <div class="legend-item"><span class="legend-color purple"></span>Enemigo púrpura: siempre telegrafía antes de atacar</div>
+              </div>
+            </div>
+            <div class="hero-stage">
+              <div class="hero-glow"></div>
+              <img id="heroPreview" class="hero-preview" alt="personaje seleccionado">
+            </div>
+          </article>
+
+          <aside class="panel roster-panel">
+            <div class="roster-header">
+              <h3>Escuadrón</h3>
+              <span id="selectedTag" class="tag">Versátil</span>
+            </div>
+            <div id="characterCarousel" class="character-carousel"></div>
+          </aside>
+        </main>
+
+        <footer class="bottom-dock panel">
+          <button id="playButton" class="dock-btn primary">Jugar</button>
+          <button id="toggleFormPreviewButton" class="dock-btn secondary">Ver vehículo</button>
+        </footer>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <canvas id="gameCanvas" width="1280" height="720"></canvas>
+
+      <div class="hud panel">
+        <div class="progress-meter" aria-label="Progreso del nivel"><div id="progressFill" class="progress-fill"></div></div>
+        <div class="hud-pill">⚡ <span id="energyCount">0</span></div>
+        <div class="hud-pill">★ <span id="starCount">0</span></div>
+        <div class="hud-pill">🤖 <span id="botCount">0</span></div>
+      </div>
+
+      <div id="voiceBubble" class="voice-bubble panel show">Usa el joystick para moverte y observa el color de cada obstáculo.</div>
+
+      <div class="game-actions panel">
+        <button id="pauseToHomeButton" class="mini-btn">⌂</button>
+      </div>
+
+      <div class="controls-wrap">
+        <div class="panel joystick-panel">
+          <div id="joystickBase" class="joystick-base">
+            <div id="joystickKnob" class="joystick-knob"></div>
+          </div>
+          <div class="joystick-help">Mover y saltar hacia arriba</div>
+        </div>
+
+        <div class="panel action-panel">
+          <button id="attackButton" class="control-btn attack">Atacar</button>
+          <button id="transformButton" class="control-btn transform">Transformar</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="rewardScreen" class="screen">
+      <div class="screen-bg"></div>
+      <div class="reward-shell panel">
+        <h2>Misión completada</h2>
+        <div class="reward-hero-stage">
+          <img id="rewardRobot" class="reward-sprite" alt="personaje">
+        </div>
+        <div id="rewardLoot" class="reward-loot"></div>
+        <div class="reward-actions">
+          <button id="playAgainButton" class="dock-btn primary">Jugar otra vez</button>
+          <button id="homeButton" class="dock-btn secondary">Inicio</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="./game-data.js"></script>
+  <script src="./game-systems.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
