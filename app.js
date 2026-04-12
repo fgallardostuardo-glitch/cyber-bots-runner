@@ -902,29 +902,19 @@ function setupButtons() {
   });
 }
 function updateJoystickVisual(nx, ny) { joystickKnob.style.transform = `translate(calc(-50% + ${nx * game.joystick.radius}px), calc(-50% + ${ny * game.joystick.radius}px))`; }
-function syncJoystickJump(ny = 0) {
-  game.joystick.dirY = ny;
-  const trigger = ny <= -0.58;
-  const release = ny >= -0.24;
-  if (trigger && !game.joystick.jumpLatched) {
-    handleJumpPress();
-    game.joystick.jumpLatched = true;
-  }
-  game.input.jumpHeld = trigger || (game.input.jumpHeld && !release && game.joystick.jumpLatched);
-  if (release) {
-    game.input.jumpHeld = false;
-    game.joystick.jumpLatched = false;
-  }
+function syncJoystickJump() {
+  game.joystick.dirY = 0;
 }
+
 function resetJoystick() {
   game.joystick.active = false; game.joystick.pointerId = null; game.joystick.dirX = 0; game.joystick.dirY = 0; game.input.jumpHeld = false; game.joystick.jumpLatched = false;
   joystickBase.classList.remove('active'); joystickBase.closest('.joystick-panel')?.classList.remove('active'); updateJoystickVisual(0, 0);
 }
 function setupJoystick() {
   const onMove = (clientX, clientY) => {
-    const rect = joystickBase.getBoundingClientRect(), cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2; let dx = clientX - cx, dy = clientY - cy; const distance = Math.hypot(dx, dy), max = rect.width * 0.32;
-    if (distance > max) { dx = (dx / distance) * max; dy = (dy / distance) * max; }
-    const nx = dx / max, ny = dy / max; game.joystick.dirX = Math.abs(nx) < 0.18 ? 0 : nx; syncJoystickJump(ny); updateJoystickVisual(nx, ny);
+    const rect = joystickBase.getBoundingClientRect(), cx = rect.left + rect.width / 2; let dx = clientX - cx; const max = rect.width * 0.32;
+    if (dx > max) dx = max; else if (dx < -max) dx = -max;
+    const nx = dx / max; game.joystick.dirX = Math.abs(nx) < 0.18 ? 0 : nx; syncJoystickJump(); updateJoystickVisual(nx, 0);
   };
   joystickBase.addEventListener('pointerdown', e => { e.preventDefault(); game.joystick.active = true; game.joystick.pointerId = e.pointerId; joystickBase.classList.add('active'); joystickBase.closest('.joystick-panel')?.classList.add('active'); joystickBase.setPointerCapture(e.pointerId); onMove(e.clientX, e.clientY); });
   joystickBase.addEventListener('pointermove', e => { if (!game.joystick.active || e.pointerId !== game.joystick.pointerId) return; onMove(e.clientX, e.clientY); });
@@ -963,7 +953,7 @@ window.__cyberBotsDebug = {
   getGame: () => game,
   getState: () => state,
   triggerJump: () => handleJumpPress(),
-  setJoystick: (x = 0, y = 0) => { game.joystick.dirX = x; syncJoystickJump(y); },
+  setJoystick: (x = 0) => { game.joystick.dirX = x; syncJoystickJump(); },
   releaseJoystick: () => resetJoystick()
 };
 
