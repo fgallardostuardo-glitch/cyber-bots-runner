@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Original enemy lineup for a kid-friendly Cybertron platform game">
+  <defs>
+    <linearGradient id="bg2" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#080d1d"/>
+      <stop offset=".5" stop-color="#18254f"/>
+      <stop offset="1" stop-color="#0a0d18"/>
+    </linearGradient>
+    <linearGradient id="danger" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ff8db2"/>
+      <stop offset="1" stop-color="#ff4d77"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#c466ff"/>
+      <stop offset="1" stop-color="#5c59ff"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#dce8ff"/>
+      <stop offset="1" stop-color="#6e7890"/>
+    </linearGradient>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <style>
+      .card { fill: rgba(255,255,255,.055); stroke: rgba(255,255,255,.16); stroke-width: 2; }
+      .warning { fill: rgba(255,77,119,.14); stroke: rgba(255,141,178,.5); stroke-width: 4; }
+      .eye { fill: #fff5b0; filter: url(#softGlow); }
+      .cyan { fill: #44efff; filter: url(#softGlow); }
+      .name { fill: #eff7ff; font: 800 30px Trebuchet MS, Arial, sans-serif; }
+      .role { fill: #9ee3ff; font: 700 18px Trebuchet MS, Arial, sans-serif; }
+      .note { fill: rgba(239,247,255,.74); font: 600 18px Trebuchet MS, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg2)"/>
+  <g opacity=".2">
+    <path d="M0 702H1600M0 590H1600M0 478H1600M0 366H1600M0 254H1600" stroke="#44efff" stroke-width="1"/>
+    <path d="M140 130V820M420 130V820M700 130V820M980 130V820M1260 130V820M1540 130V820" stroke="#44efff" stroke-width="1"/>
+  </g>
+  <text x="90" y="72" class="name">Enemy concept sheet</text>
+  <text x="90" y="105" class="note">Soft-threat enemies: readable shapes, bright telegraphs, toy-like menace, no scary gore.</text>
+
+  <g transform="translate(80 150)">
+    <rect class="card" width="310" height="300" rx="30"/>
+    <ellipse cx="155" cy="238" rx="100" ry="20" fill="rgba(0,0,0,.35)"/>
+    <g transform="translate(66 50)">
+      <path class="warning" d="M20 74h136l36 64-36 64H20l-36-64Z"/>
+      <path d="M40 48h100l36 60-36 70H40L4 108Z" fill="url(#purple)"/>
+      <rect class="eye" x="54" y="88" width="72" height="20" rx="10"/>
+      <path d="M44 42L24 0M136 42l20-42M42 178l-26 32M138 178l26 32" stroke="#dce8ff" stroke-width="12" stroke-linecap="round"/>
+    </g>
+    <text x="30" y="260" class="name">Patroller</text>
+    <text x="30" y="286" class="role">slow walker, big warning flash</text>
+  </g>
+
+  <g transform="translate(460 150)">
+    <rect class="card" width="310" height="300" rx="30"/>
+    <ellipse cx="155" cy="238" rx="100" ry="20" fill="rgba(0,0,0,.35)"/>
+    <g transform="translate(72 46)">
+      <path class="warning" d="M84 20l70 42 0 82-70 42-70-42V62Z"/>
+      <circle cx="84" cy="104" r="72" fill="url(#danger)"/>
+      <circle cx="84" cy="104" r="38" fill="#121826"/>
+      <rect class="eye" x="48" y="94" width="72" height="18" rx="9"/>
+      <path d="M84 18V-18M84 226v-36M10 104h-36M194 104h-36" stroke="#ffd4df" stroke-width="12" stroke-linecap="round"/>
+    </g>
+    <text x="30" y="260" class="name">Drone</text>
+    <text x="30" y="286" class="role">hovering obstacle, predictable arc</text>
+  </g>
+
+  <g transform="translate(840 150)">
+    <rect class="card" width="310" height="300" rx="30"/>
+    <ellipse cx="155" cy="238" rx="100" ry="20" fill="rgba(0,0,0,.35)"/>
+    <g transform="translate(62 58)">
+      <path class="warning" d="M30 154h160l28 54H2Z"/>
+      <rect x="54" y="64" width="112" height="118" rx="18" fill="url(#metal)"/>
+      <rect x="92" y="18" width="130" height="38" rx="16" fill="url(#purple)"/>
+      <circle class="eye" cx="188" cy="37" r="11"/>
+      <rect x="82" y="92" width="60" height="16" rx="8" fill="#121826"/>
+      <path d="M54 182h112M74 64L42 24M146 64l32-40" stroke="#44efff" stroke-width="8" stroke-linecap="round"/>
+    </g>
+    <text x="30" y="260" class="name">Turret</text>
+    <text x="30" y="286" class="role">charges, blinks, then fires</text>
+  </g>
+
+  <g transform="translate(1220 150)">
+    <rect class="card" width="310" height="300" rx="30"/>
+    <ellipse cx="155" cy="238" rx="100" ry="20" fill="rgba(0,0,0,.35)"/>
+    <g transform="translate(60 54)">
+      <path class="warning" d="M36 62h154l34 72-34 78H36L2 134Z"/>
+      <path d="M46 52h132l34 74-34 70H46l-34-70Z" fill="url(#metal)"/>
+      <path d="M72 88h82l18 40-18 42H72l-18-42Z" fill="#30394c"/>
+      <rect class="eye" x="78" y="112" width="70" height="18" rx="9"/>
+      <path d="M44 192l-34 36M180 192l34 36M46 52L14 18M178 52l32-34" stroke="#cfd5e2" stroke-width="12" stroke-linecap="round"/>
+    </g>
+    <text x="30" y="260" class="name">Bruiser</text>
+    <text x="30" y="286" class="role">big body, gentle knockback</text>
+  </g>
+
+  <g transform="translate(270 520)">
+    <rect class="card" width="310" height="300" rx="30"/>
+    <ellipse cx="155" cy="238" rx="100" ry="20" fill="rgba(0,0,0,.35)"/>
+    <g transform="translate(54 72)">
+      <path class="warning" d="M32 50h154l34 58-34 58H32L-2 108Z"/>
+      <path d="M58 34h102l44 76-44 76H58L14 110Z" fill="url(#purple)"/>
+      <path d="M76 78h66l22 32-22 32H76l-22-32Z" fill="#121826"/>
+      <rect class="eye" x="78" y="100" width="62" height="16" rx="8"/>
+      <path d="M14 110h-38M204 110h38" stroke="#ff8db2" stroke-width="12" stroke-linecap="round"/>
+    </g>
+    <text x="30" y="260" class="name">Rusher</text>
+    <text x="30" y="286" class="role">telegraphs, then slides forward</text>
+  </g>
+
+  <g transform="translate(650 520)">
+    <rect class="card" width="310" height="300" rx="30"/>
+    <ellipse cx="155" cy="238" rx="100" ry="20" fill="rgba(0,0,0,.35)"/>
+    <g transform="translate(72 60)">
+      <path class="warning" d="M84 0l104 76-40 132H20L-20 76Z"/>
+      <path d="M84 18l80 58-30 102H34L4 76Z" fill="url(#metal)"/>
+      <path d="M52 78h64l22 42-22 42H52l-22-42Z" fill="#263148"/>
+      <rect class="cyan" x="56" y="112" width="56" height="16" rx="8"/>
+      <path d="M34 178l-30 38M136 178l30 38" stroke="#dce8ff" stroke-width="12" stroke-linecap="round"/>
+    </g>
+    <text x="30" y="260" class="name">Shield</text>
+    <text x="30" y="286" class="role">blocks until the child transforms</text>
+  </g>
+
+  <g transform="translate(1030 520)">
+    <rect class="card" width="310" height="300" rx="30"/>
+    <ellipse cx="155" cy="238" rx="100" ry="20" fill="rgba(0,0,0,.35)"/>
+    <g transform="translate(70 60)">
+      <path class="warning" d="M20 72h138l44 52-44 52H20l-44-52Z"/>
+      <path d="M44 48h92l48 76-48 76H44L-4 124Z" fill="url(#danger)"/>
+      <path d="M54 92h72l18 32-18 32H54l-18-32Z" fill="#151b2a"/>
+      <rect class="eye" x="60" y="116" width="60" height="16" rx="8"/>
+      <path d="M14 202l42-44M164 202l-42-44" stroke="#ffd4df" stroke-width="12" stroke-linecap="round"/>
+    </g>
+    <text x="30" y="260" class="name">Hopper</text>
+    <text x="30" y="286" class="role">bounces slowly, never surprises</text>
+  </g>
+</svg>

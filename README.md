@@ -1,19 +1,29 @@
-# Cyber Bots: Vertical Slice
+# Cyber Bots
 
-Esta versión está enfocada en una sola fase corta y pulida.
+Prototipo PWA de plataformas 2D para celular, con robots transformables, guia por voz, iconos grandes y recompensas visuales.
 
-## Cambios principales
-- Diseño de nivel más compacto, con ritmo claro.
-- Eliminada la voz que decía "modo vehículo" y "modo robot".
-- Barra de progreso del nivel.
-- Mejor atmósfera visual y señales de plataforma.
-- Se mantienen los 4 personajes y sus diferencias jugables.
+## Ejecutar localmente
 
-## Ejecutar
-Usa un servidor estático:
+Usa un servidor estatico desde esta carpeta:
 
-```bash
+```powershell
 python -m http.server 8000
 ```
 
-Luego abre `http://localhost:8000/cyber-bots-vertical-slice/`.
+Luego abre:
+
+```text
+http://localhost:8000/
+```
+
+## PWA
+
+La app incluye `manifest.webmanifest` y `sw.js`. Para instalarla en celular, debe abrirse desde una URL `http` o `https`, por ejemplo GitHub Pages.
+
+## Voz
+
+La app busca audios grabados en `audio/voice/voice-map.json`. Si una linea no tiene `src`, usa la voz del navegador como fallback.
+
+## Arte
+
+Los lineamientos de personajes estan en `docs/character-design-guidelines.md`.

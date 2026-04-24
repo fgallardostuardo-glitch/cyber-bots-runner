@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Original transformable robot character lineup inspired by youthful Cybertron science fiction">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#07101f"/>
+      <stop offset=".48" stop-color="#152b58"/>
+      <stop offset="1" stop-color="#0a0d1c"/>
+    </linearGradient>
+    <linearGradient id="orionBody" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ff6b4a"/>
+      <stop offset=".44" stop-color="#d33f3a"/>
+      <stop offset=".45" stop-color="#3fb7ff"/>
+      <stop offset="1" stop-color="#275dff"/>
+    </linearGradient>
+    <linearGradient id="beeBody" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffe36b"/>
+      <stop offset=".5" stop-color="#f3b21d"/>
+      <stop offset=".51" stop-color="#273145"/>
+      <stop offset="1" stop-color="#121826"/>
+    </linearGradient>
+    <linearGradient id="aerialBody" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ff91c9"/>
+      <stop offset=".46" stop-color="#d94fa4"/>
+      <stop offset=".47" stop-color="#8371ff"/>
+      <stop offset="1" stop-color="#4336d4"/>
+    </linearGradient>
+    <linearGradient id="d16Body" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d9dfec"/>
+      <stop offset=".45" stop-color="#8a94a8"/>
+      <stop offset=".46" stop-color="#555f72"/>
+      <stop offset="1" stop-color="#252d3c"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <style>
+      .card { fill: rgba(255,255,255,.055); stroke: rgba(255,255,255,.18); stroke-width: 2; }
+      .rim { fill: none; stroke: rgba(68,239,255,.26); stroke-width: 5; }
+      .visor { fill: #dcfbff; filter: url(#glow); }
+      .metal { fill: rgba(255,255,255,.22); }
+      .joint { fill: #0b1020; stroke: rgba(255,255,255,.2); stroke-width: 4; }
+      .line { stroke: rgba(220,251,255,.7); stroke-width: 5; stroke-linecap: round; }
+      .name { fill: #eff7ff; font: 800 34px Trebuchet MS, Arial, sans-serif; }
+      .role { fill: #9ee3ff; font: 700 20px Trebuchet MS, Arial, sans-serif; }
+      .note { fill: rgba(239,247,255,.72); font: 600 18px Trebuchet MS, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <path d="M0 760C260 690 410 810 650 720C870 640 1060 700 1260 626C1430 562 1510 596 1600 552V900H0Z" fill="rgba(68,239,255,.08)"/>
+  <g opacity=".22">
+    <path d="M80 116H1520M80 216H1520M80 316H1520M80 416H1520M80 516H1520M80 616H1520M80 716H1520" stroke="#44efff" stroke-width="1"/>
+    <path d="M180 80V780M380 80V780M580 80V780M780 80V780M980 80V780M1180 80V780M1380 80V780" stroke="#44efff" stroke-width="1"/>
+  </g>
+
+  <text x="90" y="72" class="name">Cyber Bots character concept sheet</text>
+  <text x="90" y="105" class="note">Original kid-friendly transformable robot designs. Energon glow, clear silhouettes, no official logos.</text>
+
+  <g transform="translate(90 150)">
+    <rect class="card" width="320" height="640" rx="34"/>
+    <circle class="rim" cx="160" cy="232" r="128"/>
+    <ellipse cx="160" cy="560" rx="112" ry="24" fill="rgba(0,0,0,.34)"/>
+    <g transform="translate(52 62)">
+      <path d="M82 44h104l25 66-27 42H84L56 110Z" fill="url(#orionBody)"/>
+      <path d="M102 0h64l24 38-20 42h-72L78 38Z" fill="#e64c3e"/>
+      <path d="M98 44h74l-14 22h-46Z" class="visor"/>
+      <path d="M82 154h108l34 138-48 30H96l-48-30Z" fill="url(#orionBody)"/>
+      <path d="M78 190h116M64 254h144" class="line"/>
+      <path d="M32 176l42-28 16 54-38 78-46-24Z" fill="#d8433c"/>
+      <path d="M202 148l42 28 26 80-46 24-38-78Z" fill="#2f8cff"/>
+      <path d="M92 324h52l-18 134H70Z" fill="#2f70ff"/>
+      <path d="M148 324h52l22 134h-56Z" fill="#214de6"/>
+      <circle class="joint" cx="74" cy="202" r="18"/>
+      <circle class="joint" cx="214" cy="202" r="18"/>
+      <circle class="joint" cx="108" cy="330" r="16"/>
+      <circle class="joint" cx="182" cy="330" r="16"/>
+      <path d="M38 476h190l26 34-24 34H48l-30-32Z" fill="#3fb7ff"/>
+      <circle cx="74" cy="544" r="18" fill="#0b1020"/>
+      <circle cx="202" cy="544" r="18" fill="#0b1020"/>
+    </g>
+    <text x="34" y="586" class="name">Orion type</text>
+    <text x="36" y="620" class="role">balanced hero / small shield</text>
+  </g>
+
+  <g transform="translate(460 150)">
+    <rect class="card" width="320" height="640" rx="34"/>
+    <circle class="rim" cx="160" cy="232" r="128"/>
+    <ellipse cx="160" cy="560" rx="112" ry="24" fill="rgba(0,0,0,.34)"/>
+    <g transform="translate(55 78)">
+      <path d="M90 30h86l22 56-24 34H92L68 86Z" fill="url(#beeBody)"/>
+      <path d="M106 0h52l20 32-18 38h-56L86 32Z" fill="#ffd84d"/>
+      <rect class="visor" x="100" y="34" width="62" height="18" rx="9"/>
+      <path d="M84 120h102l30 108-42 34H96l-42-34Z" fill="url(#beeBody)"/>
+      <path d="M98 154l72 0M78 210h112" class="line"/>
+      <path d="M44 138l38-18 12 46-42 66-38-24Z" fill="#f2b51c"/>
+      <path d="M190 120l38 18 30 70-38 24-42-66Z" fill="#273145"/>
+      <path d="M96 262h42l-10 128H78Z" fill="#ffd84d"/>
+      <path d="M146 262h42l18 128h-50Z" fill="#1f2635"/>
+      <circle class="joint" cx="76" cy="160" r="16"/>
+      <circle class="joint" cx="206" cy="160" r="16"/>
+      <path d="M38 426h190l18 30-20 30H46l-24-30Z" fill="#f2b51c"/>
+      <path d="M80 426l34-40h72l34 40" fill="none" stroke="#273145" stroke-width="12" stroke-linecap="round"/>
+      <circle cx="76" cy="488" r="18" fill="#0b1020"/>
+      <circle cx="196" cy="488" r="18" fill="#0b1020"/>
+    </g>
+    <text x="34" y="586" class="name">Scout type</text>
+    <text x="36" y="620" class="role">fast playful dash</text>
+  </g>
+
+  <g transform="translate(830 150)">
+    <rect class="card" width="320" height="640" rx="34"/>
+    <circle class="rim" cx="160" cy="232" r="128"/>
+    <ellipse cx="160" cy="560" rx="112" ry="24" fill="rgba(0,0,0,.34)"/>
+    <g transform="translate(58 62)">
+      <path d="M90 52h86l26 58-28 40H90l-28-40Z" fill="url(#aerialBody)"/>
+      <path d="M104 8h58l22 34-16 44h-70L82 42Z" fill="#ff78ba"/>
+      <path d="M100 48h64l-10 20h-44Z" class="visor"/>
+      <path d="M84 152h102l24 124-40 38h-70l-40-38Z" fill="url(#aerialBody)"/>
+      <path d="M92 202h86M78 244h112" class="line"/>
+      <path d="M44 172l34-28 14 50-40 84-38-20Z" fill="#ff78ba"/>
+      <path d="M194 144l34 28 30 86-38 20-40-84Z" fill="#6f62ff"/>
+      <path d="M94 314h38l-20 132H60Z" fill="#d94fa4"/>
+      <path d="M152 314h38l30 132h-52Z" fill="#493bd6"/>
+      <circle class="joint" cx="76" cy="196" r="15"/>
+      <circle class="joint" cx="204" cy="196" r="15"/>
+      <path d="M54 480h60l38-72h58l34 72-28 42H82Z" fill="#6f62ff"/>
+      <circle cx="96" cy="526" r="16" fill="#0b1020"/>
+      <circle cx="198" cy="526" r="16" fill="#0b1020"/>
+    </g>
+    <text x="34" y="586" class="name">Aerial type</text>
+    <text x="36" y="620" class="role">high jump / short glide</text>
+  </g>
+
+  <g transform="translate(1200 150)">
+    <rect class="card" width="320" height="640" rx="34"/>
+    <circle class="rim" cx="160" cy="232" r="128"/>
+    <ellipse cx="160" cy="560" rx="112" ry="24" fill="rgba(0,0,0,.34)"/>
+    <g transform="translate(42 48)">
+      <path d="M88 66h126l34 70-34 46H88l-34-46Z" fill="url(#d16Body)"/>
+      <path d="M112 6h78l26 48-24 50h-82L86 54Z" fill="#a8b1c4"/>
+      <rect class="visor" x="112" y="50" width="78" height="20" rx="10"/>
+      <path d="M82 184h140l36 142-50 42h-112l-50-42Z" fill="url(#d16Body)"/>
+      <path d="M92 232h120M72 296h162" class="line"/>
+      <path d="M32 208l48-30 20 62-42 104-58-32Z" fill="#697486"/>
+      <path d="M226 178l48 30 32 104-58 32-42-104Z" fill="#cfd5e2"/>
+      <path d="M104 368h58l-22 138H72Z" fill="#535d70"/>
+      <path d="M170 368h58l28 138h-68Z" fill="#252d3c"/>
+      <circle class="joint" cx="84" cy="242" r="20"/>
+      <circle class="joint" cx="244" cy="242" r="20"/>
+      <path d="M30 530h250l38 36-34 40H58l-38-40Z" fill="#555f72"/>
+      <rect x="92" y="500" width="126" height="30" rx="12" fill="#cfd5e2"/>
+      <circle cx="86" cy="608" r="20" fill="#0b1020"/>
+      <circle cx="226" cy="608" r="20" fill="#0b1020"/>
+    </g>
+    <text x="34" y="586" class="name">D-16 type</text>
+    <text x="36" y="620" class="role">heavy breaker / cannon</text>
+  </g>
+</svg>

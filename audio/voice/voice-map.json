@@ -1,0 +1,18 @@
+{
+  "notes": "Add recorded MP3 files and fill the src fields. When src is empty, the app uses browser speech synthesis as a fallback.",
+  "voice_style": "Spanish Latin American, warm, cheerful, short phrases, age target 6.",
+  "lines": {
+    "intro": { "text": "Vamos", "src": "" },
+    "jump-now": { "text": "Salta ahora", "src": "" },
+    "transform-now": { "text": "Transformate", "src": "" },
+    "try-again": { "text": "Prueba otra vez", "src": "" },
+    "careful": { "text": "Cuidado", "src": "" },
+    "great": { "text": "Muy bien", "src": "" },
+    "rescue": { "text": "Muy bien", "src": "" },
+    "excellent": { "text": "Excelente", "src": "" },
+    "character-orion": { "text": "Orion Pax", "src": "" },
+    "character-bee": { "text": "Bumblebee", "src": "" },
+    "character-elita": { "text": "Elita Uno", "src": "" },
+    "character-d16": { "text": "D dieciseis", "src": "" }
+  }
+}
