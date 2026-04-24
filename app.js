@@ -9,6 +9,18 @@
 
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
+  const BASE_WIDTH = 1280;
+  const BASE_HEIGHT = 720;
+  const PLAYER_START_X = 220;
+
+  const layout = {
+    ratio: 1,
+    scale: 1,
+    cssWidth: BASE_WIDTH,
+    cssHeight: BASE_HEIGHT,
+    viewWidth: BASE_WIDTH,
+    viewHeight: BASE_HEIGHT
+  };
 
   if (!CanvasRenderingContext2D.prototype.roundRect) {
     CanvasRenderingContext2D.prototype.roundRect = function roundRect(x, y, width, height, radius = 0) {
@@ -83,7 +95,7 @@
     energy: 0,
     stars: 0,
     bots: 0,
-    respawnX: 120,
+    respawnX: PLAYER_START_X,
     failCount: 0,
     lastTime: 0,
     currentPrompt: null,
@@ -99,15 +111,32 @@
     Object.entries(screens).forEach(([key, element]) => element.classList.toggle('active', key === name));
   }
 
+  function getViewportSize() {
+    const viewport = window.visualViewport;
+    return {
+      width: Math.max(320, Math.floor(viewport?.width || window.innerWidth || document.documentElement.clientWidth || BASE_WIDTH)),
+      height: Math.max(240, Math.floor(viewport?.height || window.innerHeight || document.documentElement.clientHeight || BASE_HEIGHT))
+    };
+  }
+
   function resizeCanvas() {
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    const width = window.innerWidth;
-    const height = window.visualViewport?.height || window.innerHeight;
+    const { width, height } = getViewportSize();
+    const scale = Math.max(.34, Math.min(width / BASE_WIDTH, height / BASE_HEIGHT, 1.25));
+
+    layout.ratio = ratio;
+    layout.scale = scale;
+    layout.cssWidth = width;
+    layout.cssHeight = height;
+    layout.viewWidth = width / scale;
+    layout.viewHeight = height / scale;
+
+    document.documentElement.style.setProperty('--app-width', `${width}px`);
+    document.documentElement.style.setProperty('--app-height', `${height}px`);
     canvas.width = Math.floor(width * ratio);
     canvas.height = Math.floor(height * ratio);
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   }
 
   function preloadAssets() {
@@ -277,7 +306,7 @@
   function createPlayer() {
     const character = state.selectedCharacter;
     return {
-      x: 120,
+      x: PLAYER_START_X,
       y: game.groundY - character.robotSize.height,
       width: character.robotSize.width,
       height: character.robotSize.height,
@@ -314,7 +343,7 @@
     game.energy = 0;
     game.stars = 0;
     game.bots = 0;
-    game.respawnX = 120;
+    game.respawnX = PLAYER_START_X;
     game.failCount = 0;
     game.particles = [];
     game.currentPrompt = null;
@@ -398,7 +427,7 @@
       if (entity.type === 'lowTunnel') entity.height = Math.max(64, entity.height - 18);
       if (entity.type === 'wall') entity.destroyed = true;
     }
-    const x = Math.max(120, (entity?.x ?? game.respawnX) - 170);
+    const x = Math.max(PLAYER_START_X, (entity?.x ?? game.respawnX) - 170);
     player.x = x;
     player.form = 'robot';
     player.width = character.robotSize.width;
@@ -461,7 +490,7 @@
       respawnNear(gap);
     }
 
-    if (player.y > canvas.clientHeight + 220) respawnNear();
+    if (player.y > layout.viewHeight + 220) respawnNear();
     player.animationTime += dt * Math.max(.8, Math.abs(player.vx) / 120);
   }
 
@@ -582,8 +611,8 @@
 
   function updateCamera() {
     const player = game.player;
-    const target = player.x + player.width / 2 - canvas.clientWidth * .28;
-    const max = Math.max(0, game.worldWidth - canvas.clientWidth);
+    const target = player.x + player.width / 2 - layout.viewWidth * .28;
+    const max = Math.max(0, game.worldWidth - layout.viewWidth);
     game.cameraX += (Math.max(0, Math.min(max, target)) - game.cameraX) * .12;
   }
 
@@ -592,12 +621,12 @@
     game.running = false;
     const character = state.selectedCharacter;
     ui.rewardRobot.src = character.robotFrames[1];
-    const sticker = character.id === 'bee' ? '⚡' : character.id === 'd16' ? '⬢' : character.id === 'elita' ? '✦' : '◆';
+    const sticker = character.id === 'bee' ? '&#9889;' : character.id === 'd16' ? '&#11042;' : character.id === 'elita' ? '&#10022;' : '&#9670;';
     ui.rewardLoot.innerHTML = `
-      <div class="reward-pill" aria-label="Energon"><span aria-hidden="true">⚡</span><strong>${game.energy}</strong></div>
-      <div class="reward-pill" aria-label="Estrellas"><span aria-hidden="true">★</span><strong>${Math.max(3, game.stars)}</strong></div>
-      <div class="reward-pill" aria-label="Bot rescatado"><span aria-hidden="true">🤖</span><strong>${game.bots}</strong></div>
-      <div class="reward-pill sticker-reward" aria-label="Sticker nuevo"><span aria-hidden="true">${sticker}</span><strong>✦</strong></div>
+      <div class="reward-pill" aria-label="Energon"><span aria-hidden="true">&#9889;</span><strong>${game.energy}</strong></div>
+      <div class="reward-pill" aria-label="Estrellas"><span aria-hidden="true">&#9733;</span><strong>${Math.max(3, game.stars)}</strong></div>
+      <div class="reward-pill" aria-label="Bot rescatado"><span aria-hidden="true">&#129302;</span><strong>${game.bots}</strong></div>
+      <div class="reward-pill sticker-reward" aria-label="Sticker nuevo"><span aria-hidden="true">${sticker}</span><strong>&#10022;</strong></div>
     `;
     tone('success');
     setScreen('reward');
@@ -605,8 +634,8 @@
   }
 
   function drawBackground() {
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+    const width = layout.viewWidth;
+    const height = layout.viewHeight;
     const camera = game.cameraX;
     const sky = ctx.createLinearGradient(0, 0, 0, height);
     sky.addColorStop(0, '#08162f');
@@ -635,7 +664,7 @@
   }
 
   function drawCue(x, y, type) {
-    const symbol = type === 'transform' ? '⬢' : '↑';
+    const symbol = type === 'transform' ? '\u21C4' : '\u2191';
     ctx.save();
     ctx.beginPath();
     ctx.arc(x, y, 22, 0, Math.PI * 2);
@@ -656,7 +685,7 @@
     for (const entity of game.entities) {
       if (entity.collected || entity.destroyed) continue;
       const x = worldX(entity.x);
-      if (x < -240 || x > canvas.clientWidth + 240) continue;
+      if (x < -240 || x > layout.viewWidth + 240) continue;
 
       if (entity.type === 'energon') {
         ctx.save();
@@ -675,7 +704,7 @@
 
       if (entity.type === 'gap') {
         ctx.fillStyle = '#050b16';
-        ctx.fillRect(x, game.groundY, entity.width, canvas.clientHeight - game.groundY);
+        ctx.fillRect(x, game.groundY, entity.width, layout.viewHeight - game.groundY);
         ctx.fillStyle = '#9ee3ff';
         ctx.fillRect(x, game.groundY, entity.width, 12);
         drawCue(x + entity.width / 2, game.groundY - 34, 'jump');
@@ -758,7 +787,7 @@
       if (!enemy.active) continue;
       const x = worldX(enemy.x);
       const y = enemy.y;
-      if (x < -120 || x > canvas.clientWidth + 120) continue;
+      if (x < -120 || x > layout.viewWidth + 120) continue;
 
       ctx.save();
       ctx.translate(x + enemy.width / 2, y + enemy.height / 2);
@@ -816,7 +845,9 @@
   }
 
   function render(dt) {
-    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(layout.ratio * layout.scale, 0, 0, layout.ratio * layout.scale, 0, 0);
     drawBackground();
     drawEntities();
     drawEnemies();
@@ -891,7 +922,7 @@
     ui.soundToggle.addEventListener('pointerdown', (event) => {
       event.preventDefault();
       audioState.enabled = !audioState.enabled;
-      ui.soundToggle.textContent = audioState.enabled ? '🔊' : '🔇';
+      ui.soundToggle.textContent = audioState.enabled ? '\uD83D\uDD0A' : '\uD83D\uDD07';
       localStorage.setItem('cyber-bot-audio', audioState.enabled ? '1' : '0');
       if (!audioState.enabled) {
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -922,7 +953,7 @@
     const savedCharacter = localStorage.getItem('cyber-bot-selected');
     state.selectedCharacter = characters.find((character) => character.id === savedCharacter) || characters[0];
     audioState.enabled = localStorage.getItem('cyber-bot-audio') !== '0';
-    ui.soundToggle.textContent = audioState.enabled ? '🔊' : '🔇';
+    ui.soundToggle.textContent = audioState.enabled ? '\uD83D\uDD0A' : '\uD83D\uDD07';
     resizeCanvas();
     renderCharacterCards();
     updateHomePreview();
@@ -934,5 +965,7 @@
   }
 
   window.addEventListener('resize', resizeCanvas);
+  window.visualViewport?.addEventListener('resize', resizeCanvas);
+  window.visualViewport?.addEventListener('scroll', resizeCanvas);
   preloadAssets().then(init);
 })();

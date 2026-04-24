@@ -22,7 +22,8 @@ html,
 body {
   margin: 0;
   width: 100%;
-  height: 100%;
+  height: var(--app-height, 100dvh);
+  min-height: var(--app-height, 100dvh);
   overflow: hidden;
   background: var(--space);
   color: var(--white);
@@ -37,11 +38,18 @@ button {
   touch-action: manipulation;
 }
 
-#app,
+#app {
+  position: fixed;
+  inset: 0;
+  width: var(--app-width, 100vw);
+  height: var(--app-height, 100dvh);
+  overflow: hidden;
+}
+
 .screen {
   width: 100%;
   height: 100%;
-  min-height: 100dvh;
+  min-height: var(--app-height, 100dvh);
 }
 
 .screen {
@@ -111,7 +119,7 @@ button {
 .home-layout {
   position: relative;
   z-index: 1;
-  height: calc(100dvh - 152px);
+  height: calc(var(--app-height, 100dvh) - 152px);
   padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
@@ -389,7 +397,7 @@ button:active {
   position: relative;
   z-index: 1;
   width: min(860px, calc(100vw - 32px));
-  height: min(680px, calc(100dvh - 32px));
+  height: min(680px, calc(var(--app-height, 100dvh) - 32px));
   margin: 16px auto;
   padding: 18px;
   display: grid;
@@ -519,7 +527,7 @@ button:active {
 
 @media (orientation: landscape) and (max-height: 560px) {
   .home-layout {
-    height: calc(100dvh - 128px);
+    height: calc(var(--app-height, 100dvh) - 128px);
     gap: 8px;
   }
 
@@ -568,6 +576,38 @@ button:active {
 
   .voice-bubble {
     top: max(60px, calc(env(safe-area-inset-top) + 50px));
+  }
+}
+
+@media (orientation: landscape) and (max-height: 430px) {
+  .hud {
+    transform: scale(.9);
+    transform-origin: top left;
+  }
+
+  .mini-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 1.15rem;
+  }
+
+  .voice-bubble {
+    top: max(54px, calc(env(safe-area-inset-top) + 46px));
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: .9rem;
+  }
+
+  .kid-controls {
+    bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .kid-btn {
+    width: min(18vw, 104px);
+    height: min(18vw, 104px);
+    min-width: 84px;
+    min-height: 84px;
   }
 }
 
