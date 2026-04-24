@@ -1,9 +1,10 @@
-const CACHE_NAME = "cyber-bots-runner-v5";
+const CACHE_NAME = "cyber-bots-runner-v6";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./game-data.js",
+  "./game-systems.js",
   "./app.js",
   "./manifest.webmanifest",
   "./audio/voice/voice-map.json",

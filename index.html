@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-  <title>Cyber Bots</title>
-  <meta name="theme-color" content="#08101f">
+  <title>Cyber Bots: Vertical Slice</title>
+  <meta name="theme-color" content="#0b1226">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,95 +13,332 @@
   <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icons/icon-192.svg">
   <link rel="stylesheet" href="./style.css">
+  <style>
+
+/* Gameplay mobile hotfixes */
+#gameScreen .hud,
+#gameScreen .voice-bubble,
+#gameScreen .game-actions {
+  position: absolute;
+}
+
+#gameScreen .game-actions {
+  top: max(6px, env(safe-area-inset-top));
+  right: max(6px, env(safe-area-inset-right));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgba(8, 15, 31, 0.58);
+  border-color: rgba(255,255,255,.08);
+  backdrop-filter: blur(6px);
+}
+
+#gameScreen .game-actions .mini-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  font-size: 0.9rem;
+  line-height: 1;
+  background: rgba(255,255,255,.08);
+}
+
+#gameScreen .voice-bubble {
+  top: max(56px, calc(env(safe-area-inset-top) + 44px));
+  width: min(46vw, 280px);
+  max-width: min(46vw, 280px);
+  padding: 7px 9px;
+  min-height: 0;
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+#gameScreen .voice-bubble:empty {
+  display: none;
+}
+
+#gameScreen .controls-wrap {
+  pointer-events: none;
+}
+
+#gameScreen .controls-wrap > * {
+  pointer-events: auto;
+}
+
+#gameScreen .joystick-panel {
+  width: auto;
+  padding: 0;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  overflow: visible;
+}
+
+#gameScreen .joystick-base {
+  width: min(22vw, 92px);
+  height: min(22vw, 92px);
+  min-width: 78px;
+  min-height: 78px;
+}
+
+#gameScreen .joystick-knob {
+  width: 32px;
+  height: 32px;
+}
+
+#gameScreen .joystick-help {
+  display: none;
+}
+
+#gameScreen .action-panel {
+  padding: 5px;
+  gap: 5px;
+  background: rgba(8, 15, 31, 0.66);
+}
+
+#gameScreen .control-btn {
+  min-width: 108px;
+  min-height: 48px;
+  font-size: 0.9rem;
+}
+
+@media (pointer: coarse) {
+  #gameScreen .controls-wrap {
+    left: max(6px, env(safe-area-inset-left));
+    right: max(6px, env(safe-area-inset-right));
+    bottom: max(6px, env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 540px) {
+  #gameScreen .hud {
+    top: max(6px, env(safe-area-inset-top));
+    left: max(6px, env(safe-area-inset-left));
+    gap: 6px;
+    padding: 6px;
+    max-width: calc(100vw - 46px);
+  }
+
+  #gameScreen .progress-meter {
+    width: min(132px, 20vw);
+    margin-bottom: 0;
+  }
+
+  #gameScreen .hud-pill {
+    padding: 5px 7px;
+    min-width: 46px;
+    justify-content: center;
+  }
+
+  #gameScreen .game-actions {
+    top: max(5px, env(safe-area-inset-top));
+    right: max(5px, env(safe-area-inset-right));
+    padding: 2px;
+    border-radius: 10px;
+  }
+
+  #gameScreen .game-actions .mini-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+  }
+
+  #gameScreen .voice-bubble {
+    top: max(46px, calc(env(safe-area-inset-top) + 34px));
+    width: min(28vw, 210px);
+    max-width: min(28vw, 210px);
+    padding: 6px 8px;
+    font-size: 0.68rem;
+  }
+
+  #gameScreen .controls-wrap {
+    left: 6px;
+    right: 6px;
+    bottom: max(4px, env(safe-area-inset-bottom));
+    gap: 6px;
+  }
+
+  #gameScreen .joystick-base {
+    width: 74px;
+    height: 74px;
+    min-width: 74px;
+    min-height: 74px;
+  }
+
+  #gameScreen .joystick-knob {
+    width: 28px;
+    height: 28px;
+  }
+
+  #gameScreen .action-panel {
+    grid-auto-flow: column;
+    grid-template-columns: repeat(3, minmax(76px, 1fr));
+    border-radius: 14px;
+    padding: 4px;
+    gap: 4px;
+  }
+
+  #gameScreen .control-btn {
+    min-width: 76px;
+    min-height: 40px;
+    border-radius: 12px;
+    font-size: 0.76rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 430px) {
+  #gameScreen .voice-bubble {
+    display: none;
+  }
+
+  #gameScreen .controls-wrap {
+    bottom: max(48px, env(safe-area-inset-bottom));
+  }
+
+  #gameScreen .hud {
+    max-width: calc(100vw - 42px);
+  }
+
+  #gameScreen .joystick-base {
+    width: 68px;
+    height: 68px;
+    min-width: 68px;
+    min-height: 68px;
+  }
+
+  #gameScreen .control-btn {
+    min-width: 72px;
+    min-height: 36px;
+    font-size: 0.72rem;
+  }
+}
+
+</style>
 </head>
 <body>
   <div id="app">
     <section id="homeScreen" class="screen active">
-      <div class="world-bg"></div>
-      <header class="top-actions">
-        <button id="installButton" class="mini-btn hidden-install" aria-label="Instalar">+</button>
-        <button id="soundToggle" class="mini-btn" aria-label="Audio">&#128266;</button>
-      </header>
-
-      <main class="home-layout">
-        <section class="hero-zone" aria-label="Personaje seleccionado">
-          <div class="hero-ring"></div>
-          <div class="hero-light"></div>
-          <img id="heroPreview" class="hero-preview" alt="">
-          <div class="hero-nameplate">
-            <strong id="heroName">Orion Pax</strong>
-            <span id="heroRole">Equilibrado</span>
-            <small id="heroDesc">Facil para empezar.</small>
+      <div class="screen-bg"></div>
+      <div class="home-shell">
+        <header class="panel top-panel">
+          <div class="header-copy">
+            <p class="eyebrow">Cyber Bots: Vertical Slice</p>
+            <h1>Una misión corta, clara y bien pulida</h1>
+            <p class="muted">Vertical slice con combate, telegraphs claros, rutas de ventaja por personaje y un remix final para probar el corazón comercial del juego.</p>
           </div>
-        </section>
+          <div class="top-actions">
+            <button id="installButton" class="mini-btn hidden-install" aria-label="Instalar">＋</button>
+            <button id="soundToggle" class="mini-btn" aria-label="Audio">🔊</button>
+          </div>
+        </header>
 
-        <section class="roster-zone" aria-label="Elegir personaje">
-          <div id="characterCarousel" class="character-carousel"></div>
-          <span id="selectedTag" class="sr-only">Equilibrado</span>
-          <span id="abilityPrimary" class="sr-only">Escudo corto</span>
-          <span id="abilitySecondary" class="sr-only">Recuperacion segura</span>
-          <span id="statControl" class="sr-only">8</span>
-          <span id="statJump" class="sr-only">8</span>
-          <span id="statSpeed" class="sr-only">7</span>
-          <span id="statPower" class="sr-only">8</span>
-        </section>
-      </main>
+        <main class="home-main">
+          <article class="panel hero-panel">
+            <div class="hero-copy">
+              <h2 id="heroName">Orion Pax</h2>
+              <p id="heroRole" class="hero-role">Vanguardia versátil</p>
+              <p id="heroDesc">Versión premium de una sola fase: menos relleno, más intención.</p>
 
-      <footer class="home-dock">
-        <button id="playButton" class="play-btn" aria-label="Jugar">
-          <span aria-hidden="true">&#9658;</span>
-        </button>
-        <button id="toggleFormPreviewButton" class="form-btn" aria-label="Ver transformacion">
-          <span aria-hidden="true">&#8596;</span>
-        </button>
-      </footer>
+              <div class="stat-grid">
+                <div class="stat-box"><span>Control</span><strong id="statControl">8</strong></div>
+                <div class="stat-box"><span>Salto</span><strong id="statJump">8</strong></div>
+                <div class="stat-box"><span>Velocidad</span><strong id="statSpeed">7</strong></div>
+                <div class="stat-box"><span>Poder</span><strong id="statPower">6</strong></div>
+              </div>
+
+              <div class="ability-list">
+                <div class="ability-item">✦ <span id="abilityPrimary">Resistencia frontal</span></div>
+                <div class="ability-item">✦ <span id="abilitySecondary">Recuperación segura</span></div>
+              </div>
+
+              <div class="legend-grid">
+                <div class="legend-item"><span class="legend-color red"></span>Caja roja: salta</div>
+                <div class="legend-item"><span class="legend-color blue"></span>Hueco azul: toma impulso y salta</div>
+                <div class="legend-item"><span class="legend-color yellow"></span>Plataformas: identidad y remix por personaje</div>
+                <div class="legend-item"><span class="legend-color purple"></span>Enemigo púrpura: siempre telegrafía antes de atacar</div>
+              </div>
+            </div>
+            <div class="hero-stage">
+              <div class="hero-glow"></div>
+              <img id="heroPreview" class="hero-preview" alt="personaje seleccionado">
+            </div>
+          </article>
+
+          <aside class="panel roster-panel">
+            <div class="roster-header">
+              <h3>Escuadrón</h3>
+              <span id="selectedTag" class="tag">Versátil</span>
+            </div>
+            <div id="characterCarousel" class="character-carousel"></div>
+          </aside>
+        </main>
+
+        <footer class="bottom-dock panel">
+          <button id="playButton" class="dock-btn primary">Jugar</button>
+          <button id="toggleFormPreviewButton" class="dock-btn secondary">Ver vehículo</button>
+        </footer>
+      </div>
     </section>
 
     <section id="gameScreen" class="screen">
       <canvas id="gameCanvas" width="1280" height="720"></canvas>
 
-      <div class="hud">
-        <div class="progress-meter" aria-label="Progreso"><div id="progressFill" class="progress-fill"></div></div>
-        <div class="hud-chip">&#9889; <span id="energyCount">0</span></div>
-        <div class="hud-chip">&#9733; <span id="starCount">0</span></div>
-        <div class="hud-chip">&#129302; <span id="botCount">0</span></div>
+      <div class="hud panel">
+        <div class="progress-meter" aria-label="Progreso del nivel"><div id="progressFill" class="progress-fill"></div></div>
+        <div class="hud-pill">⚡ <span id="energyCount">0</span></div>
+        <div class="hud-pill">★ <span id="starCount">0</span></div>
+        <div class="hud-pill">🤖 <span id="botCount">0</span></div>
       </div>
 
-      <div id="voiceBubble" class="voice-bubble" aria-live="polite">Vamos</div>
-      <button id="pauseToHomeButton" class="mini-btn pause-btn" aria-label="Inicio">&#8962;</button>
+      <div id="voiceBubble" class="voice-bubble panel show">Usa el joystick para moverte y observa el color de cada obstáculo.</div>
 
-      <div class="kid-controls">
-        <button id="jumpButton" class="kid-btn jump" aria-label="Saltar">
-          <span aria-hidden="true">&#8593;</span>
-        </button>
-        <button id="transformButton" class="kid-btn transform" aria-label="Transformar">
-          <span aria-hidden="true">&#11042;</span>
-        </button>
+      <div class="game-actions panel">
+        <button id="pauseToHomeButton" class="mini-btn">⌂</button>
+      </div>
+
+      <div class="controls-wrap">
+        <div class="panel joystick-panel">
+          <div id="joystickBase" class="joystick-base">
+            <div id="joystickKnob" class="joystick-knob"></div>
+          </div>
+          <div class="joystick-help">Mover</div>
+        </div>
+
+        <div class="panel action-panel">
+          <button id="jumpButton" class="control-btn jump">Saltar</button>
+          <button id="attackButton" class="control-btn attack">Atacar</button>
+          <button id="transformButton" class="control-btn transform">Transformar</button>
+        </div>
       </div>
     </section>
 
     <section id="rewardScreen" class="screen">
-      <div class="world-bg"></div>
-      <main class="reward-card">
-        <div class="reward-stars" aria-hidden="true">
-          <span>&#9733;</span>
-          <span>&#9733;</span>
-          <span>&#9733;</span>
-        </div>
-        <div class="reward-stage">
-          <img id="rewardRobot" class="reward-sprite" alt="">
-          <div class="rescued-bot" aria-hidden="true">&#9673; &#9673;</div>
+      <div class="screen-bg"></div>
+      <div class="reward-shell panel">
+        <h2>Misión completada</h2>
+        <div class="reward-hero-stage">
+          <img id="rewardRobot" class="reward-sprite" alt="personaje">
         </div>
         <div id="rewardLoot" class="reward-loot"></div>
         <div class="reward-actions">
-          <button id="playAgainButton" class="play-btn small" aria-label="Jugar otra vez">&#8635;</button>
-          <button id="homeButton" class="form-btn small" aria-label="Inicio">&#8962;</button>
+          <button id="playAgainButton" class="dock-btn primary">Jugar otra vez</button>
+          <button id="homeButton" class="dock-btn secondary">Inicio</button>
         </div>
-      </main>
+      </div>
     </section>
   </div>
 
   <script src="./game-data.js"></script>
+  <script src="./game-systems.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
