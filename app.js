@@ -635,32 +635,104 @@ function updateCamera() { const vw = viewportWidth(); const target = game.player
 function getAttackVisualState(p, character) {
   if (!p || p.form !== 'robot') return null;
   if (p.charging) {
-    return { frameIdx: 2, rotation: p.facing * (-0.04 - Math.min(0.16, p.chargeTime * 0.18)), offsetX: p.facing * 10, offsetY: -4, scaleX: 1.06, scaleY: 0.97, muzzle: true };
+    return { state: 'charge', frameIdx: 2, rotation: p.facing * (-0.04 - Math.min(0.16, p.chargeTime * 0.18)), offsetX: p.facing * 10, offsetY: -4, scaleX: 1.06, scaleY: 0.97, muzzle: true };
   }
   if (p.recoilTimer > 0) {
     const t = 1 - p.recoilTimer / 0.22;
-    return { frameIdx: 2, rotation: p.facing * (0.16 - t * 0.28), offsetX: p.facing * (10 - t * 6), offsetY: -2, scaleX: 1.05, scaleY: 0.96, muzzle: true };
+    return { state: 'recoil', frameIdx: 2, rotation: p.facing * (0.16 - t * 0.28), offsetX: p.facing * (10 - t * 6), offsetY: -2, scaleX: 1.05, scaleY: 0.96, muzzle: true };
   }
-  if (!p.attack) return null;
-  const t = Math.max(0, Math.min(1, p.attack.timer / Math.max(0.001, p.attack.duration)));
-  if (p.attack.type === 'orion' || p.attack.type === 'orion-air') {
-    return { frameIdx: t < 0.33 ? 0 : t < 0.66 ? 1 : 2, rotation: p.facing * (-0.28 + t * 0.7), offsetX: p.facing * (4 + 14 * t), offsetY: p.attack.type === 'orion-air' ? -12 * Math.sin(t * Math.PI) : -2, scaleX: 1.05 + 0.06 * Math.sin(t * Math.PI), scaleY: 0.98 };
+  if (p.attack) {
+    const t = Math.max(0, Math.min(1, p.attack.timer / Math.max(0.001, p.attack.duration)));
+    if (p.attack.type === 'orion' || p.attack.type === 'orion-air') {
+      return { state: 'orion-axe', frameIdx: t < 0.33 ? 0 : t < 0.66 ? 1 : 2, rotation: p.facing * (-0.28 + t * 0.7), offsetX: p.facing * (4 + 14 * t), offsetY: p.attack.type === 'orion-air' ? -12 * Math.sin(t * Math.PI) : -2, scaleX: 1.05 + 0.06 * Math.sin(t * Math.PI), scaleY: 0.98, attackT: t };
+    }
+    if (p.attack.type === 'bee-slash') {
+      return { state: 'bee-blades', frameIdx: t < 0.4 ? 0 : t < 0.8 ? 1 : 2, rotation: p.facing * (-0.36 + t * 0.72), offsetX: p.facing * (8 + 18 * t), offsetY: -5, scaleX: 1.1, scaleY: 0.92, attackT: t };
+    }
+    if (p.attack.type === 'bee-dash') {
+      return { state: 'bee-dash', frameIdx: 2, rotation: 0, offsetX: p.facing * 16, offsetY: -2, scaleX: 1.16, scaleY: 0.9, attackT: t };
+    }
   }
-  if (p.attack.type === 'bee-slash') {
-    return { frameIdx: t < 0.4 ? 0 : t < 0.8 ? 1 : 2, rotation: p.facing * (-0.36 + t * 0.72), offsetX: p.facing * (8 + 18 * t), offsetY: -5, scaleX: 1.1, scaleY: 0.92 };
+  if (!p.onGround) {
+    const rising = p.vy < 0;
+    return { state: 'jump', frameIdx: rising ? 2 : 0, rotation: p.facing * (rising ? -0.16 : 0.12), offsetX: p.facing * (rising ? 3 : -2), offsetY: rising ? -6 : 3, scaleX: rising ? 0.94 : 1.02, scaleY: rising ? 1.12 : 0.98, rising };
   }
-  if (p.attack.type === 'bee-dash') {
-    return { frameIdx: 2, rotation: 0, offsetX: p.facing * 16, offsetY: -2, scaleX: 1.16, scaleY: 0.9 };
+  if (Math.abs(p.vx) > 28) {
+    const speed = Math.min(1, Math.abs(p.vx) / 320);
+    const step = Math.sin(p.animationTime * 5.8);
+    const lift = Math.abs(step);
+    return { state: 'run', frameIdx: Math.floor(p.animationTime * 9) % 3, rotation: p.facing * (0.05 + step * 0.035) * speed, offsetX: p.facing * lift * 2.5, offsetY: -lift * 3, scaleX: 1.02 + speed * 0.04, scaleY: 0.98 - lift * 0.025, runStep: step, speed };
   }
-  return null;
+  const breath = Math.sin(p.animationTime * 2.4);
+  return { state: 'idle', frameIdx: 1, rotation: breath * 0.01, offsetY: breath * 1.2, scaleX: 1 + breath * 0.006, scaleY: 1 - breath * 0.006 };
 }
 function getFrameSource(character, form, animationTime, speed, attackVisual = null) {
   const frames = form === 'vehicle' ? character.vehicleFrames : character.robotFrames;
+  const safeDefault = Math.min(1, Math.max(0, frames.length - 1));
   if (attackVisual && form === 'robot') {
     const idx = Math.max(0, Math.min(frames.length - 1, attackVisual.frameIdx ?? 1));
-    return assets.images[frames[idx]] || assets.images[frames[1]];
+    return assets.images[frames[idx]] || assets.images[frames[safeDefault]];
   }
-  const moving = Math.abs(speed) > 30; const idx = moving ? Math.floor(animationTime * 7) % frames.length : 1; return assets.images[frames[idx]] || assets.images[frames[1]];
+  const moving = Math.abs(speed) > 30; const idx = moving ? Math.floor(animationTime * 7) % frames.length : safeDefault; return assets.images[frames[idx]] || assets.images[frames[safeDefault]];
+}
+function drawSpriteCopy(img, p, x, y, alpha = 1, scaleX = 1, scaleY = 1, rotation = 0) {
+  if (!img) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x + p.width * 0.5, y + p.height * 0.5);
+  if (p.facing < 0) ctx.scale(-1, 1);
+  ctx.rotate(rotation);
+  ctx.scale(scaleX, scaleY);
+  ctx.drawImage(img, -p.width / 2, -p.height / 2, p.width, p.height);
+  ctx.restore();
+}
+function drawPlayerMotionTrails(p, img, sx, visual) {
+  if (!img || p.form !== 'robot') return;
+  const speed = Math.abs(p.vx);
+  const dash = visual?.state === 'bee-dash';
+  if ((visual?.state === 'run' && speed > 95) || dash) {
+    const count = dash ? 4 : 2;
+    for (let index = count; index >= 1; index -= 1) {
+      const distance = p.facing * (index * (dash ? 18 : 10) + Math.min(22, speed * 0.035));
+      drawSpriteCopy(img, p, sx - distance, p.y + index * 1.3, dash ? 0.13 - index * 0.018 : 0.085 - index * 0.02, 1 + index * 0.015, 0.98, -p.facing * 0.03 * index);
+    }
+  }
+  if (visual?.state === 'jump') {
+    drawSpriteCopy(img, p, sx - p.facing * 7, p.y + 9, 0.07, 0.96, 1.08, -p.facing * 0.06);
+  }
+}
+function drawPlayerMotionFX(p, sx, visual, character) {
+  if (!visual || p.form !== 'robot') return;
+  const feetX = sx + p.width * 0.5;
+  const feetY = p.y + p.height * 0.92;
+  if (visual.state === 'run' && Math.abs(p.vx) > 65) {
+    ctx.save();
+    ctx.globalAlpha = 0.26 + visual.speed * 0.2;
+    ctx.fillStyle = character.accent || '#44efff';
+    for (let index = 0; index < 3; index += 1) {
+      const x = feetX - p.facing * (18 + index * 17 + Math.abs(visual.runStep || 0) * 8);
+      const y = feetY + 5 + index * 2;
+      ctx.beginPath();
+      ctx.ellipse(x, y, 12 - index * 2, 3.5, -p.facing * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  if (visual.state === 'jump') {
+    ctx.save();
+    const thrust = visual.rising ? 1 : 0.55;
+    const grad = ctx.createLinearGradient(feetX, feetY - 8, feetX, feetY + 42);
+    grad.addColorStop(0, 'rgba(255,255,255,.78)');
+    grad.addColorStop(0.35, 'rgba(68,239,255,.42)');
+    grad.addColorStop(1, 'rgba(68,239,255,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(feetX - 12, feetY);
+    ctx.quadraticCurveTo(feetX, feetY + 30 * thrust, feetX + 12, feetY);
+    ctx.quadraticCurveTo(feetX, feetY + 12 * thrust, feetX - 12, feetY);
+    ctx.fill();
+    ctx.restore();
+  }
 }
 function drawPlayerAttackFX(p, sx, visual) {
   if (!p) return;
@@ -669,12 +741,43 @@ function drawPlayerAttackFX(p, sx, visual) {
   if (p.attack?.type === 'orion' || p.attack?.type === 'orion-air') {
     const t = p.attack.timer / Math.max(0.001, p.attack.duration);
     ctx.save();
-    ctx.translate(centerX + p.facing * (18 + t * 18), centerY - 8);
+    ctx.translate(centerX + p.facing * (6 + t * 20), centerY - 2);
     if (p.facing < 0) ctx.scale(-1, 1);
-    ctx.rotate(-0.7 + t * 1.15);
-    const grad = ctx.createLinearGradient(0, 0, 92, 0); grad.addColorStop(0, 'rgba(255,255,255,0)'); grad.addColorStop(0.35, 'rgba(255,245,210,.75)'); grad.addColorStop(1, 'rgba(82,181,255,.22)');
-    ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.moveTo(0, -14); ctx.quadraticCurveTo(48, -40, 102, -6); ctx.quadraticCurveTo(54, -2, 0, 16); ctx.closePath(); ctx.fill();
+    ctx.rotate(-1.05 + t * 1.55);
+    ctx.scale(1.18, 1.18);
+    ctx.shadowColor = 'rgba(68,239,255,.85)';
+    ctx.shadowBlur = 18;
+    const trail = ctx.createLinearGradient(-10, 0, 116, 0);
+    trail.addColorStop(0, 'rgba(68,239,255,0)');
+    trail.addColorStop(0.38, 'rgba(255,255,255,.76)');
+    trail.addColorStop(1, 'rgba(68,239,255,.08)');
+    ctx.fillStyle = trail;
+    ctx.beginPath();
+    ctx.moveTo(-8, -24);
+    ctx.quadraticCurveTo(48, -56, 118, -14);
+    ctx.quadraticCurveTo(58, 4, -8, 24);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(155,239,255,.95)';
+    ctx.lineWidth = 7;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-20, 28);
+    ctx.lineTo(78, -20);
+    ctx.stroke();
+    const blade = ctx.createRadialGradient(92, -24, 4, 92, -24, 42);
+    blade.addColorStop(0, 'rgba(255,255,255,.98)');
+    blade.addColorStop(0.45, 'rgba(75,214,255,.78)');
+    blade.addColorStop(1, 'rgba(38,118,255,.08)');
+    ctx.fillStyle = blade;
+    ctx.beginPath();
+    ctx.moveTo(70, -42);
+    ctx.quadraticCurveTo(126, -54, 126, -5);
+    ctx.quadraticCurveTo(104, -18, 74, 8);
+    ctx.quadraticCurveTo(91, -14, 70, -42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
     ctx.restore();
   }
   if (p.attack?.type === 'bee-slash' || p.attack?.type === 'bee-dash') {
@@ -684,9 +787,36 @@ function drawPlayerAttackFX(p, sx, visual) {
     ctx.translate(centerX + p.facing * (dash ? 24 : 14), centerY + 4);
     if (p.facing < 0) ctx.scale(-1, 1);
     ctx.rotate(-0.35 + t * 0.5);
-    const grad = ctx.createLinearGradient(-10, 0, dash ? 136 : 92, 0); grad.addColorStop(0, 'rgba(255,255,255,0)'); grad.addColorStop(0.26, 'rgba(255,245,200,.82)'); grad.addColorStop(1, dash ? 'rgba(255,77,119,.18)' : 'rgba(68,239,255,.22)');
-    ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.moveTo(-4, -12); ctx.quadraticCurveTo(dash ? 62 : 40, dash ? -26 : -20, dash ? 136 : 92, 0); ctx.quadraticCurveTo(dash ? 70 : 38, dash ? 18 : 16, -4, 10); ctx.closePath(); ctx.fill();
+    ctx.scale(1.18, 1.18);
+    ctx.shadowColor = 'rgba(68,239,255,.75)';
+    ctx.shadowBlur = dash ? 20 : 13;
+    for (const y of [-13, 13]) {
+      const length = dash ? 132 : 86;
+      const grad = ctx.createLinearGradient(-8, y, length, y);
+      grad.addColorStop(0, 'rgba(255,255,255,.95)');
+      grad.addColorStop(0.18, 'rgba(255,242,160,.78)');
+      grad.addColorStop(0.72, 'rgba(68,239,255,.55)');
+      grad.addColorStop(1, 'rgba(68,239,255,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(-6, y - 5);
+      ctx.lineTo(length, y - (dash ? 18 : 12));
+      ctx.quadraticCurveTo(length + 20, y, length, y + (dash ? 18 : 12));
+      ctx.lineTo(-6, y + 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      ctx.beginPath();
+      ctx.arc(-8, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (dash) {
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = 'rgba(255,216,77,.32)';
+      ctx.fillRect(-52, -24, 132, 48);
+      ctx.globalAlpha = 1;
+    }
+    ctx.shadowBlur = 0;
     ctx.restore();
   }
   if (visual?.muzzle) {
@@ -832,6 +962,8 @@ function drawPlayer() {
   const shadowGrad = ctx.createRadialGradient(sx + p.width * 0.5, p.y + p.height * 0.88, 4, sx + p.width * 0.5, p.y + p.height * 0.88, p.width * 0.68);
   shadowGrad.addColorStop(0, 'rgba(0,0,0,.22)'); shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = shadowGrad; ctx.beginPath(); ctx.ellipse(sx + p.width * 0.5, p.y + p.height * 0.92, p.width * 0.42, 14, 0, 0, Math.PI * 2); ctx.fill();
+  drawPlayerMotionTrails(p, img, sx, visual);
+  drawPlayerMotionFX(p, sx, visual, c);
   if (p.invuln > 0 && Math.floor(p.invuln * 10) % 2 === 0) ctx.globalAlpha = 0.5;
   const centerX = sx + p.width * 0.5 + (visual?.offsetX || 0);
   const centerY = p.y + p.height * 0.5 + (visual?.offsetY || 0);
@@ -953,6 +1085,8 @@ window.__cyberBotsDebug = {
   getGame: () => game,
   getState: () => state,
   triggerJump: () => handleJumpPress(),
+  triggerAttack: () => { game.input.attackPressed = true; game.input.attackHeld = true; },
+  releaseAttack: () => { game.input.attackHeld = false; game.input.attackReleased = true; },
   setJoystick: (x = 0) => { game.joystick.dirX = x; syncJoystickJump(); },
   releaseJoystick: () => resetJoystick()
 };
