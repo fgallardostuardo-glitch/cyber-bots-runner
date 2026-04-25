@@ -170,7 +170,7 @@ function setImageWithFallback(imgEl, src, fallbackSrc) {
 }
 function updateHomePreview() {
   const c = state.selectedCharacter;
-  const previewSrc = state.previewForm === 'robot' ? c.robotFrames[1] : c.vehicleFrames[1];
+  const previewSrc = state.previewForm === 'robot' ? (c.modelArt || c.robotFrames[1]) : c.vehicleFrames[1];
   ui.heroName.textContent = c.name; ui.heroRole.textContent = c.fantasy; ui.heroDesc.textContent = c.desc;
   animateHomePreview();
   applyCharacterTheme(c);
@@ -188,7 +188,7 @@ function renderCharacterCards() {
     card.style.setProperty('--card-accent-2', c.accent || '#ffd84d');
     card.innerHTML = `<div class="card-art-wrap"><img class="card-sprite" alt="${c.name}"></div><div class="card-meta"><div class="card-head"><div class="card-name">${c.name}</div><span class="card-badge">${c.role}</span></div><div class="card-role">${c.fantasy}</div><div class="card-ability">✦ ${c.abilities[0]}</div><div class="card-stats">Ctrl ${c.stats.control} · Salto ${c.stats.jump} · Vel ${c.stats.speed} · Poder ${c.stats.power}</div></div>`;
     const sprite = card.querySelector('.card-sprite');
-    setImageWithFallback(sprite, c.robotFrames[1], makeSpriteFallback(c, 'robot'));
+    setImageWithFallback(sprite, c.modelArt || c.robotFrames[1], makeSpriteFallback(c, 'robot'));
     card.addEventListener('click', () => selectCharacter(index));
     ui.carousel.appendChild(card);
   });
@@ -627,7 +627,7 @@ function completeLevel() {
   game.justCompleted = true; game.running = false;
   addScreenShake(12, 0.18);
   robotBeep('destroy');
-  setImageWithFallback(ui.rewardRobot, state.selectedCharacter.robotFrames[1], makeSpriteFallback(state.selectedCharacter, 'robot'));
+  setImageWithFallback(ui.rewardRobot, state.selectedCharacter.modelArt || state.selectedCharacter.robotFrames[1], makeSpriteFallback(state.selectedCharacter, 'robot'));
   ui.rewardLoot.innerHTML = `<div class="reward-pill">⚡ Energón: ${game.energy}</div><div class="reward-pill">★ Estrellas: ${game.stars}</div><div class="reward-pill">🤖 Bots rescatados: ${game.bots}</div><div class="reward-pill">Ruta de ventaja: ${state.selectedCharacter.abilities[0]}</div>`;
   setScreen('reward');
 }

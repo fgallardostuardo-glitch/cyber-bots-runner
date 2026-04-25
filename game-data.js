@@ -1,5 +1,6 @@
 (function(){
 const SPRITE_BASE = './sprites';
+const MODEL_BASE = './models/characters';
 
 const characters = [
   {
@@ -11,7 +12,8 @@ const characters = [
     color: '#d6413b', accent: '#52b5ff',
     stats: { control: 8, jump: 8, speed: 7, power: 8 },
     abilities: ['Combo de hacha x3', 'Tajo aéreo con rebote'],
-    robotFrames: [1,2,3].map(n => `${SPRITE_BASE}/orion-robot-${n}.svg`),
+    modelArt: `${MODEL_BASE}/orion-reference.jpg`,
+    robotFrames: [1,2,3].map(n => `${MODEL_BASE}/orion-robot-${n}.png`),
     vehicleFrames: [1,2,3].map(n => `${SPRITE_BASE}/orion-vehicle-${n}.svg`),
     robotAccel: 1700, robotMaxSpeed: 282, vehicleAccel: 1920, vehicleMaxSpeed: 358,
     jumpVelocity: 740, gravity: 1300, airControl: 0.98, extraJumps: 0, glideGravity: 1,
@@ -27,7 +29,8 @@ const characters = [
     color: '#f2b51c', accent: '#202738',
     stats: { control: 8, jump: 8, speed: 10, power: 5 },
     abilities: ['Cadena de cortes rápidos', 'Dash slash horizontal'],
-    robotFrames: [1,2,3].map(n => `${SPRITE_BASE}/bee-robot-${n}.svg`),
+    modelArt: `${MODEL_BASE}/bee-reference.jpg`,
+    robotFrames: [1,2,3].map(n => `${MODEL_BASE}/bee-robot-${n}.png`),
     vehicleFrames: [1,2,3].map(n => `${SPRITE_BASE}/bee-vehicle-${n}.svg`),
     robotAccel: 1960, robotMaxSpeed: 308, vehicleAccel: 2360, vehicleMaxSpeed: 430,
     jumpVelocity: 742, gravity: 1330, airControl: 1.03, extraJumps: 0, glideGravity: 1,
@@ -43,7 +46,8 @@ const characters = [
     color: '#d85aa6', accent: '#6756ff',
     stats: { control: 9, jump: 10, speed: 8, power: 4 },
     abilities: ['Doble salto', 'Planeo ligero'],
-    robotFrames: [1,2,3].map(n => `${SPRITE_BASE}/elita-robot-${n}.svg`),
+    modelArt: `${MODEL_BASE}/elita-reference.jpg`,
+    robotFrames: [1,2,3].map(n => `${MODEL_BASE}/elita-robot-${n}.png`),
     vehicleFrames: [1,2,3].map(n => `${SPRITE_BASE}/elita-vehicle-${n}.svg`),
     robotAccel: 1680, robotMaxSpeed: 276, vehicleAccel: 1840, vehicleMaxSpeed: 348,
     jumpVelocity: 724, gravity: 1240, airControl: 1.15, extraJumps: 1, glideGravity: 0.56,
@@ -59,7 +63,8 @@ const characters = [
     color: '#737d8e', accent: '#cfd5e2',
     stats: { control: 6, jump: 8, speed: 6, power: 10 },
     abilities: ['Cañón con retroceso', 'Disparo cargado'],
-    robotFrames: [1,2,3].map(n => `${SPRITE_BASE}/d16-robot-${n}.svg`),
+    modelArt: `${MODEL_BASE}/d16-reference.jpg`,
+    robotFrames: [1,2,3].map(n => `${MODEL_BASE}/d16-robot-${n}.png`),
     vehicleFrames: [1,2,3].map(n => `${SPRITE_BASE}/d16-vehicle-${n}.svg`),
     robotAccel: 1540, robotMaxSpeed: 258, vehicleAccel: 1730, vehicleMaxSpeed: 332,
     jumpVelocity: 748, gravity: 1350, airControl: 0.9, extraJumps: 0, glideGravity: 1,

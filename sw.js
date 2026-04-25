@@ -1,4 +1,4 @@
-const CACHE_NAME = "cyber-bots-runner-v6";
+const CACHE_NAME = "cyber-bots-runner-v7";
 const APP_ASSETS = [
   "./",
   "./index.html",
@@ -34,7 +34,27 @@ const APP_ASSETS = [
   "./sprites/d16-robot-3.svg",
   "./sprites/d16-vehicle-1.svg",
   "./sprites/d16-vehicle-2.svg",
-  "./sprites/d16-vehicle-3.svg"
+  "./sprites/d16-vehicle-3.svg",
+  "./models/characters/orion-reference.jpg",
+  "./models/characters/orion-model.png",
+  "./models/characters/orion-robot-1.png",
+  "./models/characters/orion-robot-2.png",
+  "./models/characters/orion-robot-3.png",
+  "./models/characters/bee-reference.jpg",
+  "./models/characters/bee-model.png",
+  "./models/characters/bee-robot-1.png",
+  "./models/characters/bee-robot-2.png",
+  "./models/characters/bee-robot-3.png",
+  "./models/characters/elita-reference.jpg",
+  "./models/characters/elita-model.png",
+  "./models/characters/elita-robot-1.png",
+  "./models/characters/elita-robot-2.png",
+  "./models/characters/elita-robot-3.png",
+  "./models/characters/d16-reference.jpg",
+  "./models/characters/d16-model.png",
+  "./models/characters/d16-robot-1.png",
+  "./models/characters/d16-robot-2.png",
+  "./models/characters/d16-robot-3.png"
 ];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_ASSETS)));
