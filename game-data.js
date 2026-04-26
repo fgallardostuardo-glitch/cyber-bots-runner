@@ -17,8 +17,8 @@ const characters = [
     vehicleFrames: [1,2,3].map(n => `${SPRITE_BASE}/orion-vehicle-${n}.svg`),
     robotAccel: 1700, robotMaxSpeed: 282, vehicleAccel: 1920, vehicleMaxSpeed: 358,
     jumpVelocity: 740, gravity: 1300, airControl: 0.98, extraJumps: 0, glideGravity: 1,
-    robotSize: { width: 92, height: 138 }, vehicleSize: { width: 150, height: 86 },
-    combat: { kind: 'orion', cadence: 0.2, reach: 92 }
+    robotSize: { width: 86, height: 128 }, vehicleSize: { width: 150, height: 86 },
+    combat: { kind: 'orion', cadence: 0.2, reach: 0 }
   },
   {
     id: 'bee',
