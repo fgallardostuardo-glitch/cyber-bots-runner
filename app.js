@@ -109,8 +109,8 @@ function safeGetStorage(key) { try { return window.localStorage ? localStorage.g
 function safeSetStorage(key, value) { try { if (window.localStorage) localStorage.setItem(key, value); } catch (_) {} }
 function syncViewportMetrics() {
   const vv = window.visualViewport;
-  const width = Math.max(320, Math.round(vv?.width || window.innerWidth || document.documentElement.clientWidth || 320));
-  const height = Math.max(320, Math.round(vv?.height || window.innerHeight || document.documentElement.clientHeight || 320));
+  const width = Math.max(320, Math.round(vv?.width || 0), Math.round(window.innerWidth || 0), Math.round(document.documentElement.clientWidth || 0));
+  const height = Math.max(320, Math.round(vv?.height || 0), Math.round(window.innerHeight || 0), Math.round(document.documentElement.clientHeight || 0));
   document.documentElement.style.setProperty('--app-width', `${width}px`);
   document.documentElement.style.setProperty('--app-height', `${height}px`);
   return { width, height };
@@ -686,7 +686,8 @@ function drawSpriteCopy(img, p, x, y, alpha = 1, scaleX = 1, scaleY = 1, rotatio
   ctx.drawImage(img, -p.width / 2, -p.height / 2, p.width, p.height);
   ctx.restore();
 }
-function drawPlayerMotionTrails(p, img, sx, visual) {
+function drawPlayerMotionTrails(p, img, sx, visual, character) {
+  if (character?.id === 'orion' && p.form === 'robot') return;
   if (!img || p.form !== 'robot') return;
   const speed = Math.abs(p.vx);
   const dash = visual?.state === 'bee-dash';
@@ -956,13 +957,225 @@ function drawFallbackPlayerSprite(sx, p, c) {
   ctx.fill();
 }
 
+function clamp01(value) { return Math.max(0, Math.min(1, value)); }
+function drawOrionPanel(x, y, width, height, radius, topColor, bottomColor, strokeColor = 'rgba(182,239,255,.58)') {
+  const grad = ctx.createLinearGradient(x, y, x + width, y + height);
+  grad.addColorStop(0, topColor);
+  grad.addColorStop(1, bottomColor);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, radius);
+  ctx.fill();
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+}
+function drawOrionJoint(x, y, radius, fill = '#233f69') {
+  const grad = ctx.createRadialGradient(x - radius * 0.35, y - radius * 0.35, 1, x, y, radius * 1.2);
+  grad.addColorStop(0, '#dff9ff');
+  grad.addColorStop(0.28, fill);
+  grad.addColorStop(1, '#071329');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(139,233,255,.72)';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+}
+function drawOrionLimbSegment(x, y, length, width, angle, topColor, bottomColor, alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  drawOrionPanel(-width / 2, 0, width, length, width * 0.34, topColor, bottomColor, 'rgba(157,229,255,.52)');
+  ctx.fillStyle = 'rgba(255,255,255,.2)';
+  ctx.fillRect(-width * 0.18, length * 0.12, width * 0.16, length * 0.58);
+  ctx.restore();
+  return { x: x - Math.sin(angle) * length, y: y + Math.cos(angle) * length };
+}
+function drawOrionFoot(x, y, angle, scale = 1, alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  drawOrionPanel(-13 * scale, -2 * scale, 30 * scale, 14 * scale, 6 * scale, '#1b66b7', '#0b1a34', 'rgba(153,231,255,.6)');
+  ctx.fillStyle = 'rgba(255,255,255,.22)';
+  ctx.fillRect(0, 1 * scale, 11 * scale, 3 * scale);
+  ctx.restore();
+}
+function drawOrionAxe(x, y, angle, attackT = 0) {
+  const power = Math.sin(clamp01(attackT) * Math.PI);
+  const handleLength = 62 + power * 6;
+  const bladeScale = 1 + power * 0.18;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.lineCap = 'round';
+  ctx.shadowColor = 'rgba(68,239,255,.85)';
+  ctx.shadowBlur = 10 + power * 16;
+  ctx.strokeStyle = '#162542';
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(-10, 0);
+  ctx.lineTo(handleLength, 0);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(147,239,255,.95)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-6, -0.5);
+  ctx.lineTo(handleLength - 4, -0.5);
+  ctx.stroke();
+  ctx.translate(handleLength, 0);
+  ctx.scale(bladeScale, bladeScale);
+  const bladeGrad = ctx.createRadialGradient(10, 0, 4, 12, 0, 38);
+  bladeGrad.addColorStop(0, 'rgba(255,255,255,.98)');
+  bladeGrad.addColorStop(0.38, 'rgba(92,226,255,.92)');
+  bladeGrad.addColorStop(0.78, 'rgba(47,117,255,.58)');
+  bladeGrad.addColorStop(1, 'rgba(47,117,255,0)');
+  ctx.fillStyle = bladeGrad;
+  ctx.beginPath();
+  ctx.moveTo(-5, -25);
+  ctx.quadraticCurveTo(27, -43, 45, -16);
+  ctx.quadraticCurveTo(29, -10, 25, 0);
+  ctx.quadraticCurveTo(32, 12, 47, 17);
+  ctx.quadraticCurveTo(20, 38, -7, 21);
+  ctx.quadraticCurveTo(10, 4, -5, -25);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(214,250,255,.94)';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  ctx.globalAlpha *= 0.72;
+  ctx.strokeStyle = 'rgba(255,255,255,.9)';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(1, -18);
+  ctx.quadraticCurveTo(24, -26, 35, -13);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawOrionRig(p, character, visual) {
+  const w = p.width;
+  const h = p.height;
+  const top = -h / 2;
+  const bottom = h / 2;
+  const runPower = visual?.state === 'run' ? clamp01(visual.speed ?? Math.abs(p.vx) / 300) : 0;
+  const step = visual?.runStep ?? Math.sin(p.animationTime * 5.8);
+  const idle = Math.sin(p.animationTime * 2.4);
+  const isJump = visual?.state === 'jump';
+  const attackT = visual?.state === 'orion-axe' ? clamp01(visual.attackT ?? 0) : 0;
+  const attacking = visual?.state === 'orion-axe';
+  const attackPower = attacking ? Math.sin(attackT * Math.PI) : 0;
+  const torsoTilt = runPower * step * 0.04 + (isJump ? -0.08 : 0) + attackPower * 0.05;
+
+  const shoulderY = top + h * 0.32;
+  const hipY = top + h * 0.67;
+  const shoulderSpread = w * 0.34;
+  const hipSpread = w * 0.16;
+  const torsoX = -w * 0.26;
+  const torsoY = top + h * 0.22;
+  const torsoW = w * 0.52;
+  const torsoH = h * 0.43;
+
+  ctx.save();
+  ctx.rotate(torsoTilt);
+  ctx.shadowColor = 'rgba(72,195,255,.32)';
+  ctx.shadowBlur = 18;
+
+  const leftSwing = -step * runPower;
+  const rightSwing = step * runPower;
+  const legBase = isJump ? 0.6 : 0;
+  const backThigh = isJump ? 0.55 : leftSwing * 0.58;
+  const backShin = backThigh + (isJump ? 0.7 : Math.max(0.05, -leftSwing * 0.52));
+  const frontThigh = isJump ? -0.48 : rightSwing * 0.58;
+  const frontShin = frontThigh + (isJump ? 0.84 : Math.max(0.05, -rightSwing * 0.52));
+
+  ctx.save();
+  ctx.globalAlpha *= 0.76;
+  drawOrionJoint(-hipSpread, hipY, 6.5, '#1e3354');
+  let joint = drawOrionLimbSegment(-hipSpread, hipY, h * 0.25, w * 0.15, backThigh + legBase * 0.18, '#a31f2d', '#123768', 0.92);
+  drawOrionJoint(joint.x, joint.y, 5.5, '#17243c');
+  joint = drawOrionLimbSegment(joint.x, joint.y, h * 0.24, w * 0.135, backShin, '#225896', '#0b1630', 0.9);
+  drawOrionFoot(joint.x, Math.min(bottom - 9, joint.y), -0.08 + leftSwing * 0.15, 0.92, 0.9);
+  ctx.restore();
+
+  drawOrionJoint(hipSpread, hipY, 7, '#24466f');
+  joint = drawOrionLimbSegment(hipSpread, hipY, h * 0.255, w * 0.16, frontThigh - legBase * 0.2, '#cf393c', '#174d87', 1);
+  drawOrionJoint(joint.x, joint.y, 5.8, '#1d3457');
+  joint = drawOrionLimbSegment(joint.x, joint.y, h * 0.245, w * 0.14, frontShin, '#2b78c3', '#0b1730', 1);
+  drawOrionFoot(joint.x, Math.min(bottom - 8, joint.y), 0.06 + rightSwing * 0.18, 1, 1);
+
+  ctx.save();
+  ctx.globalAlpha *= 0.82;
+  drawOrionJoint(-shoulderSpread, shoulderY, 7.5, '#1b335b');
+  const freeUpper = isJump ? 0.62 : 0.28 + rightSwing * 0.24;
+  const freeLower = isJump ? 0.12 : 0.48 - rightSwing * 0.2;
+  let hand = drawOrionLimbSegment(-shoulderSpread, shoulderY, h * 0.2, w * 0.12, freeUpper, '#a72230', '#102a50', 0.9);
+  drawOrionJoint(hand.x, hand.y, 4.6, '#182a4a');
+  hand = drawOrionLimbSegment(hand.x, hand.y, h * 0.18, w * 0.105, freeLower, '#233e68', '#091528', 0.9);
+  drawOrionJoint(hand.x, hand.y, 4.5, '#c62f35');
+  ctx.restore();
+
+  drawOrionPanel(torsoX - 3, torsoY + torsoH * 0.72, torsoW + 6, h * 0.13, 9, '#223d64', '#101c34', 'rgba(139,229,255,.52)');
+  drawOrionPanel(torsoX, torsoY, torsoW, torsoH, 12, '#d33b3d', '#123a68', 'rgba(188,238,255,.7)');
+  drawOrionPanel(-w * 0.13, torsoY + h * 0.12, w * 0.26, h * 0.16, 7, '#e5f8ff', '#53baff', 'rgba(255,255,255,.84)');
+  drawOrionPanel(-w * 0.2, torsoY + h * 0.28, w * 0.4, h * 0.09, 5, '#182d52', '#081327', 'rgba(98,209,255,.46)');
+  drawOrionPanel(-w * 0.34, shoulderY - 6, w * 0.68, h * 0.11, 8, '#1d4b7b', '#071329', 'rgba(118,221,255,.58)');
+  ctx.shadowBlur = 0;
+
+  const headY = top + h * 0.08 + idle * 0.7;
+  drawOrionPanel(-w * 0.17, headY, w * 0.34, h * 0.17, 8, '#1f5f9f', '#0a172e', 'rgba(170,238,255,.72)');
+  drawOrionPanel(-w * 0.12, headY + h * 0.065, w * 0.24, h * 0.045, 4, '#dffaff', '#5dd9ff', 'rgba(255,255,255,.85)');
+  ctx.fillStyle = '#d43a3d';
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.17, headY + 2);
+  ctx.lineTo(-w * 0.29, headY - h * 0.04);
+  ctx.lineTo(-w * 0.13, headY + h * 0.06);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(w * 0.17, headY + 2);
+  ctx.lineTo(w * 0.29, headY - h * 0.04);
+  ctx.lineTo(w * 0.13, headY + h * 0.06);
+  ctx.closePath();
+  ctx.fill();
+
+  drawOrionJoint(shoulderSpread, shoulderY, 8, '#275b90');
+  let axeUpper = -0.36 - leftSwing * 0.24;
+  let axeLower = -0.58 - leftSwing * 0.12;
+  let axeAngle = -0.78 - leftSwing * 0.08;
+  if (attacking) {
+    axeUpper = -1.95 + attackT * 1.65;
+    axeLower = -1.08 + attackT * 1.05;
+    axeAngle = -1.95 + attackT * 2.25;
+  } else if (isJump) {
+    axeUpper = -1.02;
+    axeLower = -0.82;
+    axeAngle = -1.22;
+  }
+  hand = drawOrionLimbSegment(shoulderSpread, shoulderY, h * 0.205, w * 0.125, axeUpper, '#cf343a', '#12345e', 1);
+  drawOrionJoint(hand.x, hand.y, 4.8, '#18345b');
+  hand = drawOrionLimbSegment(hand.x, hand.y, h * 0.19, w * 0.11, axeLower, '#2c79c3', '#091628', 1);
+  drawOrionJoint(hand.x, hand.y, 5, '#d2383a');
+  drawOrionAxe(hand.x + 2, hand.y, axeAngle, attackT);
+
+  ctx.fillStyle = character?.accent || '#52b5ff';
+  ctx.globalAlpha *= 0.35 + attackPower * 0.2;
+  ctx.beginPath();
+  ctx.ellipse(0, bottom - 8, w * 0.38, 3.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 function drawPlayer() {
   const p = game.player, c = state.selectedCharacter, visual = getAttackVisualState(p, c), img = getFrameSource(c, p.form, p.animationTime, p.vx, visual), sx = worldToScreenX(p.x);
+  const useOrionRig = c?.id === 'orion' && p.form === 'robot';
   ctx.save();
   const shadowGrad = ctx.createRadialGradient(sx + p.width * 0.5, p.y + p.height * 0.88, 4, sx + p.width * 0.5, p.y + p.height * 0.88, p.width * 0.68);
   shadowGrad.addColorStop(0, 'rgba(0,0,0,.22)'); shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = shadowGrad; ctx.beginPath(); ctx.ellipse(sx + p.width * 0.5, p.y + p.height * 0.92, p.width * 0.42, 14, 0, 0, Math.PI * 2); ctx.fill();
-  drawPlayerMotionTrails(p, img, sx, visual);
+  drawPlayerMotionTrails(p, img, sx, visual, c);
   drawPlayerMotionFX(p, sx, visual, c);
   if (p.invuln > 0 && Math.floor(p.invuln * 10) % 2 === 0) ctx.globalAlpha = 0.5;
   const centerX = sx + p.width * 0.5 + (visual?.offsetX || 0);
@@ -971,11 +1184,15 @@ function drawPlayer() {
   if (p.facing < 0) ctx.scale(-1, 1);
   ctx.rotate(visual?.rotation || 0);
   ctx.scale(visual?.scaleX || 1, visual?.scaleY || 1);
-  try {
-    if (!img || typeof img !== 'object') throw new Error('missing player sprite');
-    ctx.drawImage(img, -p.width / 2, -p.height / 2, p.width, p.height);
-  } catch (_) {
-    drawFallbackPlayerSprite(-p.width / 2, { ...p, y: -p.height / 2 }, c);
+  if (useOrionRig) {
+    drawOrionRig(p, c, visual);
+  } else {
+    try {
+      if (!img || typeof img !== 'object') throw new Error('missing player sprite');
+      ctx.drawImage(img, -p.width / 2, -p.height / 2, p.width, p.height);
+    } catch (_) {
+      drawFallbackPlayerSprite(-p.width / 2, { ...p, y: -p.height / 2 }, c);
+    }
   }
   if (c.id === 'elita' && !p.onGround && game.input.jumpHeld && p.vy > 0) { ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.moveTo(0, -p.height * 0.1); ctx.lineTo(-p.width * 0.6, p.height * 0.24); ctx.lineTo(p.width * 0.6, p.height * 0.24); ctx.closePath(); ctx.fill(); }
   if (p.charging) { ctx.fillStyle = 'rgba(255, 199, 108, .8)'; ctx.beginPath(); ctx.arc(p.width * .2, -p.height * 0.16, 12 + p.chargeTime * 18, 0, Math.PI * 2); ctx.fill(); }
