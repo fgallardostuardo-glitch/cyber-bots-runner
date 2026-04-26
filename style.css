@@ -142,9 +142,9 @@ h1 { font-size: clamp(1.04rem, 2.3vw, 1.65rem); margin-bottom: 6px; line-height:
   #gameScreen { min-height: var(--app-height, 100dvh); }
   .hud { max-width: calc(var(--app-width, 100vw) - 78px); }
   .voice-bubble { width: min(82vw, 460px); }
-  .controls-wrap { left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); }
-  .joystick-panel { width: min(40vw, 182px); padding: 10px; }
-  .joystick-base { width: min(35vw, 136px); height: min(35vw, 136px); min-width: 108px; min-height: 108px; }
+  .controls-wrap { left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); bottom: max(4px, calc(env(safe-area-inset-bottom) - 4px)); }
+  .joystick-panel { width: min(42vw, 194px); padding: 10px; }
+  .joystick-base { width: min(37vw, 148px); height: min(37vw, 148px); min-width: 120px; min-height: 120px; }
   .action-panel { grid-template-columns: repeat(2, minmax(112px, 1fr)); }
   .control-btn { min-height: 58px; min-width: 120px; }
 }
@@ -259,10 +259,10 @@ html.touch-device button { touch-action: manipulation; }
   .progress-meter { width: min(180px, 48vw); margin-bottom: 0; }
   .hud-pill { padding: 6px 10px; font-size: .84rem; }
   .voice-bubble { top: max(64px, calc(env(safe-area-inset-top) + 52px)); bottom: auto; width: min(84vw, 420px); padding: 9px 12px; font-size: .88rem; }
-  .controls-wrap { left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); gap: 8px; align-items: flex-end; }
-  .joystick-panel { width: min(42vw, 174px); padding: 10px; }
-  .joystick-base { width: min(34vw, 132px); height: min(34vw, 132px); min-width: 112px; min-height: 112px; }
-  .joystick-knob { width: 46px; height: 46px; }
+  .controls-wrap { left: 8px; right: 8px; bottom: max(2px, calc(env(safe-area-inset-bottom) - 5px)); gap: 8px; align-items: flex-end; }
+  .joystick-panel { width: min(46vw, 190px); padding: 10px; }
+  .joystick-base { width: min(38vw, 148px); height: min(38vw, 148px); min-width: 124px; min-height: 124px; }
+  .joystick-knob { width: 50px; height: 50px; }
   .action-panel { padding: 6px; gap: 6px; }
   .control-btn { min-width: min(34vw, 128px); min-height: 56px; border-radius: 18px; font-size: .96rem; }
   .game-actions { top: max(8px, env(safe-area-inset-top)); right: 8px; padding: 6px; }
@@ -274,10 +274,10 @@ html.touch-device button { touch-action: manipulation; }
   #gameScreen { min-height: 100dvh; }
   .hud { max-width: 52vw; }
   .voice-bubble { top: max(62px, calc(env(safe-area-inset-top) + 46px)); width: min(42vw, 360px); font-size: .82rem; padding: 8px 10px; }
-  .controls-wrap { left: 8px; right: 8px; bottom: max(6px, env(safe-area-inset-bottom)); }
-  .joystick-panel { width: 140px; padding: 8px; gap: 4px; }
-  .joystick-base { width: 96px; height: 96px; min-width: 96px; min-height: 96px; }
-  .joystick-knob { width: 38px; height: 38px; }
+  .controls-wrap { left: 8px; right: 8px; bottom: max(2px, calc(env(safe-area-inset-bottom) - 4px)); }
+  .joystick-panel { width: 156px; padding: 8px; gap: 4px; }
+  .joystick-base { width: 110px; height: 110px; min-width: 110px; min-height: 110px; }
+  .joystick-knob { width: 42px; height: 42px; }
   .action-panel { grid-auto-flow: column; grid-template-columns: repeat(2, minmax(96px, 1fr)); align-items: stretch; }
   .control-btn { min-width: 96px; min-height: 46px; font-size: .84rem; border-radius: 16px; }
   .joystick-help { display: none; }

@@ -1,1 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 96"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#d6413b"/><stop offset="1" stop-color="#52b5ff"/></linearGradient></defs><rect x="14" y="42" width="86" height="30" rx="10" fill="url(#g)"/><path d="M94 34 H126 L144 48 V72 H94 Z" fill="#cfd7e8"/><rect x="26" y="34" width="54" height="14" rx="6" fill="#9ad9ff"/><circle cx="44" cy="76" r="14" fill="#202738"/><circle cx="118" cy="76" r="14" fill="#202738"/><circle cx="44" cy="76" r="7" fill="#cfd7e8"/><circle cx="118" cy="76" r="7" fill="#cfd7e8"/><rect x="12" y="58" width="136" height="8" rx="4" fill="#52b5ff" opacity=".5"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 96">
+  <defs>
+    <filter id="softGlow" x="-20%" y="-30%" width="140%" height="160%">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <ellipse cx="82" cy="78" rx="70" ry="8" fill="#071226" opacity=".38"/>
+  <path d="M13 56 L24 43 H70 L84 56 L84 70 H13 Z" fill="#123a68" stroke="#7bdfff" stroke-opacity=".34" stroke-width="1.4"/>
+  <path d="M22 46 H64 L76 56 H18 Z" fill="#176cc0"/>
+  <path d="M76 36 H121 L145 53 V70 H78 Z" fill="#d23539" stroke="#7bdfff" stroke-opacity=".34" stroke-width="1.4"/>
+  <path d="M86 25 H118 L134 38 L142 53 H80 Z" fill="#d23539"/>
+  <path d="M91 31 H116 L127 41 H86 Z" fill="#bff5ff" filter="url(#softGlow)"/>
+  <path d="M78 56 H145 V70 H78 Z" fill="#9a2630"/>
+  <path d="M18 58 H66 L76 68 H13 Z" fill="#07162d" opacity=".42"/>
+  <path d="M86 58 H137 L145 68 H80 Z" fill="#07162d" opacity=".34"/>
+  <path d="M31 39 H60 L67 45 H24 Z" fill="#d23539"/>
+  <path d="M97 45 H132 L140 54 H90 Z" fill="#132b4f"/>
+  <path d="M101 49 H128 L133 54 H97 Z" fill="#2ddcff" opacity=".7"/>
+  <path d="M8 66 H151 L145 74 H15 Z" fill="#0b1d35"/>
+  <path d="M19 65 H54 L60 71 H13 Z" fill="#176cc0"/>
+  <path d="M99 65 H144 L136 72 H93 Z" fill="#176cc0"/>
+  <circle cx="43" cy="74" r="15" fill="#071226"/>
+  <circle cx="43" cy="74" r="9" fill="#1b4474"/>
+  <circle cx="43" cy="74" r="4" fill="#bff5ff"/>
+  <circle cx="119" cy="76" r="15" fill="#071226"/>
+  <circle cx="119" cy="76" r="9" fill="#1b4474"/>
+  <circle cx="119" cy="76" r="4" fill="#bff5ff"/>
+  <path d="M78 29 L86 22 L92 30 L85 36 Z" fill="#154a86"/>
+  <path d="M143 55 L153 59 L143 64 Z" fill="#52b5ff" opacity=".88"/>
+</svg>

@@ -1257,47 +1257,47 @@ function drawOrionRig(p, character, visual) {
   ], '#154a86', 'rgba(118,221,255,.34)', '#061226');
   ctx.shadowBlur = 0;
 
-  const headY = top + h * 0.08 + idle * 0.7;
+  const headY = top + h * 0.105 + idle * 0.55;
   drawOrionArmorPlate([
-    { x: -w * 0.2, y: headY + h * 0.02 },
-    { x: -w * 0.12, y: headY - h * 0.03 },
-    { x: w * 0.12, y: headY - h * 0.03 },
-    { x: w * 0.2, y: headY + h * 0.02 },
-    { x: w * 0.15, y: headY + h * 0.17 },
-    { x: -w * 0.15, y: headY + h * 0.17 }
+    { x: -w * 0.165, y: headY + h * 0.012 },
+    { x: -w * 0.1, y: headY - h * 0.02 },
+    { x: w * 0.1, y: headY - h * 0.02 },
+    { x: w * 0.165, y: headY + h * 0.012 },
+    { x: w * 0.13, y: headY + h * 0.135 },
+    { x: -w * 0.13, y: headY + h * 0.135 }
   ], '#155a9b', 'rgba(170,238,255,.42)', '#061226');
   drawOrionArmorPlate([
-    { x: -w * 0.13, y: headY + h * 0.07 },
-    { x: w * 0.13, y: headY + h * 0.07 },
-    { x: w * 0.1, y: headY + h * 0.12 },
-    { x: -w * 0.1, y: headY + h * 0.12 }
+    { x: -w * 0.105, y: headY + h * 0.055 },
+    { x: w * 0.105, y: headY + h * 0.055 },
+    { x: w * 0.082, y: headY + h * 0.097 },
+    { x: -w * 0.082, y: headY + h * 0.097 }
   ], '#0b1d35', 'rgba(255,255,255,.25)', null);
   ctx.fillStyle = '#dffaff';
   ctx.beginPath();
-  ctx.moveTo(-w * 0.115, headY + h * 0.074);
-  ctx.lineTo(-w * 0.018, headY + h * 0.083);
-  ctx.lineTo(-w * 0.03, headY + h * 0.105);
-  ctx.lineTo(-w * 0.105, headY + h * 0.098);
+  ctx.moveTo(-w * 0.093, headY + h * 0.06);
+  ctx.lineTo(-w * 0.015, headY + h * 0.068);
+  ctx.lineTo(-w * 0.027, headY + h * 0.087);
+  ctx.lineTo(-w * 0.088, headY + h * 0.081);
   ctx.closePath();
   ctx.fill();
   ctx.beginPath();
-  ctx.moveTo(w * 0.115, headY + h * 0.074);
-  ctx.lineTo(w * 0.018, headY + h * 0.083);
-  ctx.lineTo(w * 0.03, headY + h * 0.105);
-  ctx.lineTo(w * 0.105, headY + h * 0.098);
+  ctx.moveTo(w * 0.093, headY + h * 0.06);
+  ctx.lineTo(w * 0.015, headY + h * 0.068);
+  ctx.lineTo(w * 0.027, headY + h * 0.087);
+  ctx.lineTo(w * 0.088, headY + h * 0.081);
   ctx.closePath();
   ctx.fill();
   ctx.fillStyle = '#d43a3d';
   ctx.beginPath();
-  ctx.moveTo(-w * 0.19, headY + h * 0.02);
-  ctx.lineTo(-w * 0.31, headY - h * 0.05);
-  ctx.lineTo(-w * 0.15, headY + h * 0.075);
+  ctx.moveTo(-w * 0.155, headY + h * 0.02);
+  ctx.lineTo(-w * 0.25, headY - h * 0.037);
+  ctx.lineTo(-w * 0.12, headY + h * 0.06);
   ctx.closePath();
   ctx.fill();
   ctx.beginPath();
-  ctx.moveTo(w * 0.19, headY + h * 0.02);
-  ctx.lineTo(w * 0.31, headY - h * 0.05);
-  ctx.lineTo(w * 0.15, headY + h * 0.075);
+  ctx.moveTo(w * 0.155, headY + h * 0.02);
+  ctx.lineTo(w * 0.25, headY - h * 0.037);
+  ctx.lineTo(w * 0.12, headY + h * 0.06);
   ctx.closePath();
   ctx.fill();
 
