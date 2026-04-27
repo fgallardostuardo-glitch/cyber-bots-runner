@@ -296,7 +296,7 @@ function resolveTerrainSteps(previousX) {
 function createPlayer() {
   const c = state.selectedCharacter;
   return {
-    x: 120, y: 580 - c.robotSize.height, vx: 0, vy: 0, width: c.robotSize.width, height: c.robotSize.height,
+    x: 330, y: 580 - c.robotSize.height, vx: 0, vy: 0, width: c.robotSize.width, height: c.robotSize.height,
     form: 'robot', facing: 1, onGround: true, coyote: 0, holdJumpTimer: 0, extraJumpsLeft: c.extraJumps,
     transformLock: 0, invuln: 0, animationTime: 0, dashTimer: 0, recoilTimer: 0,
     attack: null, attackCooldown: 0, comboWindow: 0, comboIndex: 0, charging: false, chargeTime: 0,
@@ -322,7 +322,7 @@ function spawnLevel() {
   game.entities = clone.entities.map(e => ({ ...e, collected: false, destroyed: false, timer: 0, falling: false, vy: 0 }));
   game.enemies = clone.enemies.map(makeEnemy); game.checkpoints = game.entities.filter(e => e.type === 'checkpoint'); game.checkpointIndex = 0;
   game.stepBlockers = buildStepBlockers(clone.terrain);
-  game.energy = 0; game.stars = 0; game.bots = 0; game.cameraX = 0; game.player = createPlayer(); game.respawnX = 120; game.justCompleted = false; game.projectiles = []; game.fx = [];
+  game.energy = 0; game.stars = 0; game.bots = 0; game.cameraX = 0; game.player = createPlayer(); game.respawnX = 330; game.justCompleted = false; game.projectiles = []; game.fx = [];
   updateCounters();
 }
 function startGame() { spawnLevel(); game.running = true; setScreen('game'); showMessage(game.currentLevel.intro, true); }
