@@ -435,11 +435,114 @@ function getOrionAxeBladeHitbox(p, attack) {
   const maxY = Math.max(...ys) + pad;
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY, dir: p.facing, aerial: attack.type === 'orion-air', damage: attack.damage };
 }
+function transformBeeLocalPointToWorld(p, visual, x, y, torsoTilt = 0) {
+  const tiltCos = Math.cos(torsoTilt);
+  const tiltSin = Math.sin(torsoTilt);
+  const tiltedX = x * tiltCos - y * tiltSin;
+  const tiltedY = x * tiltSin + y * tiltCos;
+  const scaleX = visual?.scaleX || 1;
+  const scaleY = visual?.scaleY || 1;
+  const localX = tiltedX * scaleX;
+  const localY = tiltedY * scaleY;
+  const rotation = visual?.rotation || 0;
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  let worldOffsetX = localX * cos - localY * sin;
+  const worldOffsetY = localX * sin + localY * cos;
+  if (p.facing < 0) worldOffsetX *= -1;
+  return {
+    x: p.x + p.width * 0.5 + (visual?.offsetX || 0) + worldOffsetX,
+    y: p.y + p.height * 0.5 + (visual?.offsetY || 0) + worldOffsetY
+  };
+}
+function getBeeRigPose(p, visual) {
+  const w = p.width;
+  const h = p.height;
+  const top = -h / 2;
+  const runPower = visual?.state === 'run' ? clamp01(visual.speed ?? Math.abs(p.vx) / 320) : 0;
+  const step = visual?.runStep ?? Math.sin(p.animationTime * 5.8);
+  const isJump = visual?.state === 'jump';
+  const slashT = visual?.state === 'bee-blades' ? clamp01(visual.attackT ?? 0) : 0;
+  const dashT = visual?.state === 'bee-dash' ? clamp01(visual.attackT ?? 0) : 0;
+  const slashing = visual?.state === 'bee-blades';
+  const dashing = visual?.state === 'bee-dash';
+  const slashPower = slashing ? Math.sin(slashT * Math.PI) : 0;
+  const dashPower = dashing ? 1 : 0;
+  const torsoTilt = runPower * step * 0.045 + (isJump ? -0.08 : 0) + dashPower * 0.08 + slashPower * 0.025;
+  const shoulderY = top + h * 0.31;
+  const hipY = top + h * 0.61;
+  const shoulderSpread = w * 0.49;
+  const hipSpread = w * 0.09;
+  const frontSwing = step * runPower;
+  const backSwing = -step * runPower;
+  const legBase = isJump ? 0.28 : 0;
+  const frontThigh = dashing ? -0.58 : isJump ? -0.28 : frontSwing * 0.5;
+  const frontShin = dashing ? 0.22 : frontThigh + (isJump ? 0.48 : Math.max(-0.1, Math.min(0.46, -frontSwing * 0.42)));
+  const backThigh = dashing ? 0.66 : isJump ? 0.38 : backSwing * 0.5;
+  const backShin = dashing ? 0.78 : backThigh + (isJump ? 0.42 : Math.max(-0.1, Math.min(0.46, -backSwing * 0.42)));
+  const frontUpper = dashing ? -1.18 : slashing ? -1.18 + slashT * 0.62 : isJump ? -0.7 : -0.24 - frontSwing * 0.18;
+  const frontLower = dashing ? -1.03 : slashing ? -0.84 + slashT * 0.44 : isJump ? -0.28 : 0.28 + frontSwing * 0.14;
+  const backUpper = dashing ? -0.78 : slashing ? -0.92 + slashT * 0.5 : isJump ? 0.5 : 0.26 + backSwing * 0.18;
+  const backLower = dashing ? -0.7 : slashing ? -0.5 + slashT * 0.38 : isJump ? 0.12 : 0.42 - backSwing * 0.12;
+  const frontBladeAngle = dashing ? -1.26 : slashing ? -1.08 + (slashT - 0.5) * 0.28 : -1.28;
+  const backBladeAngle = dashing ? -1.02 : slashing ? -0.92 + (slashT - 0.5) * 0.24 : -1.18;
+  const frontElbow = limbEndpoint(shoulderSpread, shoulderY, h * 0.17, frontUpper);
+  const frontHand = limbEndpoint(frontElbow.x, frontElbow.y, h * 0.152, frontLower);
+  const backElbow = limbEndpoint(-shoulderSpread, shoulderY + h * 0.012, h * 0.165, backUpper);
+  const backHand = limbEndpoint(backElbow.x, backElbow.y, h * 0.146, backLower);
+  const bladeLength = (dashing ? 64 : 48) + slashPower * 8 + dashT * 8;
+  const bladeWidth = dashing ? 8.5 : 7.5;
+  return {
+    top, runPower, step, isJump, slashT, dashT, slashing, dashing, slashPower, dashPower, torsoTilt,
+    shoulderY, hipY, shoulderSpread, hipSpread, frontThigh: frontThigh - legBase * 0.15, frontShin,
+    backThigh: backThigh + legBase * 0.15, backShin, frontUpper, frontLower, backUpper, backLower,
+    frontElbow, frontHand, backElbow, backHand, frontBladeAngle, backBladeAngle, bladeLength, bladeWidth
+  };
+}
+function getBeeBladeWorldPoints(p, visual, pose) {
+  const points = [];
+  const addBlade = (hand, angle, length, width) => {
+    const tip = limbEndpoint(hand.x + 2, hand.y, length, angle);
+    const nx = Math.cos(angle) * width;
+    const ny = Math.sin(angle) * width;
+    [
+      { x: hand.x - nx, y: hand.y - ny },
+      { x: hand.x + nx, y: hand.y + ny },
+      { x: tip.x + nx * 0.35, y: tip.y + ny * 0.35 },
+      { x: tip.x - nx * 0.35, y: tip.y - ny * 0.35 }
+    ].forEach((point) => points.push(transformBeeLocalPointToWorld(p, visual, point.x, point.y, pose.torsoTilt)));
+  };
+  addBlade(pose.frontHand, pose.frontBladeAngle, pose.bladeLength, pose.bladeWidth);
+  addBlade(pose.backHand, pose.backBladeAngle, pose.bladeLength * 0.92, pose.bladeWidth);
+  if (pose.dashing) {
+    const w = p.width;
+    const h = p.height;
+    [
+      { x: -w * 0.24, y: -h * 0.24 },
+      { x: w * 0.46, y: -h * 0.2 },
+      { x: w * 0.5, y: h * 0.23 },
+      { x: -w * 0.22, y: h * 0.26 }
+    ].forEach((point) => points.push(transformBeeLocalPointToWorld(p, visual, point.x, point.y, pose.torsoTilt)));
+  }
+  return points;
+}
+function getBeeBladeHitbox(p, attack) {
+  const visual = getAttackVisualState(p, getPlayerStats());
+  const pose = getBeeRigPose(p, visual);
+  const points = getBeeBladeWorldPoints(p, visual, pose);
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const pad = attack.type === 'bee-dash' ? 6 : 4;
+  const minX = Math.min(...xs) - pad;
+  const maxX = Math.max(...xs) + pad;
+  const minY = Math.min(...ys) - pad;
+  const maxY = Math.max(...ys) + pad;
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY, dir: p.facing, damage: attack.damage || (attack.type === 'bee-dash' ? 1.8 : 1.05), kind: attack.type };
+}
 function getAttackHitbox(p, attack) {
   if (!attack) return null;
   if (attack.type === 'orion-air' || attack.type === 'orion') return getOrionAxeBladeHitbox(p, attack);
-  if (attack.type === 'bee-slash') return { x: p.facing > 0 ? p.x + p.width * 0.55 : p.x - attack.reach, y: p.y + 20, width: attack.reach, height: 46, dir: p.facing, damage: 1.2 };
-  if (attack.type === 'bee-dash') return { x: p.facing > 0 ? p.x + 8 : p.x - 10, y: p.y + 14, width: p.width + 14, height: p.height - 20, dir: p.facing, damage: 2.2 };
+  if (attack.type === 'bee-slash' || attack.type === 'bee-dash') return getBeeBladeHitbox(p, attack);
   return null;
 }
 function beginAttack() {
@@ -458,9 +561,9 @@ function beginAttack() {
   }
   if (c.id === 'bee') {
     const fast = Math.abs(p.vx) > 170 && p.onGround && Math.abs(game.joystick.dirX) > 0.45;
-    if (fast) { p.attack = { type: 'bee-dash', timer: 0, duration: 0.22, reach: 82, hit: new Set() }; p.attackCooldown = 0.14; p.dashTimer = 0.22; p.vx = p.facing * 480; robotBeep('attack'); return; }
-    p.comboIndex = p.comboWindow > 0 ? ((p.comboIndex % 4) + 1) : 1; p.comboWindow = 0.24; const reach = 54 + (p.comboIndex >= 3 ? 8 : 0);
-    p.attack = { type: 'bee-slash', timer: 0, duration: 0.12, reach, combo: p.comboIndex, hit: new Set() }; p.attackCooldown = 0.07; robotBeep('attack');
+    if (fast) { p.attack = { type: 'bee-dash', timer: 0, duration: 0.24, damage: 1.75, hit: new Set() }; p.attackCooldown = 0.16; p.dashTimer = 0.24; p.vx = p.facing * 520; robotBeep('attack'); return; }
+    p.comboIndex = p.comboWindow > 0 ? ((p.comboIndex % 4) + 1) : 1; p.comboWindow = 0.24;
+    p.attack = { type: 'bee-slash', timer: 0, duration: 0.16, damage: p.comboIndex >= 4 ? 1.25 : 1.05, combo: p.comboIndex, hit: new Set() }; p.attackCooldown = 0.07; robotBeep('attack');
   }
 }
 function releaseAttack() {
@@ -519,7 +622,7 @@ function updateCombat(dt) {
         }
       }
     }
-    if (p.attack.type === 'bee-dash') p.vx = p.facing * 420;
+    if (p.attack.type === 'bee-dash') p.vx = p.facing * 500;
     if (p.attack.timer >= p.attack.duration) p.attack = null;
   }
   if (p.charging) {
@@ -539,7 +642,7 @@ function updatePlayer(dt) {
   const p = game.player, c = getPlayerStats(); if (!p) return;
   const moveInput = game.joystick.dirX; const isVehicle = p.form === 'vehicle'; const accel = isVehicle ? c.vehicleAccel : c.robotAccel; const maxSpeed = isVehicle ? c.vehicleMaxSpeed : c.robotMaxSpeed; const air = p.onGround ? 1 : c.airControl;
   let desiredSpeed = moveInput * maxSpeed; if (c.id === 'bee' && isVehicle && Math.abs(moveInput) > 0.92) desiredSpeed *= 1.12;
-  if (p.charging) desiredSpeed *= 0.2; if (p.attack?.type === 'bee-dash') desiredSpeed = p.facing * 420;
+  if (p.charging) desiredSpeed *= 0.2; if (p.attack?.type === 'bee-dash') desiredSpeed = p.facing * 500;
   const difference = desiredSpeed - p.vx; const push = Math.sign(difference) * Math.min(Math.abs(difference), accel * dt * air); p.vx += push;
   if (Math.abs(moveInput) < 0.08 && !p.charging && p.attack?.type !== 'bee-dash') {
     const friction = p.onGround ? 1720 : 380; if (Math.abs(p.vx) <= friction * dt) p.vx = 0; else p.vx -= Math.sign(p.vx) * friction * dt;
@@ -771,7 +874,7 @@ function drawSpriteCopy(img, p, x, y, alpha = 1, scaleX = 1, scaleY = 1, rotatio
   ctx.restore();
 }
 function drawPlayerMotionTrails(p, img, sx, visual, character) {
-  if (character?.id === 'orion' && p.form === 'robot') return;
+  if (usesCodeRobotRig(character, p) || usesCodeVehicleRig(character, p)) return;
   if (!img || p.form !== 'robot') return;
   const speed = Math.abs(p.vx);
   const dash = visual?.state === 'bee-dash';
@@ -829,39 +932,29 @@ function drawPlayerAttackFX(p, sx, visual) {
   }
   if (p.attack?.type === 'bee-slash' || p.attack?.type === 'bee-dash') {
     const dash = p.attack.type === 'bee-dash';
+    if (!dash) return;
     const t = p.attack.timer / Math.max(0.001, p.attack.duration);
     ctx.save();
-    ctx.translate(centerX + p.facing * (dash ? 24 : 14), centerY + 4);
+    ctx.translate(centerX + p.facing * 12, centerY + 9);
     if (p.facing < 0) ctx.scale(-1, 1);
-    ctx.rotate(-0.35 + t * 0.5);
-    ctx.scale(1.18, 1.18);
-    ctx.shadowColor = 'rgba(68,239,255,.75)';
-    ctx.shadowBlur = dash ? 20 : 13;
-    for (const y of [-13, 13]) {
-      const length = dash ? 132 : 86;
-      const grad = ctx.createLinearGradient(-8, y, length, y);
+    ctx.rotate(-0.08 + t * 0.16);
+    ctx.shadowColor = 'rgba(68,239,255,.65)';
+    ctx.shadowBlur = 18;
+    for (const y of [-15, 0, 15]) {
+      const length = 118 - Math.abs(y) * 1.8;
+      const grad = ctx.createLinearGradient(-56, y, length, y);
       grad.addColorStop(0, 'rgba(255,255,255,.95)');
-      grad.addColorStop(0.18, 'rgba(255,242,160,.78)');
-      grad.addColorStop(0.72, 'rgba(68,239,255,.55)');
+      grad.addColorStop(0.16, 'rgba(255,221,76,.54)');
+      grad.addColorStop(0.72, 'rgba(68,239,255,.34)');
       grad.addColorStop(1, 'rgba(68,239,255,0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(-6, y - 5);
-      ctx.lineTo(length, y - (dash ? 18 : 12));
-      ctx.quadraticCurveTo(length + 20, y, length, y + (dash ? 18 : 12));
-      ctx.lineTo(-6, y + 5);
+      ctx.moveTo(-48, y - 3);
+      ctx.lineTo(length, y - 9);
+      ctx.quadraticCurveTo(length + 18, y, length, y + 9);
+      ctx.lineTo(-48, y + 3);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,.9)';
-      ctx.beginPath();
-      ctx.arc(-8, y, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    if (dash) {
-      ctx.globalAlpha = 0.45;
-      ctx.fillStyle = 'rgba(255,216,77,.32)';
-      ctx.fillRect(-52, -24, 132, 48);
-      ctx.globalAlpha = 1;
     }
     ctx.shadowBlur = 0;
     ctx.restore();
@@ -1324,13 +1417,750 @@ function drawOrionRig(p, character, visual) {
   ctx.restore();
 }
 
+function drawBeeBlade(x, y, angle, length, width, intensity = 0) {
+  const glow = 0.55 + intensity * 0.45;
+  const tip = limbEndpoint(2, 0, length, angle);
+  const nx = Math.cos(angle) * width;
+  const ny = Math.sin(angle) * width;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.shadowColor = 'rgba(68,239,255,.82)';
+  ctx.shadowBlur = 8 + intensity * 10;
+  const bladeGrad = ctx.createLinearGradient(0, 0, tip.x, tip.y);
+  bladeGrad.addColorStop(0, 'rgba(255,255,255,.98)');
+  bladeGrad.addColorStop(0.28, 'rgba(129,241,255,.94)');
+  bladeGrad.addColorStop(0.66, `rgba(31,160,255,${0.82 * glow})`);
+  bladeGrad.addColorStop(1, 'rgba(31,160,255,.14)');
+  ctx.fillStyle = bladeGrad;
+  ctx.beginPath();
+  ctx.moveTo(-nx * 0.55, -ny * 0.55);
+  ctx.lineTo(nx * 0.55, ny * 0.55);
+  ctx.lineTo(tip.x + nx * 0.28, tip.y + ny * 0.28);
+  ctx.lineTo(tip.x - nx * 0.28, tip.y - ny * 0.28);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.96)';
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(tip.x * 0.92, tip.y * 0.92);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(244,254,255,.9)';
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+  ctx.restore();
+}
+function drawBeeWheel(x, y, radius, alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.fillStyle = '#101827';
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#2f3b54';
+  ctx.beginPath();
+  ctx.arc(x, y, radius * 0.62, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,226,86,.45)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+}
+function drawBeeRig(p, character, visual) {
+  const w = p.width;
+  const h = p.height;
+  const top = -h / 2;
+  const bottom = h / 2;
+  const pose = getBeeRigPose(p, visual);
+  const idle = Math.sin(p.animationTime * 2.8);
+  const yellow = '#f2b51c';
+  const yellowHi = '#ffd94f';
+  const amber = '#e8871c';
+  const dark = '#171e2b';
+  const panelDark = '#273144';
+  const cyan = '#74f6ff';
+
+  ctx.save();
+  ctx.rotate(pose.torsoTilt);
+  ctx.shadowColor = 'rgba(255,217,79,.24)';
+  ctx.shadowBlur = 15;
+
+  drawBeeWheel(-w * 0.26, bottom - h * 0.2, w * 0.12, 0.48);
+  drawBeeWheel(w * 0.22, bottom - h * 0.22, w * 0.11, 0.42);
+
+  ctx.save();
+  ctx.globalAlpha *= 0.82;
+  drawOrionJoint(-pose.hipSpread, pose.hipY, 4.6, '#1c2536');
+  let joint = drawOrionLimbSegment(-pose.hipSpread, pose.hipY, h * 0.19, w * 0.145, pose.backThigh, amber, '#141b29', 0.88);
+  drawOrionJoint(joint.x, joint.y, 4.4, '#242f44');
+  joint = drawOrionLimbSegment(joint.x, joint.y, h * 0.19, w * 0.148, pose.backShin, panelDark, '#101827', 0.86);
+  drawOrionFoot(joint.x, Math.min(bottom - 6, joint.y), -0.08 + pose.step * pose.runPower * 0.09, 0.78, 0.86);
+  ctx.restore();
+
+  drawOrionJoint(pose.hipSpread, pose.hipY, 4.8, '#1f293b');
+  joint = drawOrionLimbSegment(pose.hipSpread, pose.hipY, h * 0.195, w * 0.155, pose.frontThigh, yellow, '#161d2c', 1);
+  drawOrionJoint(joint.x, joint.y, 4.5, '#273249');
+  joint = drawOrionLimbSegment(joint.x, joint.y, h * 0.19, w * 0.152, pose.frontShin, panelDark, '#101827', 1);
+  drawOrionFoot(joint.x, Math.min(bottom - 6, joint.y), 0.08 - pose.step * pose.runPower * 0.1, 0.86, 1);
+
+  ctx.save();
+  ctx.globalAlpha *= 0.82;
+  drawOrionArmorPlate([
+    { x: -pose.shoulderSpread - w * 0.2, y: pose.shoulderY - h * 0.06 },
+    { x: -pose.shoulderSpread + w * 0.04, y: pose.shoulderY - h * 0.08 },
+    { x: -pose.shoulderSpread + w * 0.16, y: pose.shoulderY },
+    { x: -pose.shoulderSpread + w * 0.08, y: pose.shoulderY + h * 0.075 },
+    { x: -pose.shoulderSpread - w * 0.21, y: pose.shoulderY + h * 0.055 }
+  ], yellow, 'rgba(255,241,124,.36)', '#151c2b');
+  drawOrionJoint(-pose.shoulderSpread, pose.shoulderY + h * 0.012, 4.8, '#212b3e');
+  let hand = drawOrionLimbSegment(-pose.shoulderSpread, pose.shoulderY + h * 0.012, h * 0.162, w * 0.122, pose.backUpper, yellow, '#101827', 0.88);
+  drawOrionJoint(hand.x, hand.y, 3.9, '#2a3447');
+  hand = drawOrionLimbSegment(hand.x, hand.y, h * 0.142, w * 0.116, pose.backLower, panelDark, '#101827', 0.88);
+  drawOrionJoint(hand.x, hand.y, 4.1, '#f0b71e');
+  drawBeeBlade(
+    hand.x + 2,
+    hand.y,
+    pose.backBladeAngle,
+    pose.slashing || pose.dashing ? pose.bladeLength * 0.92 : 44,
+    pose.slashing || pose.dashing ? pose.bladeWidth : 6.6,
+    pose.slashPower || pose.dashPower || 0.7
+  );
+  ctx.restore();
+
+  drawOrionArmorPlate([
+    { x: -w * 0.125, y: top + h * 0.56 },
+    { x: w * 0.125, y: top + h * 0.56 },
+    { x: w * 0.078, y: top + h * 0.78 },
+    { x: -w * 0.078, y: top + h * 0.78 }
+  ], dark, 'rgba(116,246,255,.22)', '#0b1322');
+  drawOrionArmorPlate([
+    { x: -w * 0.4, y: top + h * 0.24 },
+    { x: -w * 0.16, y: top + h * 0.16 },
+    { x: w * 0.16, y: top + h * 0.16 },
+    { x: w * 0.4, y: top + h * 0.24 },
+    { x: w * 0.21, y: top + h * 0.59 },
+    { x: w * 0.072, y: top + h * 0.75 },
+    { x: -w * 0.072, y: top + h * 0.75 },
+    { x: -w * 0.21, y: top + h * 0.59 }
+  ], yellow, 'rgba(255,244,139,.38)', '#a66513');
+  drawOrionArmorPlate([
+    { x: -w * 0.17, y: top + h * 0.31 },
+    { x: w * 0.17, y: top + h * 0.31 },
+    { x: w * 0.12, y: top + h * 0.49 },
+    { x: -w * 0.12, y: top + h * 0.49 }
+  ], '#0f1726', 'rgba(116,246,255,.2)', '#070d18');
+  drawOrionArmorPlate([
+    { x: -w * 0.1, y: top + h * 0.34 },
+    { x: w * 0.1, y: top + h * 0.34 },
+    { x: w * 0.075, y: top + h * 0.43 },
+    { x: -w * 0.075, y: top + h * 0.43 }
+  ], '#bff9ff', 'rgba(255,255,255,.58)', '#31bfe8');
+  ctx.fillStyle = 'rgba(255,255,255,.2)';
+  ctx.beginPath();
+  ctx.roundRect(-w * 0.27, top + h * 0.21, w * 0.16, h * 0.05, 4);
+  ctx.roundRect(w * 0.11, top + h * 0.21, w * 0.16, h * 0.05, 4);
+  ctx.fill();
+
+  const headY = top + h * 0.09 + idle * 0.45;
+  drawOrionArmorPlate([
+    { x: -w * 0.16, y: headY + h * 0.018 },
+    { x: -w * 0.1, y: headY - h * 0.018 },
+    { x: w * 0.1, y: headY - h * 0.018 },
+    { x: w * 0.16, y: headY + h * 0.018 },
+    { x: w * 0.13, y: headY + h * 0.15 },
+    { x: -w * 0.13, y: headY + h * 0.15 }
+  ], yellowHi, 'rgba(255,245,164,.45)', '#6f4b0a');
+  ctx.fillStyle = dark;
+  ctx.beginPath();
+  ctx.roundRect(-w * 0.095, headY + h * 0.06, w * 0.19, h * 0.055, 4);
+  ctx.fill();
+  ctx.fillStyle = cyan;
+  const blink = Math.max(0.35, 1 - Math.abs(Math.sin(p.animationTime * 1.7)) * 0.12);
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.08, headY + h * 0.066);
+  ctx.lineTo(-w * 0.015, headY + h * 0.073);
+  ctx.lineTo(-w * 0.025, headY + h * (0.09 * blink));
+  ctx.lineTo(-w * 0.08, headY + h * 0.087);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(w * 0.08, headY + h * 0.066);
+  ctx.lineTo(w * 0.015, headY + h * 0.073);
+  ctx.lineTo(w * 0.025, headY + h * (0.09 * blink));
+  ctx.lineTo(w * 0.08, headY + h * 0.087);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffcf36';
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.12, headY + h * 0.01);
+  ctx.lineTo(-w * 0.2, headY - h * 0.038);
+  ctx.lineTo(-w * 0.08, headY + h * 0.045);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(w * 0.12, headY + h * 0.01);
+  ctx.lineTo(w * 0.2, headY - h * 0.038);
+  ctx.lineTo(w * 0.08, headY + h * 0.045);
+  ctx.closePath();
+  ctx.fill();
+
+  drawOrionArmorPlate([
+    { x: pose.shoulderSpread - w * 0.04, y: pose.shoulderY - h * 0.085 },
+    { x: pose.shoulderSpread + w * 0.2, y: pose.shoulderY - h * 0.06 },
+    { x: pose.shoulderSpread + w * 0.22, y: pose.shoulderY + h * 0.045 },
+    { x: pose.shoulderSpread - w * 0.04, y: pose.shoulderY + h * 0.078 },
+    { x: pose.shoulderSpread - w * 0.16, y: pose.shoulderY }
+  ], yellowHi, 'rgba(255,241,124,.42)', '#151c2b');
+  drawOrionJoint(pose.shoulderSpread, pose.shoulderY, 5, '#252f42');
+  hand = drawOrionLimbSegment(pose.shoulderSpread, pose.shoulderY, h * 0.168, w * 0.13, pose.frontUpper, yellowHi, '#101827', 1);
+  drawOrionJoint(hand.x, hand.y, 4.1, '#2d384c');
+  hand = drawOrionLimbSegment(hand.x, hand.y, h * 0.148, w * 0.122, pose.frontLower, panelDark, '#101827', 1);
+  drawOrionJoint(hand.x, hand.y, 4.4, '#f3bb22');
+  drawBeeBlade(
+    hand.x + 2,
+    hand.y,
+    pose.frontBladeAngle,
+    pose.slashing || pose.dashing ? pose.bladeLength : 48,
+    pose.slashing || pose.dashing ? pose.bladeWidth : 7,
+    pose.slashPower || pose.dashPower || 0.78
+  );
+
+  if (pose.dashing) {
+    ctx.save();
+    ctx.globalAlpha *= 0.22;
+    ctx.fillStyle = '#44efff';
+    for (let index = 0; index < 3; index += 1) {
+      ctx.beginPath();
+      ctx.ellipse(-w * (0.35 + index * 0.18), h * (0.02 + index * 0.04), w * (0.22 - index * 0.03), 3, -0.12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  ctx.fillStyle = character?.accent || '#202738';
+  ctx.globalAlpha *= 0.12 + pose.slashPower * 0.08 + pose.dashPower * 0.12;
+  ctx.beginPath();
+  ctx.ellipse(0, bottom - 7, w * 0.32, 2.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function usesCodeRobotRig(character, player) {
+  return player?.form === 'robot' && ['orion', 'bee', 'elita', 'd16'].includes(character?.id);
+}
+function usesCodeVehicleRig(character, player) {
+  return player?.form === 'vehicle' && ['bee', 'elita', 'd16'].includes(character?.id);
+}
+function drawElitaRig(p, character, visual) {
+  const w = p.width;
+  const h = p.height;
+  const top = -h / 2;
+  const bottom = h / 2;
+  const runPower = visual?.state === 'run' ? clamp01(visual.speed ?? Math.abs(p.vx) / 300) : 0;
+  const step = visual?.runStep ?? Math.sin(p.animationTime * 5.8);
+  const idle = Math.sin(p.animationTime * 2.7);
+  const isJump = visual?.state === 'jump';
+  const gliding = !p.onGround && game.input.jumpHeld && p.vy > 0;
+  const torsoTilt = runPower * step * 0.05 + (isJump ? -0.12 : 0) + (gliding ? 0.08 : 0);
+  const shoulderY = top + h * 0.3;
+  const hipY = top + h * 0.53;
+  const shoulderSpread = w * 0.33;
+  const hipSpread = w * 0.145;
+  const pink = '#d85aa6';
+  const hot = '#ff7cc9';
+  const purple = '#6756ff';
+  const dark = '#17142d';
+  const cyan = '#c9fbff';
+
+  ctx.save();
+  ctx.rotate(torsoTilt);
+  ctx.shadowColor = 'rgba(255,124,201,.24)';
+  ctx.shadowBlur = 16;
+
+  if (gliding) {
+    const wingGrad = ctx.createLinearGradient(-w * 0.86, top + h * 0.35, w * 0.86, top + h * 0.35);
+    wingGrad.addColorStop(0, 'rgba(103,86,255,.05)');
+    wingGrad.addColorStop(0.5, 'rgba(255,255,255,.34)');
+    wingGrad.addColorStop(1, 'rgba(216,90,166,.05)');
+    ctx.fillStyle = wingGrad;
+    ctx.beginPath();
+    ctx.moveTo(-w * 0.18, top + h * 0.38);
+    ctx.lineTo(-w * 0.96, top + h * 0.18);
+    ctx.lineTo(-w * 0.62, top + h * 0.52);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(w * 0.18, top + h * 0.38);
+    ctx.lineTo(w * 0.96, top + h * 0.18);
+    ctx.lineTo(w * 0.62, top + h * 0.52);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  ctx.save();
+  ctx.globalAlpha *= 0.8;
+  drawOrionJoint(-hipSpread, hipY, 4.2, '#221b3d');
+  let joint = drawOrionLimbSegment(-hipSpread, hipY, h * 0.265, w * 0.118, isJump ? 0.44 : -step * runPower * 0.5, pink, '#1a1630', 0.82);
+  drawOrionJoint(joint.x, joint.y, 3.8, '#2b2248');
+  joint = drawOrionLimbSegment(joint.x, joint.y, h * 0.255, w * 0.112, isJump ? 0.52 : Math.max(-0.1, Math.min(0.48, step * runPower * 0.42)), purple, '#121023', 0.82);
+  drawOrionFoot(joint.x, Math.min(bottom - 6, joint.y), -0.1 + step * runPower * 0.14, 0.62, 0.82);
+  ctx.restore();
+
+  drawOrionJoint(hipSpread, hipY, 4.4, '#2a2146');
+  joint = drawOrionLimbSegment(hipSpread, hipY, h * 0.27, w * 0.125, isJump ? -0.42 : step * runPower * 0.5, hot, '#1a1630', 1);
+  drawOrionJoint(joint.x, joint.y, 3.9, '#31254f');
+  joint = drawOrionLimbSegment(joint.x, joint.y, h * 0.258, w * 0.118, isJump ? 0.42 : Math.max(-0.1, Math.min(0.48, -step * runPower * 0.42)), purple, '#121023', 1);
+  drawOrionFoot(joint.x, Math.min(bottom - 6, joint.y), 0.08 - step * runPower * 0.14, 0.68, 1);
+
+  ctx.save();
+  ctx.globalAlpha *= 0.86;
+  drawOrionArmorPlate([
+    { x: -shoulderSpread - w * 0.12, y: shoulderY - h * 0.045 },
+    { x: -shoulderSpread + w * 0.06, y: shoulderY - h * 0.07 },
+    { x: -shoulderSpread + w * 0.13, y: shoulderY + h * 0.01 },
+    { x: -shoulderSpread + w * 0.04, y: shoulderY + h * 0.07 },
+    { x: -shoulderSpread - w * 0.14, y: shoulderY + h * 0.04 }
+  ], pink, 'rgba(255,206,238,.38)', '#19132d');
+  drawOrionJoint(-shoulderSpread, shoulderY, 4.2, '#2a2146');
+  let hand = drawOrionLimbSegment(-shoulderSpread, shoulderY, h * 0.18, w * 0.105, gliding ? -1.03 : 0.2 + step * runPower * 0.18, pink, '#161126', 0.84);
+  drawOrionJoint(hand.x, hand.y, 3.5, '#372a57');
+  hand = drawOrionLimbSegment(hand.x, hand.y, h * 0.17, w * 0.098, gliding ? -0.72 : 0.38 - step * runPower * 0.16, purple, '#121023', 0.84);
+  drawOrionJoint(hand.x, hand.y, 3.6, hot);
+  ctx.restore();
+
+  drawOrionArmorPlate([
+    { x: -w * 0.23, y: top + h * 0.23 },
+    { x: -w * 0.095, y: top + h * 0.155 },
+    { x: w * 0.095, y: top + h * 0.155 },
+    { x: w * 0.23, y: top + h * 0.23 },
+    { x: w * 0.13, y: top + h * 0.48 },
+    { x: w * 0.21, y: top + h * 0.63 },
+    { x: w * 0.08, y: top + h * 0.76 },
+    { x: -w * 0.08, y: top + h * 0.76 },
+    { x: -w * 0.21, y: top + h * 0.63 },
+    { x: -w * 0.13, y: top + h * 0.48 }
+  ], pink, 'rgba(255,206,238,.42)', '#7b2b71');
+  drawOrionArmorPlate([
+    { x: -w * 0.11, y: top + h * 0.31 },
+    { x: w * 0.11, y: top + h * 0.31 },
+    { x: w * 0.07, y: top + h * 0.48 },
+    { x: -w * 0.07, y: top + h * 0.48 }
+  ], cyan, 'rgba(255,255,255,.58)', '#49d4ef');
+  drawOrionArmorPlate([
+    { x: -w * 0.11, y: top + h * 0.5 },
+    { x: w * 0.11, y: top + h * 0.5 },
+    { x: w * 0.16, y: top + h * 0.63 },
+    { x: w * 0.075, y: top + h * 0.77 },
+    { x: -w * 0.075, y: top + h * 0.77 },
+    { x: -w * 0.16, y: top + h * 0.63 }
+  ], dark, 'rgba(103,86,255,.38)', '#080713');
+
+  const headY = top + h * 0.08 + idle * 0.45;
+  drawOrionArmorPlate([
+    { x: -w * 0.15, y: headY + h * 0.02 },
+    { x: -w * 0.08, y: headY - h * 0.014 },
+    { x: w * 0.08, y: headY - h * 0.014 },
+    { x: w * 0.15, y: headY + h * 0.02 },
+    { x: w * 0.12, y: headY + h * 0.14 },
+    { x: -w * 0.12, y: headY + h * 0.14 }
+  ], hot, 'rgba(255,218,242,.44)', '#7b2b71');
+  ctx.fillStyle = dark;
+  ctx.beginPath();
+  ctx.roundRect(-w * 0.09, headY + h * 0.06, w * 0.18, h * 0.052, 4);
+  ctx.fill();
+  ctx.fillStyle = cyan;
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.078, headY + h * 0.067);
+  ctx.lineTo(-w * 0.014, headY + h * 0.074);
+  ctx.lineTo(-w * 0.025, headY + h * 0.092);
+  ctx.lineTo(-w * 0.076, headY + h * 0.086);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(w * 0.078, headY + h * 0.067);
+  ctx.lineTo(w * 0.014, headY + h * 0.074);
+  ctx.lineTo(w * 0.025, headY + h * 0.092);
+  ctx.lineTo(w * 0.076, headY + h * 0.086);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = purple;
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.13, headY + h * 0.022);
+  ctx.lineTo(-w * 0.22, headY - h * 0.026);
+  ctx.lineTo(-w * 0.08, headY + h * 0.052);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(w * 0.13, headY + h * 0.022);
+  ctx.lineTo(w * 0.22, headY - h * 0.026);
+  ctx.lineTo(w * 0.08, headY + h * 0.052);
+  ctx.closePath();
+  ctx.fill();
+
+  drawOrionArmorPlate([
+    { x: shoulderSpread - w * 0.06, y: shoulderY - h * 0.07 },
+    { x: shoulderSpread + w * 0.12, y: shoulderY - h * 0.045 },
+    { x: shoulderSpread + w * 0.14, y: shoulderY + h * 0.04 },
+    { x: shoulderSpread - w * 0.04, y: shoulderY + h * 0.07 },
+    { x: shoulderSpread - w * 0.13, y: shoulderY + h * 0.01 }
+  ], hot, 'rgba(255,206,238,.42)', '#19132d');
+  drawOrionJoint(shoulderSpread, shoulderY, 4.3, '#33264f');
+  hand = drawOrionLimbSegment(shoulderSpread, shoulderY, h * 0.18, w * 0.108, gliding ? -0.92 : -0.18 - step * runPower * 0.18, hot, '#161126', 1);
+  drawOrionJoint(hand.x, hand.y, 3.7, '#3a2a58');
+  hand = drawOrionLimbSegment(hand.x, hand.y, h * 0.17, w * 0.1, gliding ? -0.62 : 0.3 + step * runPower * 0.16, purple, '#121023', 1);
+  drawOrionJoint(hand.x, hand.y, 3.8, hot);
+
+  ctx.fillStyle = character?.accent || purple;
+  ctx.globalAlpha *= 0.12 + (gliding ? 0.12 : 0);
+  ctx.beginPath();
+  ctx.ellipse(0, bottom - 6, w * 0.28, 2.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawD16Rig(p, character, visual) {
+  const w = p.width;
+  const h = p.height;
+  const top = -h / 2;
+  const bottom = h / 2;
+  const runPower = visual?.state === 'run' ? clamp01(visual.speed ?? Math.abs(p.vx) / 280) : 0;
+  const step = visual?.runStep ?? Math.sin(p.animationTime * 5.1);
+  const idle = Math.sin(p.animationTime * 2.1);
+  const isJump = visual?.state === 'jump';
+  const charging = visual?.state === 'charge';
+  const recoil = visual?.state === 'recoil';
+  const cannonPower = charging ? Math.min(1, p.chargeTime || 0) : recoil ? 0.7 : 0;
+  const torsoTilt = runPower * step * 0.025 + (isJump ? -0.04 : 0) - cannonPower * 0.035;
+  const shoulderY = top + h * 0.31;
+  const hipY = top + h * 0.61;
+  const shoulderSpread = w * 0.5;
+  const hipSpread = w * 0.12;
+  const metal = '#737d8e';
+  const steel = '#cfd5e2';
+  const dark = '#202738';
+  const gun = '#384152';
+  const red = '#c24646';
+
+  ctx.save();
+  ctx.rotate(torsoTilt);
+  ctx.shadowColor = 'rgba(207,213,226,.22)';
+  ctx.shadowBlur = 14;
+
+  ctx.save();
+  ctx.globalAlpha *= 0.82;
+  drawOrionJoint(-hipSpread, hipY, 5.4, '#252b36');
+  let joint = drawOrionLimbSegment(-hipSpread, hipY, h * 0.2, w * 0.18, isJump ? 0.34 : -step * runPower * 0.34, metal, '#171c25', 0.88);
+  drawOrionJoint(joint.x, joint.y, 5.2, '#303743');
+  joint = drawOrionLimbSegment(joint.x, joint.y, h * 0.2, w * 0.185, isJump ? 0.38 : Math.max(-0.07, Math.min(0.34, step * runPower * 0.3)), gun, '#111722', 0.88);
+  drawOrionFoot(joint.x, Math.min(bottom - 7, joint.y), -0.02 + step * runPower * 0.08, 1.02, 0.88);
+  ctx.restore();
+
+  drawOrionJoint(hipSpread, hipY, 5.8, '#2f3642');
+  joint = drawOrionLimbSegment(hipSpread, hipY, h * 0.205, w * 0.19, isJump ? -0.3 : step * runPower * 0.34, metal, '#171c25', 1);
+  drawOrionJoint(joint.x, joint.y, 5.4, '#353c49');
+  joint = drawOrionLimbSegment(joint.x, joint.y, h * 0.205, w * 0.19, isJump ? 0.34 : Math.max(-0.07, Math.min(0.34, -step * runPower * 0.3)), gun, '#111722', 1);
+  drawOrionFoot(joint.x, Math.min(bottom - 7, joint.y), 0.02 - step * runPower * 0.08, 1.08, 1);
+
+  drawOrionArmorPlate([
+    { x: -w * 0.44, y: top + h * 0.24 },
+    { x: -w * 0.24, y: top + h * 0.15 },
+    { x: w * 0.24, y: top + h * 0.15 },
+    { x: w * 0.44, y: top + h * 0.24 },
+    { x: w * 0.24, y: top + h * 0.58 },
+    { x: w * 0.12, y: top + h * 0.79 },
+    { x: -w * 0.12, y: top + h * 0.79 },
+    { x: -w * 0.24, y: top + h * 0.58 }
+  ], metal, 'rgba(232,239,255,.35)', '#303743');
+  drawOrionArmorPlate([
+    { x: -w * 0.2, y: top + h * 0.3 },
+    { x: w * 0.2, y: top + h * 0.3 },
+    { x: w * 0.105, y: top + h * 0.55 },
+    { x: -w * 0.105, y: top + h * 0.55 }
+  ], dark, 'rgba(232,239,255,.22)', '#111722');
+  drawOrionArmorPlate([
+    { x: -w * 0.11, y: top + h * 0.34 },
+    { x: w * 0.11, y: top + h * 0.34 },
+    { x: w * 0.08, y: top + h * 0.46 },
+    { x: -w * 0.08, y: top + h * 0.46 }
+  ], '#d9eef7', 'rgba(255,255,255,.48)', '#7d9aa8');
+  drawOrionArmorPlate([
+    { x: -w * 0.48, y: shoulderY - h * 0.065 },
+    { x: w * 0.48, y: shoulderY - h * 0.065 },
+    { x: w * 0.39, y: shoulderY + h * 0.055 },
+    { x: -w * 0.39, y: shoulderY + h * 0.055 }
+  ], gun, 'rgba(232,239,255,.24)', '#101722');
+  ctx.fillStyle = '#b93434';
+  ctx.fillRect(-w * 0.26, top + h * 0.43, w * 0.16, h * 0.052);
+  ctx.fillRect(w * 0.1, top + h * 0.43, w * 0.16, h * 0.052);
+  ctx.fillStyle = 'rgba(255,210,210,.32)';
+  ctx.fillRect(-w * 0.245, top + h * 0.445, w * 0.13, h * 0.012);
+  ctx.fillRect(w * 0.115, top + h * 0.445, w * 0.13, h * 0.012);
+
+  const headY = top + h * 0.09 + idle * 0.35;
+  drawOrionArmorPlate([
+    { x: -w * 0.16, y: headY + h * 0.02 },
+    { x: -w * 0.1, y: headY - h * 0.015 },
+    { x: w * 0.1, y: headY - h * 0.015 },
+    { x: w * 0.16, y: headY + h * 0.02 },
+    { x: w * 0.14, y: headY + h * 0.13 },
+    { x: -w * 0.14, y: headY + h * 0.13 }
+  ], steel, 'rgba(255,255,255,.42)', '#424b59');
+  ctx.fillStyle = dark;
+  ctx.beginPath();
+  ctx.roundRect(-w * 0.105, headY + h * 0.055, w * 0.21, h * 0.05, 4);
+  ctx.fill();
+  ctx.fillStyle = '#ffb7b7';
+  ctx.fillRect(-w * 0.082, headY + h * 0.068, w * 0.164, h * 0.012);
+  ctx.fillStyle = red;
+  ctx.fillRect(-w * 0.028, headY + h * 0.09, w * 0.056, h * 0.02);
+
+  ctx.save();
+  ctx.globalAlpha *= 0.86;
+  drawOrionJoint(-shoulderSpread, shoulderY, 5.7, '#303743');
+  let hand = drawOrionLimbSegment(-shoulderSpread, shoulderY, h * 0.18, w * 0.15, isJump ? 0.42 : 0.22 + step * runPower * 0.12, metal, '#171c25', 0.86);
+  drawOrionJoint(hand.x, hand.y, 4.7, '#343b48');
+  hand = drawOrionLimbSegment(hand.x, hand.y, h * 0.17, w * 0.145, isJump ? 0.08 : 0.46 - step * runPower * 0.1, gun, '#111722', 0.86);
+  drawOrionJoint(hand.x, hand.y, 4.8, steel);
+  ctx.restore();
+
+  drawOrionJoint(shoulderSpread, shoulderY, 6, '#343b48');
+  const upper = charging || recoil ? -0.92 : -0.2 - step * runPower * 0.12;
+  const lower = charging || recoil ? -1.04 : 0.34 + step * runPower * 0.1;
+  hand = drawOrionLimbSegment(shoulderSpread, shoulderY, h * 0.17, w * 0.16, upper, metal, '#171c25', 1);
+  drawOrionJoint(hand.x, hand.y, 5, '#3b4350');
+  hand = drawOrionLimbSegment(hand.x, hand.y, h * 0.145, w * 0.15, lower, gun, '#111722', 1);
+  drawOrionJoint(hand.x, hand.y, 5.2, steel);
+  ctx.save();
+  ctx.translate(hand.x, hand.y);
+  ctx.rotate(charging || recoil ? -1.08 : -0.72);
+  ctx.fillStyle = '#2c3544';
+  ctx.beginPath();
+  ctx.roundRect(-8, -9, 70, 18, 8);
+  ctx.fill();
+  ctx.fillStyle = '#111722';
+  ctx.fillRect(9, -6, 13, 12);
+  ctx.fillStyle = steel;
+  ctx.fillRect(23, -5, 32, 10);
+  ctx.fillStyle = '#151c26';
+  ctx.beginPath();
+  ctx.roundRect(52, -6, 24, 12, 6);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.28)';
+  ctx.fillRect(26, -3, 25, 2);
+  ctx.fillStyle = red;
+  ctx.beginPath();
+  ctx.arc(78, 0, 5.5 + cannonPower * 5.5, 0, Math.PI * 2);
+  ctx.fill();
+  if (charging) {
+    const flare = ctx.createRadialGradient(82, 0, 2, 82, 0, 28 + cannonPower * 10);
+    flare.addColorStop(0, 'rgba(255,244,210,.92)');
+    flare.addColorStop(0.42, 'rgba(255,199,108,.62)');
+    flare.addColorStop(1, 'rgba(255,199,108,0)');
+    ctx.fillStyle = flare;
+    ctx.beginPath();
+    ctx.arc(82, 0, 28 + cannonPower * 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  ctx.fillStyle = character?.accent || steel;
+  ctx.globalAlpha *= 0.12 + cannonPower * 0.08;
+  ctx.beginPath();
+  ctx.ellipse(0, bottom - 7, w * 0.31, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawCyberWheel(x, y, radius, trim = '#9ae8ff', spin = 0) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(spin);
+  ctx.fillStyle = '#071226';
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#1c2738';
+  ctx.beginPath();
+  ctx.arc(0, 0, radius * 0.62, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = trim;
+  ctx.globalAlpha *= 0.72;
+  ctx.lineWidth = 2;
+  for (let index = 0; index < 3; index += 1) {
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(index * Math.PI * 2 / 3) * radius * 0.48, Math.sin(index * Math.PI * 2 / 3) * radius * 0.48);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawBeeVehicle(p, character) {
+  const w = p.width;
+  const h = p.height;
+  const spin = p.animationTime * Math.max(0.5, Math.abs(p.vx) / 90);
+  const yellow = '#f2b51c';
+  const bright = '#ffdf4d';
+  const dark = '#141b29';
+  ctx.save();
+  ctx.translate(0, Math.sin(p.animationTime * 10) * Math.min(1.5, Math.abs(p.vx) / 260));
+  ctx.shadowColor = 'rgba(255,223,77,.28)';
+  ctx.shadowBlur = 14;
+  drawOrionArmorPlate([
+    { x: -w * 0.47, y: -h * 0.06 },
+    { x: -w * 0.32, y: -h * 0.36 },
+    { x: w * 0.12, y: -h * 0.38 },
+    { x: w * 0.36, y: -h * 0.2 },
+    { x: w * 0.48, y: h * 0.08 },
+    { x: w * 0.42, y: h * 0.25 },
+    { x: -w * 0.45, y: h * 0.25 }
+  ], yellow, 'rgba(255,246,161,.45)', '#9a6b11');
+  drawOrionArmorPlate([
+    { x: -w * 0.18, y: -h * 0.34 },
+    { x: w * 0.1, y: -h * 0.33 },
+    { x: w * 0.25, y: -h * 0.17 },
+    { x: -w * 0.26, y: -h * 0.15 }
+  ], '#bff9ff', 'rgba(255,255,255,.58)', '#31bfe8');
+  drawOrionArmorPlate([
+    { x: -w * 0.38, y: h * 0.05 },
+    { x: w * 0.34, y: h * 0.05 },
+    { x: w * 0.42, y: h * 0.22 },
+    { x: -w * 0.42, y: h * 0.22 }
+  ], dark, 'rgba(255,223,77,.22)', '#071226');
+  ctx.fillStyle = 'rgba(255,255,255,.18)';
+  ctx.fillRect(-w * 0.32, -h * 0.2, w * 0.14, h * 0.04);
+  ctx.fillRect(w * 0.16, -h * 0.06, w * 0.18, h * 0.04);
+  ctx.fillStyle = '#44efff';
+  ctx.beginPath();
+  ctx.moveTo(w * 0.46, -h * 0.02);
+  ctx.lineTo(w * 0.55, h * 0.04);
+  ctx.lineTo(w * 0.46, h * 0.12);
+  ctx.closePath();
+  ctx.fill();
+  drawCyberWheel(-w * 0.26, h * 0.28, h * 0.18, bright, spin);
+  drawCyberWheel(w * 0.28, h * 0.28, h * 0.18, bright, spin);
+  if (Math.abs(p.vx) > 220) {
+    ctx.globalAlpha *= 0.32;
+    ctx.fillStyle = '#44efff';
+    ctx.beginPath();
+    ctx.ellipse(-w * 0.52, h * 0.08, w * 0.16, h * 0.05, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+function drawElitaVehicle(p, character) {
+  const w = p.width;
+  const h = p.height;
+  const spin = p.animationTime * Math.max(0.5, Math.abs(p.vx) / 85);
+  const pink = '#d85aa6';
+  const hot = '#ff7cc9';
+  const purple = '#6756ff';
+  ctx.save();
+  ctx.translate(0, Math.sin(p.animationTime * 9) * Math.min(1.4, Math.abs(p.vx) / 260));
+  ctx.shadowColor = 'rgba(255,124,201,.3)';
+  ctx.shadowBlur = 14;
+  drawCyberWheel(-w * 0.3, h * 0.24, h * 0.2, hot, spin);
+  drawCyberWheel(w * 0.34, h * 0.22, h * 0.18, purple, spin);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = pink;
+  ctx.lineWidth = h * 0.16;
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.28, h * 0.08);
+  ctx.quadraticCurveTo(-w * 0.02, -h * 0.17, w * 0.28, h * 0.08);
+  ctx.stroke();
+  ctx.strokeStyle = purple;
+  ctx.lineWidth = h * 0.1;
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.02, -h * 0.18);
+  ctx.lineTo(w * 0.2, -h * 0.38);
+  ctx.lineTo(w * 0.43, -h * 0.34);
+  ctx.stroke();
+  drawOrionArmorPlate([
+    { x: -w * 0.18, y: -h * 0.18 },
+    { x: w * 0.12, y: -h * 0.24 },
+    { x: w * 0.26, y: -h * 0.08 },
+    { x: w * 0.02, y: h * 0.05 },
+    { x: -w * 0.23, y: h * 0.02 }
+  ], hot, 'rgba(255,213,240,.45)', '#7b2b71');
+  drawOrionArmorPlate([
+    { x: -w * 0.06, y: -h * 0.25 },
+    { x: w * 0.16, y: -h * 0.25 },
+    { x: w * 0.08, y: -h * 0.12 },
+    { x: -w * 0.12, y: -h * 0.12 }
+  ], '#c9fbff', 'rgba(255,255,255,.58)', '#49d4ef');
+  ctx.fillStyle = '#44efff';
+  ctx.beginPath();
+  ctx.moveTo(w * 0.44, -h * 0.15);
+  ctx.lineTo(w * 0.57, -h * 0.07);
+  ctx.lineTo(w * 0.43, h * 0.02);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+function drawD16Vehicle(p, character) {
+  const w = p.width;
+  const h = p.height;
+  const spin = p.animationTime * Math.max(0.4, Math.abs(p.vx) / 70);
+  const metal = '#737d8e';
+  const steel = '#cfd5e2';
+  const dark = '#202738';
+  ctx.save();
+  ctx.translate(0, Math.sin(p.animationTime * 7) * Math.min(1, Math.abs(p.vx) / 280));
+  ctx.shadowColor = 'rgba(207,213,226,.22)';
+  ctx.shadowBlur = 12;
+  drawOrionArmorPlate([
+    { x: -w * 0.48, y: -h * 0.02 },
+    { x: -w * 0.37, y: -h * 0.2 },
+    { x: w * 0.34, y: -h * 0.2 },
+    { x: w * 0.48, y: -h * 0.02 },
+    { x: w * 0.42, y: h * 0.27 },
+    { x: -w * 0.42, y: h * 0.27 }
+  ], metal, 'rgba(232,239,255,.34)', '#303743');
+  drawOrionArmorPlate([
+    { x: -w * 0.18, y: -h * 0.39 },
+    { x: w * 0.18, y: -h * 0.39 },
+    { x: w * 0.26, y: -h * 0.22 },
+    { x: -w * 0.26, y: -h * 0.22 }
+  ], steel, 'rgba(255,255,255,.4)', '#424b59');
+  ctx.fillStyle = '#384152';
+  ctx.beginPath();
+  ctx.roundRect(w * 0.08, -h * 0.34, w * 0.42, h * 0.1, h * 0.05);
+  ctx.fill();
+  ctx.fillStyle = '#ffb7b7';
+  ctx.beginPath();
+  ctx.arc(w * 0.52, -h * 0.29, h * 0.055, 0, Math.PI * 2);
+  ctx.fill();
+  drawOrionArmorPlate([
+    { x: -w * 0.44, y: h * 0.1 },
+    { x: w * 0.44, y: h * 0.1 },
+    { x: w * 0.36, y: h * 0.34 },
+    { x: -w * 0.36, y: h * 0.34 }
+  ], dark, 'rgba(232,239,255,.22)', '#071226');
+  for (const x of [-0.3, -0.1, 0.1, 0.3]) drawCyberWheel(w * x, h * 0.28, h * 0.13, steel, spin);
+  ctx.fillStyle = 'rgba(255,255,255,.16)';
+  ctx.fillRect(-w * 0.34, -h * 0.11, w * 0.24, h * 0.05);
+  ctx.fillRect(w * 0.06, -h * 0.1, w * 0.24, h * 0.05);
+  ctx.restore();
+}
+function drawCodeVehicle(p, character) {
+  if (character?.id === 'bee') drawBeeVehicle(p, character);
+  if (character?.id === 'elita') drawElitaVehicle(p, character);
+  if (character?.id === 'd16') drawD16Vehicle(p, character);
+}
+
 function drawPlayer() {
   const p = game.player, c = state.selectedCharacter, visual = getAttackVisualState(p, c), img = getFrameSource(c, p.form, p.animationTime, p.vx, visual), sx = worldToScreenX(p.x);
   const useOrionRig = c?.id === 'orion' && p.form === 'robot';
+  const useBeeRig = c?.id === 'bee' && p.form === 'robot';
+  const useElitaRig = c?.id === 'elita' && p.form === 'robot';
+  const useD16Rig = c?.id === 'd16' && p.form === 'robot';
+  const useVehicleRig = usesCodeVehicleRig(c, p);
+  const useCodeRig = useOrionRig || useBeeRig || useElitaRig || useD16Rig || useVehicleRig;
   ctx.save();
   const shadowGrad = ctx.createRadialGradient(sx + p.width * 0.5, p.y + p.height * 0.88, 4, sx + p.width * 0.5, p.y + p.height * 0.88, p.width * 0.68);
-  shadowGrad.addColorStop(0, useOrionRig ? 'rgba(0,0,0,.1)' : 'rgba(0,0,0,.22)'); shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = shadowGrad; ctx.beginPath(); ctx.ellipse(sx + p.width * 0.5, p.y + p.height * 0.92, p.width * (useOrionRig ? 0.3 : 0.42), useOrionRig ? 8 : 14, 0, 0, Math.PI * 2); ctx.fill();
+  shadowGrad.addColorStop(0, useCodeRig ? 'rgba(0,0,0,.1)' : 'rgba(0,0,0,.22)'); shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = shadowGrad; ctx.beginPath(); ctx.ellipse(sx + p.width * 0.5, p.y + p.height * 0.92, p.width * (useCodeRig ? 0.3 : 0.42), useCodeRig ? 8 : 14, 0, 0, Math.PI * 2); ctx.fill();
   drawPlayerMotionTrails(p, img, sx, visual, c);
   drawPlayerMotionFX(p, sx, visual, c);
   if (p.invuln > 0 && Math.floor(p.invuln * 10) % 2 === 0) ctx.globalAlpha = 0.5;
@@ -1342,6 +2172,14 @@ function drawPlayer() {
   ctx.scale(visual?.scaleX || 1, visual?.scaleY || 1);
   if (useOrionRig) {
     drawOrionRig(p, c, visual);
+  } else if (useBeeRig) {
+    drawBeeRig(p, c, visual);
+  } else if (useElitaRig) {
+    drawElitaRig(p, c, visual);
+  } else if (useD16Rig) {
+    drawD16Rig(p, c, visual);
+  } else if (useVehicleRig) {
+    drawCodeVehicle(p, c);
   } else {
     try {
       if (!img || typeof img !== 'object') throw new Error('missing player sprite');
@@ -1350,7 +2188,7 @@ function drawPlayer() {
       drawFallbackPlayerSprite(-p.width / 2, { ...p, y: -p.height / 2 }, c);
     }
   }
-  if (c.id === 'elita' && !p.onGround && game.input.jumpHeld && p.vy > 0) { ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.moveTo(0, -p.height * 0.1); ctx.lineTo(-p.width * 0.6, p.height * 0.24); ctx.lineTo(p.width * 0.6, p.height * 0.24); ctx.closePath(); ctx.fill(); }
+  if (c.id === 'elita' && !useElitaRig && !p.onGround && game.input.jumpHeld && p.vy > 0) { ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.moveTo(0, -p.height * 0.1); ctx.lineTo(-p.width * 0.6, p.height * 0.24); ctx.lineTo(p.width * 0.6, p.height * 0.24); ctx.closePath(); ctx.fill(); }
   if (p.charging) { ctx.fillStyle = 'rgba(255, 199, 108, .8)'; ctx.beginPath(); ctx.arc(p.width * .2, -p.height * 0.16, 12 + p.chargeTime * 18, 0, Math.PI * 2); ctx.fill(); }
   if (Math.abs(p.vx) > 220 && p.onGround) { ctx.fillStyle = 'rgba(154,232,255,.12)'; ctx.fillRect(-p.width * 0.54 - p.facing * 10, p.height * 0.3, 18, 8); }
   ctx.restore();
@@ -1406,7 +2244,17 @@ function setupButtons() {
     if (e.code === 'ArrowLeft' || e.code === 'KeyA' || e.code === 'ArrowRight' || e.code === 'KeyD') game.joystick.dirX = 0;
   });
 }
-function updateJoystickVisual(nx, ny) { joystickKnob.style.transform = `translate(calc(-50% + ${nx * game.joystick.radius}px), calc(-50% + ${ny * game.joystick.radius}px))`; }
+function getJoystickTravel() {
+  const baseRect = joystickBase?.getBoundingClientRect?.();
+  const knobRect = joystickKnob?.getBoundingClientRect?.();
+  const baseWidth = baseRect?.width || 150;
+  const knobWidth = knobRect?.width || 48;
+  return Math.max(30, baseWidth * 0.5 - knobWidth * 0.5 - 6);
+}
+function updateJoystickVisual(nx) {
+  const travel = getJoystickTravel();
+  joystickKnob.style.transform = `translate(calc(-50% + ${nx * travel}px), -50%)`;
+}
 function syncJoystickJump() {
   game.joystick.dirY = 0;
 }
@@ -1417,7 +2265,7 @@ function resetJoystick() {
 }
 function setupJoystick() {
   const onMove = (clientX, clientY) => {
-    const rect = joystickBase.getBoundingClientRect(), cx = rect.left + rect.width / 2; let dx = clientX - cx; const max = rect.width * 0.32;
+    const rect = joystickBase.getBoundingClientRect(), cx = rect.left + rect.width / 2; let dx = clientX - cx; const max = getJoystickTravel();
     if (dx > max) dx = max; else if (dx < -max) dx = -max;
     const nx = dx / max; game.joystick.dirX = Math.abs(nx) < 0.18 ? 0 : nx; syncJoystickJump(); updateJoystickVisual(nx, 0);
   };

@@ -1,4 +1,4 @@
-const CACHE_NAME = "cyber-bots-runner-v16";
+const CACHE_NAME = "cyber-bots-runner-v19";
 const APP_ASSETS = [
   "./",
   "./index.html",

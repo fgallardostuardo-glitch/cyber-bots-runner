@@ -1,1 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 96"><rect x="18" y="54" width="124" height="22" rx="11" fill="#3e4654"/><rect x="30" y="46" width="100" height="18" rx="7" fill="#737d8e"/><rect x="64" y="34" width="42" height="18" rx="7" fill="#b9c0cb"/><rect x="98" y="40" width="36" height="6" rx="3" fill="#cfd5e2"/><circle cx="44" cy="76" r="10" fill="#202738"/><circle cx="72" cy="76" r="10" fill="#202738"/><circle cx="100" cy="76" r="10" fill="#202738"/><circle cx="128" cy="76" r="10" fill="#202738"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 96">
+  <defs>
+    <filter id="glow" x="-30%" y="-40%" width="160%" height="180%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <ellipse cx="82" cy="82" rx="70" ry="8" fill="#071226" opacity=".38"/>
+  <path d="M13 57 L30 42 H126 L148 58 L141 73 H20 Z" fill="#737d8e" stroke="#e8efff" stroke-opacity=".34" stroke-width="1.5"/>
+  <path d="M45 34 H98 L113 45 H34 Z" fill="#cfd5e2" stroke="#ffffff" stroke-opacity=".28" stroke-width="1.2"/>
+  <path d="M88 31 H128 V42 H88 Z" fill="#384152"/>
+  <circle cx="132" cy="36" r="5" fill="#ffb7b7" filter="url(#glow)"/>
+  <path d="M20 64 H140 L132 77 H27 Z" fill="#202738"/>
+  <path d="M32 51 H70 L64 58 H24 Z" fill="#384152" opacity=".82"/>
+  <path d="M84 51 H124 L133 58 H77 Z" fill="#384152" opacity=".82"/>
+  <circle cx="43" cy="75" r="10" fill="#071226"/>
+  <circle cx="43" cy="75" r="5" fill="#cfd5e2"/>
+  <circle cx="70" cy="75" r="10" fill="#071226"/>
+  <circle cx="70" cy="75" r="5" fill="#cfd5e2"/>
+  <circle cx="98" cy="75" r="10" fill="#071226"/>
+  <circle cx="98" cy="75" r="5" fill="#cfd5e2"/>
+  <circle cx="125" cy="75" r="10" fill="#071226"/>
+  <circle cx="125" cy="75" r="5" fill="#cfd5e2"/>
+  <path d="M94 42 H122 L130 49 H88 Z" fill="#d9eef7" opacity=".72"/>
+</svg>

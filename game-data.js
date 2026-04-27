@@ -35,7 +35,7 @@ const characters = [
     robotAccel: 1960, robotMaxSpeed: 308, vehicleAccel: 2360, vehicleMaxSpeed: 430,
     jumpVelocity: 742, gravity: 1330, airControl: 1.03, extraJumps: 0, glideGravity: 1,
     robotSize: { width: 82, height: 118 }, vehicleSize: { width: 145, height: 78 },
-    combat: { kind: 'bee', cadence: 0.1, reach: 68 }
+    combat: { kind: 'bee', cadence: 0.1, reach: 42 }
   },
   {
     id: 'elita',

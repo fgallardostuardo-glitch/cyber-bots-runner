@@ -12,7 +12,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icons/icon-192.svg">
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style.css?v=19">
   <style>
 
 /* Gameplay mobile hotfixes */
@@ -84,20 +84,34 @@
 }
 
 #gameScreen .joystick-base {
-  width: min(28vw, 124px);
-  height: min(28vw, 124px);
-  min-width: 102px;
-  min-height: 102px;
+  width: min(34vw, 168px);
+  height: 58px;
+  min-width: 132px;
+  min-height: 58px;
+  border-radius: 999px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+#gameScreen .joystick-base::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 50%;
+  height: 9px;
+  transform: translateY(-50%);
+  border-radius: 999px;
   background:
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,.24), rgba(68,239,255,.14) 38%, rgba(5,14,32,.62) 69%),
-    conic-gradient(from 20deg, rgba(68,239,255,.08), rgba(255,255,255,.22), rgba(68,239,255,.08));
-  border: 2px solid rgba(116,245,255,.28);
-  box-shadow: inset 0 0 0 12px rgba(255,255,255,.035), 0 12px 28px rgba(0,0,0,.28), 0 0 24px rgba(68,239,255,.16);
+    linear-gradient(90deg, rgba(116,245,255,.16), rgba(255,255,255,.58), rgba(116,245,255,.16)),
+    linear-gradient(180deg, rgba(68,239,255,.22), rgba(7,18,42,.64));
+  box-shadow: 0 0 16px rgba(68,239,255,.24), inset 0 0 0 1px rgba(255,255,255,.16);
 }
 
 #gameScreen .joystick-knob {
-  width: 42px;
-  height: 42px;
+  width: 50px;
+  height: 50px;
   background: radial-gradient(circle at 35% 25%, #ffffff, #78f4ff 38%, #1789d4 78%);
   border: 2px solid rgba(255,255,255,.7);
   box-shadow: 0 10px 20px rgba(0,0,0,.32), 0 0 18px rgba(68,239,255,.34);
@@ -301,15 +315,15 @@
   }
 
   #gameScreen .joystick-base {
-    width: min(31vw, 132px);
-    height: min(31vw, 132px);
-    min-width: 108px;
-    min-height: 108px;
+    width: min(37vw, 176px);
+    height: 60px;
+    min-width: 142px;
+    min-height: 60px;
   }
 
   #gameScreen .joystick-knob {
-    width: 46px;
-    height: 46px;
+    width: 52px;
+    height: 52px;
   }
 
   #gameScreen .control-btn {
@@ -374,15 +388,15 @@
   }
 
   #gameScreen .joystick-base {
-    width: 112px;
-    height: 112px;
-    min-width: 112px;
-    min-height: 112px;
+    width: 160px;
+    height: 58px;
+    min-width: 160px;
+    min-height: 58px;
   }
 
   #gameScreen .joystick-knob {
-    width: 42px;
-    height: 42px;
+    width: 50px;
+    height: 50px;
   }
 
   #gameScreen .action-panel {
@@ -423,15 +437,15 @@
   }
 
   #gameScreen .joystick-base {
-    width: 104px;
-    height: 104px;
-    min-width: 104px;
-    min-height: 104px;
+    width: 148px;
+    height: 54px;
+    min-width: 148px;
+    min-height: 54px;
   }
 
   #gameScreen .joystick-knob {
-    width: 40px;
-    height: 40px;
+    width: 46px;
+    height: 46px;
   }
 
   #gameScreen .control-btn {
@@ -572,8 +586,8 @@
     </section>
   </div>
 
-  <script src="./game-data.js"></script>
-  <script src="./game-systems.js"></script>
-  <script src="./app.js"></script>
+  <script src="./game-data.js?v=19"></script>
+  <script src="./game-systems.js?v=19"></script>
+  <script src="./app.js?v=19"></script>
 </body>
 </html>

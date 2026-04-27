@@ -1,1 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 96"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#f2b51c"/><stop offset="1" stop-color="#ffdf4d"/></linearGradient></defs><path d="M20 62 L34 34 H92 L126 46 L142 62 V74 H20 Z" fill="url(#g)"/><path d="M44 38 H90 L110 52 H34 Z" fill="#a9dfff"/><circle cx="48" cy="76" r="13" fill="#202738"/><circle cx="116" cy="76" r="13" fill="#202738"/><circle cx="48" cy="76" r="6" fill="#cfd7e8"/><circle cx="116" cy="76" r="6" fill="#cfd7e8"/><rect x="26" y="66" width="110" height="6" rx="3" fill="#202738" opacity=".45"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 96">
+  <defs>
+    <filter id="glow" x="-30%" y="-40%" width="160%" height="180%">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="body" x1="0" x2="1">
+      <stop offset="0" stop-color="#f2b51c"/>
+      <stop offset=".55" stop-color="#ffdf4d"/>
+      <stop offset="1" stop-color="#e8871c"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="82" cy="80" rx="68" ry="8" fill="#071226" opacity=".36"/>
+  <path d="M12 58 L31 31 H86 L122 43 L148 59 L141 72 H18 Z" fill="url(#body)" stroke="#fff1a0" stroke-opacity=".45" stroke-width="1.5"/>
+  <path d="M35 35 H84 L106 48 H25 Z" fill="#c9fbff" filter="url(#glow)"/>
+  <path d="M20 62 H141 L134 72 H24 Z" fill="#141b29" opacity=".86"/>
+  <path d="M33 39 L62 39 L53 50 H27 Z" fill="#141b29" opacity=".45"/>
+  <path d="M94 49 H128 L139 58 H87 Z" fill="#141b29" opacity=".58"/>
+  <path d="M142 57 L154 62 L142 67 Z" fill="#44efff" filter="url(#glow)"/>
+  <circle cx="46" cy="75" r="15" fill="#071226"/>
+  <circle cx="46" cy="75" r="9" fill="#1c2738"/>
+  <circle cx="46" cy="75" r="4" fill="#ffdf4d"/>
+  <circle cx="119" cy="75" r="15" fill="#071226"/>
+  <circle cx="119" cy="75" r="9" fill="#1c2738"/>
+  <circle cx="119" cy="75" r="4" fill="#ffdf4d"/>
+  <path d="M20 54 H42 L35 61 H14 Z" fill="#ffdf4d" opacity=".7"/>
+  <path d="M71 28 L83 20 L93 31 L84 38 Z" fill="#141b29" opacity=".8"/>
+</svg>
