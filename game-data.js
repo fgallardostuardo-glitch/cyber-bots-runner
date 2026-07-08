@@ -42,17 +42,17 @@ const characters = [
     name: 'Elita-1',
     role: 'Acróbata',
     fantasy: 'Moto táctica de movilidad total',
-    desc: 'La reina del aire. Doble salto, planeo corto y ruta alta con más margen para un plataformas comercialmente amable.',
+    desc: 'La reina del aire. Doble salto, planeo corto y una patada rapida de corto rango para abrir espacio.',
     color: '#d85aa6', accent: '#6756ff',
     stats: { control: 9, jump: 10, speed: 8, power: 4 },
-    abilities: ['Doble salto', 'Planeo ligero'],
+    abilities: ['Doble salto y planeo', 'Patada corta'],
     modelArt: `${MODEL_BASE}/elita-reference.jpg`,
     robotFrames: [1,2,3].map(n => `${MODEL_BASE}/elita-robot-${n}.png`),
     vehicleFrames: [1,2,3].map(n => `${SPRITE_BASE}/elita-vehicle-${n}.svg`),
     robotAccel: 1680, robotMaxSpeed: 276, vehicleAccel: 1840, vehicleMaxSpeed: 348,
     jumpVelocity: 724, gravity: 1240, airControl: 1.15, extraJumps: 1, glideGravity: 0.56,
     robotSize: { width: 74, height: 130 }, vehicleSize: { width: 132, height: 74 },
-    combat: { kind: 'none' }
+    combat: { kind: 'elita', cadence: 0.13, reach: 28 }
   },
   {
     id: 'd16',
@@ -127,7 +127,7 @@ const levelTemplate = {
     { type: 'finish', x: 6110, width: 160 }
   ],
   enemies: [
-    { type: 'patroller', x: 470, left: 330, right: 860 },
+    { type: 'patroller', x: 760, left: 700, right: 900 },
     { type: 'rusher', x: 1160, left: 1128, right: 1500 },
     { type: 'hopper', x: 2050, left: 1960, right: 2340 },
     { type: 'shield', x: 2520, left: 2480, right: 2780 },

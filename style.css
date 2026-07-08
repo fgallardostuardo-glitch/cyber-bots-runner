@@ -1164,7 +1164,7 @@ body {
 
 @media (orientation: landscape) and (max-height: 540px), (max-width: 780px) {
   #gameScreen .hud {
-    max-width: min(47vw, 285px) !important;
+    max-width: min(56vw, 360px) !important;
     gap: 4px !important;
     padding: 4px 5px !important;
     border-radius: 16px !important;
@@ -1173,7 +1173,7 @@ body {
   }
 
   #gameScreen .progress-meter {
-    width: clamp(72px, 15vw, 104px) !important;
+    width: clamp(128px, 22vw, 184px) !important;
     height: 8px !important;
     margin: 0 2px 0 0 !important;
   }

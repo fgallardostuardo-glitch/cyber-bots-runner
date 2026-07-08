@@ -38,6 +38,7 @@ const state = { selectedCharacter: characters[0], deferredInstallPrompt: null, p
 const VOICE_ASSET_VERSION = 28;
 const audioState = { enabled: true, voiceMap: null, currentVoiceAudio: null, lineCooldowns: Object.create(null) };
 const assets = { images: {} };
+const homePlayablePreviewCache = new Map();
 let audioCtx = null;
 const PLAYER_START_X = 300;
 
@@ -170,9 +171,96 @@ function setImageWithFallback(imgEl, src, fallbackSrc) {
   imgEl.dataset.fallbackApplied = '0';
   imgEl.src = src || fallbackSrc;
 }
+function makePreviewPlayer(character, form, exportWidth, exportHeight) {
+  const size = form === 'vehicle' ? character.vehicleSize : character.robotSize;
+  const baseWidth = size?.width || 90;
+  const baseHeight = size?.height || 130;
+  const maxWidth = exportWidth * (form === 'vehicle' ? 0.72 : 0.58);
+  const maxHeight = exportHeight * (form === 'vehicle' ? 0.45 : 0.72);
+  const scale = Math.min(maxWidth / baseWidth, maxHeight / baseHeight);
+  const width = Math.round(baseWidth * scale);
+  const height = Math.round(baseHeight * scale);
+  return {
+    x: Math.round(exportWidth * 0.5 - width * 0.5),
+    y: Math.round(exportHeight * (form === 'vehicle' ? 0.54 : 0.55) - height * 0.5),
+    vx: form === 'vehicle' ? 150 : 0,
+    vy: 0,
+    width,
+    height,
+    form,
+    facing: 1,
+    onGround: true,
+    coyote: 0,
+    holdJumpTimer: 0,
+    extraJumpsLeft: character.extraJumps || 0,
+    transformLock: 0,
+    invuln: 0,
+    animationTime: 0.42,
+    dashTimer: 0,
+    recoilTimer: 0,
+    attack: null,
+    attackCooldown: 0,
+    comboWindow: 0,
+    comboIndex: 0,
+    charging: false,
+    chargeTime: 0,
+    groundBelow: exportHeight * 0.72
+  };
+}
+function renderPlayablePreview(character, form = 'robot') {
+  if (!character || !canvas || !ctx) return null;
+  const key = `${character.id}:${form}:playable-v30`;
+  if (homePlayablePreviewCache.has(key)) return homePlayablePreviewCache.get(key);
+
+  const exportWidth = 420;
+  const exportHeight = 420;
+  const previous = {
+    width: canvas.width,
+    height: canvas.height,
+    player: game.player,
+    cameraX: game.cameraX,
+    selectedCharacter: state.selectedCharacter,
+    fx: game.fx,
+    projectiles: game.projectiles
+  };
+
+  try {
+    canvas.width = exportWidth;
+    canvas.height = exportHeight;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, exportWidth, exportHeight);
+    state.selectedCharacter = character;
+    game.cameraX = 0;
+    game.fx = [];
+    game.projectiles = [];
+    game.player = makePreviewPlayer(character, form, exportWidth, exportHeight);
+    drawPlayer();
+    const src = canvas.toDataURL('image/png');
+    if (src) homePlayablePreviewCache.set(key, src);
+    return src;
+  } catch (_) {
+    return null;
+  } finally {
+    state.selectedCharacter = previous.selectedCharacter;
+    game.player = previous.player;
+    game.cameraX = previous.cameraX;
+    game.fx = previous.fx;
+    game.projectiles = previous.projectiles;
+    canvas.width = previous.width || 300;
+    canvas.height = previous.height || 150;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+function getPlayablePreviewSource(character, form = 'robot') {
+  const rendered = renderPlayablePreview(character, form);
+  if (rendered) return rendered;
+  const frames = form === 'vehicle' ? character.vehicleFrames : character.robotFrames;
+  return frames?.[1] || frames?.[0] || character.modelArt;
+}
 function updateHomePreview() {
   const c = state.selectedCharacter;
-  const previewSrc = state.previewForm === 'robot' ? (c.modelArt || c.robotFrames[1]) : c.vehicleFrames[1];
+  const previewSrc = getPlayablePreviewSource(c, state.previewForm);
   ui.heroName.textContent = c.name; ui.heroRole.textContent = c.fantasy; ui.heroDesc.textContent = c.desc;
   animateHomePreview();
   applyCharacterTheme(c);
@@ -190,7 +278,7 @@ function renderCharacterCards() {
     card.style.setProperty('--card-accent-2', c.accent || '#ffd84d');
     card.innerHTML = `<div class="card-art-wrap"><img class="card-sprite" alt="${c.name}"></div><div class="card-meta"><div class="card-head"><div class="card-name">${c.name}</div><span class="card-badge">${c.role}</span></div><div class="card-role">${c.fantasy}</div><div class="card-ability">✦ ${c.abilities[0]}</div><div class="card-stats">Ctrl ${c.stats.control} · Salto ${c.stats.jump} · Vel ${c.stats.speed} · Poder ${c.stats.power}</div></div>`;
     const sprite = card.querySelector('.card-sprite');
-    setImageWithFallback(sprite, c.modelArt || c.robotFrames[1], makeSpriteFallback(c, 'robot'));
+    setImageWithFallback(sprite, getPlayablePreviewSource(c, 'robot'), makeSpriteFallback(c, 'robot'));
     card.addEventListener('click', () => selectCharacter(index));
     ui.carousel.appendChild(card);
   });
@@ -943,7 +1031,7 @@ function completeLevel() {
   game.justCompleted = true; game.running = false;
   addScreenShake(12, 0.18);
   robotBeep('destroy');
-  setImageWithFallback(ui.rewardRobot, state.selectedCharacter.robotFrames[1] || state.selectedCharacter.modelArt, makeSpriteFallback(state.selectedCharacter, 'robot'));
+  setImageWithFallback(ui.rewardRobot, getPlayablePreviewSource(state.selectedCharacter, 'robot'), makeSpriteFallback(state.selectedCharacter, 'robot'));
   ui.rewardLoot.innerHTML = `
     <div class="reward-pill"><span class="reward-icon">⚡</span><strong>${game.energy}</strong><small>Energón</small></div>
     <div class="reward-pill"><span class="reward-icon">★</span><strong>${game.stars}</strong><small>Estrellas</small></div>

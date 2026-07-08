@@ -13,6 +13,7 @@ const index = read("index.html");
 const app = read("app.js");
 const style = read("style.css");
 const sw = read("sw.js");
+const gameData = read("game-data.js");
 
 const gameRigsIndex = index.indexOf("game-rigs.js");
 const appIndex = index.indexOf("app.js");
@@ -40,6 +41,18 @@ check(
   "compact-mobile-hud",
   style.includes("mobile-hud-compact") && /\.hud-pill\s+\.hud-label/.test(style),
   "style.css needs compact mobile HUD rules that hide labels and preserve playfield space"
+);
+
+check(
+  "mobile-progress-bar-readable",
+  /#gameScreen\s+\.progress-meter\s*\{[\s\S]*width:\s*clamp\(128px,\s*22vw,\s*184px\)/.test(style),
+  "mobile progress bar should be wider while keeping the same 8px height"
+);
+
+check(
+  "first-enemy-away-from-spawn",
+  /\{ type:\s*'patroller',\s*x:\s*760,\s*left:\s*700,\s*right:\s*900 \}/.test(gameData),
+  "first patroller should stay away from the player start area"
 );
 
 check(
