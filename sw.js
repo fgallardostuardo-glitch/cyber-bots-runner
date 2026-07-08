@@ -1,13 +1,62 @@
-const CACHE_NAME = "cyber-bots-runner-v19";
+const CACHE_NAME = "cyber-bots-runner-v29";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./game-data.js",
   "./game-systems.js",
+  "./game-rigs.js",
   "./app.js",
   "./manifest.webmanifest",
   "./audio/voice/voice-map.json",
+  "./audio/voice/orion-selected.wav?v=28",
+  "./audio/voice/orion-mission-start.wav?v=28",
+  "./audio/voice/orion-mission-complete.wav?v=28",
+  "./audio/voice/orion-jump.wav?v=28",
+  "./audio/voice/orion-transform.wav?v=28",
+  "./audio/voice/orion-attack.wav?v=28",
+  "./audio/voice/orion-charge.wav?v=28",
+  "./audio/voice/orion-hit.wav?v=28",
+  "./audio/voice/orion-checkpoint.wav?v=28",
+  "./audio/voice/orion-pickup.wav?v=28",
+  "./audio/voice/orion-rescue.wav?v=28",
+  "./audio/voice/orion-danger.wav?v=28",
+  "./audio/voice/bee-selected.wav?v=28",
+  "./audio/voice/bee-mission-start.wav?v=28",
+  "./audio/voice/bee-mission-complete.wav?v=28",
+  "./audio/voice/bee-jump.wav?v=28",
+  "./audio/voice/bee-transform.wav?v=28",
+  "./audio/voice/bee-attack.wav?v=28",
+  "./audio/voice/bee-charge.wav?v=28",
+  "./audio/voice/bee-hit.wav?v=28",
+  "./audio/voice/bee-checkpoint.wav?v=28",
+  "./audio/voice/bee-pickup.wav?v=28",
+  "./audio/voice/bee-rescue.wav?v=28",
+  "./audio/voice/bee-danger.wav?v=28",
+  "./audio/voice/elita-selected.wav?v=28",
+  "./audio/voice/elita-mission-start.wav?v=28",
+  "./audio/voice/elita-mission-complete.wav?v=28",
+  "./audio/voice/elita-jump.wav?v=28",
+  "./audio/voice/elita-transform.wav?v=28",
+  "./audio/voice/elita-attack.wav?v=28",
+  "./audio/voice/elita-charge.wav?v=28",
+  "./audio/voice/elita-hit.wav?v=28",
+  "./audio/voice/elita-checkpoint.wav?v=28",
+  "./audio/voice/elita-pickup.wav?v=28",
+  "./audio/voice/elita-rescue.wav?v=28",
+  "./audio/voice/elita-danger.wav?v=28",
+  "./audio/voice/d16-selected.wav?v=28",
+  "./audio/voice/d16-mission-start.wav?v=28",
+  "./audio/voice/d16-mission-complete.wav?v=28",
+  "./audio/voice/d16-jump.wav?v=28",
+  "./audio/voice/d16-transform.wav?v=28",
+  "./audio/voice/d16-attack.wav?v=28",
+  "./audio/voice/d16-charge.wav?v=28",
+  "./audio/voice/d16-hit.wav?v=28",
+  "./audio/voice/d16-checkpoint.wav?v=28",
+  "./audio/voice/d16-pickup.wav?v=28",
+  "./audio/voice/d16-rescue.wav?v=28",
+  "./audio/voice/d16-danger.wav?v=28",
   "./icons/icon-192.svg",
   "./icons/icon-512.svg",
   "./icons/icon-maskable.svg",
@@ -70,5 +119,8 @@ self.addEventListener("fetch", (event) => {
     const clone = response.clone();
     caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
     return response;
-  }).catch(() => caches.match("./index.html"))));
+  }).catch(() => {
+    if (event.request.mode === "navigate") return caches.match("./index.html");
+    return Response.error();
+  })));
 });

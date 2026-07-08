@@ -1,18 +1,289 @@
 {
-  "notes": "Add recorded MP3 files and fill the src fields. When src is empty, the app uses browser speech synthesis as a fallback.",
-  "voice_style": "Spanish Latin American, warm, cheerful, short phrases, age target 6.",
+  "notes": "WAV files are original synthetic character voices generated from Microsoft Helena with per-character robotic processing. They are not voice clones.",
+  "format": "wav",
+  "version": 28,
+  "base_voice": "Microsoft Helena Desktop",
+  "fallback": "If a WAV file fails, the app falls back to browser speech synthesis.",
+  "events": [
+    "selected",
+    "mission-start",
+    "mission-complete",
+    "jump",
+    "transform",
+    "attack",
+    "charge",
+    "hit",
+    "checkpoint",
+    "pickup",
+    "rescue",
+    "danger"
+  ],
+  "characters": {
+    "orion": {
+      "name": "Orion Pax",
+      "voice_style": "lider heroico grave, calmado y metalico suave",
+      "lines": {
+        "selected": {
+          "text": "Orion Pax listo.",
+          "src": "./audio/voice/orion-selected.wav?v=28"
+        },
+        "mission-start": {
+          "text": "Avancen con valor.",
+          "src": "./audio/voice/orion-mission-start.wav?v=28"
+        },
+        "mission-complete": {
+          "text": "Misión cumplida.",
+          "src": "./audio/voice/orion-mission-complete.wav?v=28"
+        },
+        "jump": {
+          "text": "Arriba.",
+          "src": "./audio/voice/orion-jump.wav?v=28"
+        },
+        "transform": {
+          "text": "Ruta abierta.",
+          "src": "./audio/voice/orion-transform.wav?v=28"
+        },
+        "attack": {
+          "text": "Golpe de energía.",
+          "src": "./audio/voice/orion-attack.wav?v=28"
+        },
+        "charge": {
+          "text": "Poder listo.",
+          "src": "./audio/voice/orion-charge.wav?v=28"
+        },
+        "hit": {
+          "text": "Resiste.",
+          "src": "./audio/voice/orion-hit.wav?v=28"
+        },
+        "checkpoint": {
+          "text": "Checkpoint seguro.",
+          "src": "./audio/voice/orion-checkpoint.wav?v=28"
+        },
+        "pickup": {
+          "text": "Energón seguro.",
+          "src": "./audio/voice/orion-pickup.wav?v=28"
+        },
+        "rescue": {
+          "text": "Mini bot a salvo.",
+          "src": "./audio/voice/orion-rescue.wav?v=28"
+        },
+        "danger": {
+          "text": "Peligro al frente.",
+          "src": "./audio/voice/orion-danger.wav?v=28"
+        }
+      }
+    },
+    "bee": {
+      "name": "Bumblebee",
+      "voice_style": "robot juvenil veloz, brillante y celebrador",
+      "lines": {
+        "selected": {
+          "text": "Bumblebee listo. Vamos rápido.",
+          "src": "./audio/voice/bee-selected.wav?v=28"
+        },
+        "mission-start": {
+          "text": "Arranca la misión. Yo marco el ritmo.",
+          "src": "./audio/voice/bee-mission-start.wav?v=28"
+        },
+        "mission-complete": {
+          "text": "Llegamos. Eso fue velocidad pura.",
+          "src": "./audio/voice/bee-mission-complete.wav?v=28"
+        },
+        "jump": {
+          "text": "Salto turbo.",
+          "src": "./audio/voice/bee-jump.wav?v=28"
+        },
+        "transform": {
+          "text": "Ruedas listas.",
+          "src": "./audio/voice/bee-transform.wav?v=28"
+        },
+        "attack": {
+          "text": "Corte veloz.",
+          "src": "./audio/voice/bee-attack.wav?v=28"
+        },
+        "charge": {
+          "text": "Acelero y golpeo.",
+          "src": "./audio/voice/bee-charge.wav?v=28"
+        },
+        "hit": {
+          "text": "Uy. Sigo en pie.",
+          "src": "./audio/voice/bee-hit.wav?v=28"
+        },
+        "checkpoint": {
+          "text": "Check listo. Sin frenar.",
+          "src": "./audio/voice/bee-checkpoint.wav?v=28"
+        },
+        "pickup": {
+          "text": "Energón. Me encanta.",
+          "src": "./audio/voice/bee-pickup.wav?v=28"
+        },
+        "rescue": {
+          "text": "Mini bot rescatado.",
+          "src": "./audio/voice/bee-rescue.wav?v=28"
+        },
+        "danger": {
+          "text": "Cuidado. Peligro en pista.",
+          "src": "./audio/voice/bee-danger.wav?v=28"
+        }
+      }
+    },
+    "elita": {
+      "name": "Elita-1",
+      "voice_style": "voz tactica, clara, agil y segura",
+      "lines": {
+        "selected": {
+          "text": "Elita uno lista.",
+          "src": "./audio/voice/elita-selected.wav?v=28"
+        },
+        "mission-start": {
+          "text": "Precisa y ligera.",
+          "src": "./audio/voice/elita-mission-start.wav?v=28"
+        },
+        "mission-complete": {
+          "text": "Objetivo finalizado.",
+          "src": "./audio/voice/elita-mission-complete.wav?v=28"
+        },
+        "jump": {
+          "text": "Salto limpio.",
+          "src": "./audio/voice/elita-jump.wav?v=28"
+        },
+        "transform": {
+          "text": "Modo ligero.",
+          "src": "./audio/voice/elita-transform.wav?v=28"
+        },
+        "attack": {
+          "text": "Patada precisa.",
+          "src": "./audio/voice/elita-attack.wav?v=28"
+        },
+        "charge": {
+          "text": "Concentro energía.",
+          "src": "./audio/voice/elita-charge.wav?v=28"
+        },
+        "hit": {
+          "text": "Reajusto.",
+          "src": "./audio/voice/elita-hit.wav?v=28"
+        },
+        "checkpoint": {
+          "text": "Checkpoint tomado.",
+          "src": "./audio/voice/elita-checkpoint.wav?v=28"
+        },
+        "pickup": {
+          "text": "Energón recogido.",
+          "src": "./audio/voice/elita-pickup.wav?v=28"
+        },
+        "rescue": {
+          "text": "Rescate confirmado.",
+          "src": "./audio/voice/elita-rescue.wav?v=28"
+        },
+        "danger": {
+          "text": "Aviso visto.",
+          "src": "./audio/voice/elita-danger.wav?v=28"
+        }
+      }
+    },
+    "d16": {
+      "name": "D-16",
+      "voice_style": "guerrero pesado, profundo, firme y robotico",
+      "lines": {
+        "selected": {
+          "text": "D dieciséis listo.",
+          "src": "./audio/voice/d16-selected.wav?v=28"
+        },
+        "mission-start": {
+          "text": "Avance pesado.",
+          "src": "./audio/voice/d16-mission-start.wav?v=28"
+        },
+        "mission-complete": {
+          "text": "Zona segura.",
+          "src": "./audio/voice/d16-mission-complete.wav?v=28"
+        },
+        "jump": {
+          "text": "Impulso pesado.",
+          "src": "./audio/voice/d16-jump.wav?v=28"
+        },
+        "transform": {
+          "text": "Blindaje en marcha.",
+          "src": "./audio/voice/d16-transform.wav?v=28"
+        },
+        "attack": {
+          "text": "Impacto frontal.",
+          "src": "./audio/voice/d16-attack.wav?v=28"
+        },
+        "charge": {
+          "text": "Cañón cargando.",
+          "src": "./audio/voice/d16-charge.wav?v=28"
+        },
+        "hit": {
+          "text": "No cedo.",
+          "src": "./audio/voice/d16-hit.wav?v=28"
+        },
+        "checkpoint": {
+          "text": "Punto seguro.",
+          "src": "./audio/voice/d16-checkpoint.wav?v=28"
+        },
+        "pickup": {
+          "text": "Energón tomado.",
+          "src": "./audio/voice/d16-pickup.wav?v=28"
+        },
+        "rescue": {
+          "text": "Mini bot protegido.",
+          "src": "./audio/voice/d16-rescue.wav?v=28"
+        },
+        "danger": {
+          "text": "Amenaza al frente.",
+          "src": "./audio/voice/d16-danger.wav?v=28"
+        }
+      }
+    }
+  },
   "lines": {
-    "intro": { "text": "Vamos", "src": "" },
-    "jump-now": { "text": "Salta ahora", "src": "" },
-    "transform-now": { "text": "Transformate", "src": "" },
-    "try-again": { "text": "Prueba otra vez", "src": "" },
-    "careful": { "text": "Cuidado", "src": "" },
-    "great": { "text": "Muy bien", "src": "" },
-    "rescue": { "text": "Muy bien", "src": "" },
-    "excellent": { "text": "Excelente", "src": "" },
-    "character-orion": { "text": "Orion Pax", "src": "" },
-    "character-bee": { "text": "Bumblebee", "src": "" },
-    "character-elita": { "text": "Elita Uno", "src": "" },
-    "character-d16": { "text": "D dieciseis", "src": "" }
+    "intro": {
+      "text": "Vamos",
+      "src": "./audio/voice/orion-mission-start.wav?v=28"
+    },
+    "jump-now": {
+      "text": "Salta ahora",
+      "src": "./audio/voice/orion-jump.wav?v=28"
+    },
+    "transform-now": {
+      "text": "Transformate",
+      "src": "./audio/voice/orion-transform.wav?v=28"
+    },
+    "try-again": {
+      "text": "Prueba otra vez",
+      "src": "./audio/voice/orion-hit.wav?v=28"
+    },
+    "careful": {
+      "text": "Cuidado",
+      "src": "./audio/voice/orion-danger.wav?v=28"
+    },
+    "great": {
+      "text": "Muy bien",
+      "src": "./audio/voice/bee-pickup.wav?v=28"
+    },
+    "rescue": {
+      "text": "Mini bot rescatado",
+      "src": "./audio/voice/elita-rescue.wav?v=28"
+    },
+    "excellent": {
+      "text": "Excelente",
+      "src": "./audio/voice/orion-mission-complete.wav?v=28"
+    },
+    "character-orion": {
+      "text": "Orion Pax",
+      "src": "./audio/voice/orion-selected.wav?v=28"
+    },
+    "character-bee": {
+      "text": "Bumblebee",
+      "src": "./audio/voice/bee-selected.wav?v=28"
+    },
+    "character-elita": {
+      "text": "Elita Uno",
+      "src": "./audio/voice/elita-selected.wav?v=28"
+    },
+    "character-d16": {
+      "text": "D dieciseis",
+      "src": "./audio/voice/d16-selected.wav?v=28"
+    }
   }
 }

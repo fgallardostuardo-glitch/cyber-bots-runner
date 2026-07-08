@@ -12,7 +12,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icons/icon-192.svg">
-  <link rel="stylesheet" href="./style.css?v=19">
+  <link rel="stylesheet" href="./style.css?v=29">
   <style>
 
 /* Gameplay mobile hotfixes */
@@ -127,24 +127,24 @@
   grid-template-columns: repeat(3, auto);
   align-items: center;
   padding: 0;
-  gap: 10px;
+  gap: 9px;
   background: transparent;
   border-color: transparent;
   box-shadow: none;
   backdrop-filter: none;
   overflow: visible;
+  transform: translateX(-12px);
 }
 
 #gameScreen .control-btn {
   position: relative;
   display: grid;
-  grid-template-rows: 1fr auto;
   place-items: center;
-  width: 76px;
-  height: 76px;
-  min-width: 76px;
-  min-height: 76px;
-  padding: 8px 6px 7px;
+  width: 68px;
+  height: 68px;
+  min-width: 68px;
+  min-height: 68px;
+  padding: 0;
   border-radius: 50%;
   color: #061226;
   font-size: 0.58rem;
@@ -179,8 +179,7 @@
 }
 
 #gameScreen .control-label {
-  line-height: 1;
-  text-shadow: 0 1px 0 rgba(255,255,255,.28);
+  display: none;
 }
 
 #gameScreen .control-btn.jump {
@@ -305,7 +304,7 @@
 @media (pointer: coarse) {
   #gameScreen .controls-wrap {
     left: max(20px, calc(env(safe-area-inset-left) + 18px));
-    right: max(8px, env(safe-area-inset-right));
+    right: max(24px, calc(env(safe-area-inset-right) + 20px));
     bottom: max(2px, calc(env(safe-area-inset-bottom) - 4px));
     gap: 12px;
   }
@@ -327,10 +326,10 @@
   }
 
   #gameScreen .control-btn {
-    width: 78px;
-    height: 78px;
-    min-width: 78px;
-    min-height: 78px;
+    width: 70px;
+    height: 70px;
+    min-width: 70px;
+    min-height: 70px;
   }
 }
 
@@ -378,7 +377,7 @@
 
   #gameScreen .controls-wrap {
     left: max(22px, calc(env(safe-area-inset-left) + 18px));
-    right: max(8px, env(safe-area-inset-right));
+    right: max(24px, calc(env(safe-area-inset-right) + 20px));
     bottom: max(2px, calc(env(safe-area-inset-bottom) - 4px));
     gap: 10px;
   }
@@ -404,14 +403,15 @@
     grid-template-columns: repeat(3, auto);
     border-radius: 999px;
     padding: 0;
-    gap: 8px;
+    gap: 7px;
+    transform: translateX(-10px);
   }
 
   #gameScreen .control-btn {
-    width: 64px;
-    height: 64px;
-    min-width: 64px;
-    min-height: 64px;
+    width: 58px;
+    height: 58px;
+    min-width: 58px;
+    min-height: 58px;
     border-radius: 50%;
     padding: 7px 5px 6px;
     font-size: 0.5rem;
@@ -449,10 +449,10 @@
   }
 
   #gameScreen .control-btn {
-    width: 66px;
-    height: 66px;
-    min-width: 66px;
-    min-height: 66px;
+    width: 58px;
+    height: 58px;
+    min-width: 58px;
+    min-height: 58px;
     font-size: 0.5rem;
   }
 
@@ -471,9 +471,9 @@
       <div class="home-shell">
         <header class="panel top-panel">
           <div class="header-copy">
-            <p class="eyebrow">Cyber Bots: Vertical Slice</p>
-            <h1>Una misión corta, clara y bien pulida</h1>
-            <p class="muted">Vertical slice con combate, telegraphs claros, rutas de ventaja por personaje y un remix final para probar el corazón comercial del juego.</p>
+            <p class="eyebrow">Cyber Bots</p>
+            <h1>Elige tu bot</h1>
+            <p class="muted">Toca un personaje, mira su vehiculo y empieza la aventura.</p>
           </div>
           <div class="top-actions">
             <button id="installButton" class="mini-btn hidden-install" aria-label="Instalar">＋</button>
@@ -486,7 +486,7 @@
             <div class="hero-copy">
               <h2 id="heroName">Orion Pax</h2>
               <p id="heroRole" class="hero-role">Vanguardia versátil</p>
-              <p id="heroDesc">Versión premium de una sola fase: menos relleno, más intención.</p>
+              <p id="heroDesc">Listo para jugar.</p>
 
               <div class="stat-grid">
                 <div class="stat-box"><span>Control</span><strong id="statControl">8</strong></div>
@@ -515,7 +515,7 @@
 
           <aside class="panel roster-panel">
             <div class="roster-header">
-              <h3>Escuadrón</h3>
+              <h3>Personajes</h3>
               <span id="selectedTag" class="tag">Versátil</span>
             </div>
             <div id="characterCarousel" class="character-carousel"></div>
@@ -534,9 +534,9 @@
 
       <div class="hud panel">
         <div class="progress-meter" aria-label="Progreso del nivel"><div id="progressFill" class="progress-fill"></div></div>
-        <div class="hud-pill">⚡ <span id="energyCount">0</span></div>
-        <div class="hud-pill">★ <span id="starCount">0</span></div>
-        <div class="hud-pill">🤖 <span id="botCount">0</span></div>
+        <div class="hud-pill"><span class="hud-icon">⚡</span><span class="hud-label">Energón</span><span id="energyCount">0</span></div>
+        <div class="hud-pill"><span class="hud-icon">★</span><span class="hud-label">Estrellas</span><span id="starCount">0</span></div>
+        <div class="hud-pill"><span class="hud-icon">🤖</span><span class="hud-label">Bots</span><span id="botCount">0</span></div>
       </div>
 
       <div id="voiceBubble" class="voice-bubble panel show">Usa el joystick para moverte y observa el color de cada obstáculo.</div>
@@ -573,8 +573,14 @@
     <section id="rewardScreen" class="screen">
       <div class="screen-bg"></div>
       <div class="reward-shell panel">
+        <div id="rewardBurst" class="reward-burst" aria-hidden="true"></div>
+        <div id="rewardStars" class="reward-stars" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="reward-kicker">Victoria heroica</p>
         <h2>Misión completada</h2>
         <div class="reward-hero-stage">
+          <div class="reward-ring" aria-hidden="true"></div>
           <img id="rewardRobot" class="reward-sprite" alt="personaje">
         </div>
         <div id="rewardLoot" class="reward-loot"></div>
@@ -586,8 +592,9 @@
     </section>
   </div>
 
-  <script src="./game-data.js?v=19"></script>
-  <script src="./game-systems.js?v=19"></script>
-  <script src="./app.js?v=19"></script>
+  <script src="./game-data.js?v=29"></script>
+  <script src="./game-systems.js?v=29"></script>
+  <script src="./game-rigs.js?v=29"></script>
+  <script src="./app.js?v=29"></script>
 </body>
 </html>

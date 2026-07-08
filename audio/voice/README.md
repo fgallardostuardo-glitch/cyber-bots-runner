@@ -1,31 +1,26 @@
-# Voice recording guide
+# Voice assets
 
-The app already supports recorded voice. Add final MP3 files in this folder and update `voice-map.json` with each file path.
+This folder contains generated WAV voices for each playable character. The voices are original synthetic performances made from `Microsoft Helena Desktop` and then processed with per-character robotic effects. They are not voice clones.
 
-Recommended delivery:
+Current event set per character:
 
-- Format: `mp3`, mono, 44.1 kHz or 48 kHz.
-- Length: 0.5 to 1.4 seconds per phrase.
-- Tone: warm Latin American Spanish, energetic, calm, never scolding.
-- Performance: smile while speaking, clear consonants, no long explanations.
+- `selected`
+- `mission-start`
+- `mission-complete`
+- `jump`
+- `transform`
+- `attack`
+- `charge`
+- `hit`
+- `checkpoint`
+- `pickup`
+- `rescue`
+- `danger`
 
-Suggested filenames:
+The playable map is `voice-map.json`. If a WAV file fails to load, the app falls back to browser speech synthesis.
 
-- `intro.mp3`: "Vamos"
-- `jump-now.mp3`: "Salta ahora"
-- `transform-now.mp3`: "Transformate"
-- `try-again.mp3`: "Prueba otra vez"
-- `careful.mp3`: "Cuidado"
-- `great.mp3`: "Muy bien"
-- `rescue.mp3`: "Muy bien"
-- `excellent.mp3`: "Excelente"
-- `character-orion.mp3`: "Orion Pax"
-- `character-bee.mp3`: "Bumblebee"
-- `character-elita.mp3`: "Elita Uno"
-- `character-d16.mp3`: "D dieciseis"
+To regenerate the WAV files after editing phrases, run:
 
-Example mapping:
-
-```json
-"intro": { "text": "Vamos", "src": "./audio/voice/intro.mp3" }
+```powershell
+python tools\generate_voice_assets.py
 ```
